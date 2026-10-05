@@ -1,0 +1,4 @@
+psutil>=5.9,<8
+pypresence==4.6.2
+websockets>=13,<18
+pywebview>=6.2,<7

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+config.json
+config.json*.bak
+logs/
+build/
+dist/
+.app.lock
+*.tmp

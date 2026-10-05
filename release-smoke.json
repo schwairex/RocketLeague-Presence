@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "gui_subsystem": 2,
+  "native_viewport": [
+    1120,
+    760
+  ],
+  "offline_resources": true,
+  "native_bridge": true,
+  "stats_status": "live",
+  "phase": "TRAINING",
+  "arena": "Stadium_P",
+  "packets_per_second": 30,
+  "console_missing_id_exit_code": 2,
+  "real_discord_credentials_used": false
+}

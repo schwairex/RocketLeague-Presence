@@ -1,0 +1,295 @@
+"""Console entry point and supervised asyncio application lifecycle."""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import logging
+import copy
+from dataclasses import asdict, replace
+from collections import deque
+from pathlib import Path
+import signal
+import os
+import time
+
+from . import __version__
+from .config import Config, app_directory, load_config, save_config, validate_config
+from .game_watcher import rocket_league_running, watch_game
+from .installer import setup_install
+from .presence import build_presence
+from .rpc import DiscordClient, PresencePublisher, UNSET
+from .maps import lookup_map
+from .modes import lookup_mode
+from .runtime import AlreadyRunning, SingleInstance, configure_logging, supervise, wait_or_stop
+from .state import MatchState, Phase, reduce_event, normalize_event
+from .stats_client import StatsClient
+
+log = logging.getLogger(__name__)
+
+
+class Application:
+    def __init__(self, config: Config, config_path: Path | None = None,
+                 discord_factory=None, wall_clock=time.time, monotonic_clock=time.monotonic,
+                 mock_game: bool = False, raw_packets: bool = False):
+        self.config = config
+        self.config_path = config_path
+        self.wall_clock = wall_clock
+        self.running = False
+        self.connected = False
+        self.state = MatchState()
+        self.stop = asyncio.Event()
+        self.stats_task = None
+        self.mock_game = mock_game
+        self.raw_packets = raw_packets
+        self.custom_discord_factory = discord_factory is not None
+        self.last_event = None
+        self.last_packet_at = None
+        self.last_update = None
+        self.stats_error = ''
+        self.packet_times = deque(maxlen=1000)
+        self.settings_lock = asyncio.Lock()
+        self.publisher = PresencePublisher(discord_factory or (lambda:DiscordClient(self.config.client_id)),
+                                           interval=config.update_interval, clock=monotonic_clock)
+
+    def snapshot(self) -> dict:
+        now = self.wall_clock()
+        match = asdict(self.state)
+        match['phase'] = self.state.phase.value
+        match['players'] = list(match['players'])
+        match['map_name'], match['map_asset'] = lookup_map(self.state.arena) if self.state.arena else ('—','rl_logo')
+        match['mode_name'] = lookup_mode(self.state.playlist_id) if self.state.playlist_id is not None else '—'
+        status = ('game_off' if not self.running else 'disconnected' if not self.connected else
+                  'awaiting_data' if self.last_event is None else 'menu' if self.state.phase == Phase.MENU else 'live')
+        return {'config':asdict(self.config), 'game_running':self.running, 'match':match,
+                'stats':{'connected':self.connected, 'status':status, 'last_event':self.last_event,
+                         'last_packet_at':self.last_packet_at, 'error':self.stats_error,
+                         'packets_per_second':sum(t >= now-1 for t in self.packet_times)},
+                'discord':{'connected':self.publisher.client is not None,
+                           'error':self.publisher.error,
+                           'sent_payload':copy.deepcopy(self.publisher.sent) if self.publisher.sent is not UNSET else None,
+                           'pending_payload':self.current_payload(),
+                           'next_send_in':max(0,15-(self.publisher.clock()-self.publisher.last_attempt))}}
+
+    async def apply_config(self, changes: dict) -> dict:
+        if not isinstance(changes,dict):
+            raise ValueError('Settings must be an object')
+        async with self.settings_lock:
+            candidate = validate_config({**asdict(self.config), **changes})
+            if self.config_path and not await asyncio.to_thread(save_config,candidate,self.config_path):
+                raise OSError('Ayarlar kaydedilemedi. Yazılabilir bir klasör kullanın.')
+            old = self.config
+            self.config = candidate
+            self.publisher.interval = candidate.update_interval
+            if old.client_id != candidate.client_id:
+                async with self.publisher.lock:
+                    await self.publisher._disconnect()
+                    self.publisher.retry_at = float('-inf')
+            if any(getattr(old,k) != getattr(candidate,k) for k in ('stats_host','stats_port','stats_web_port','stats_transport')):
+                self.connected = False
+                self.state = MatchState()
+                self.last_update = None
+                self.last_event = None
+                if self.stats_task and not self.stats_task.done():
+                    self.stats_task.cancel()
+            elif self.last_update is not None:
+                # Re-evaluate identity only; an old packet must never restart a
+                # clock or change a paused/replay phase during settings save.
+                matched = reduce_event(self.state,self.last_update,candidate,self.wall_clock())
+                self.state = replace(self.state, **{key:getattr(matched,key) for key in (
+                    'local_team','local_player_name','local_primary_id','local_player_score',
+                    'local_player_goals','local_player_saves')})
+            self.refresh(priority=True)
+            log.info('Settings saved and applied.')
+            return self.snapshot()
+
+    async def on_stats_error(self, exc):
+        self.stats_error = f'{type(exc).__name__}: {exc}'
+
+    def current_payload(self):
+        if not self.running:
+            return None
+        state = self.state if self.connected else MatchState()
+        return build_presence(state, self.config, self.wall_clock())
+
+    def refresh(self, priority: bool = False):
+        self.publisher.offer(self.current_payload(), priority)
+
+    async def set_running(self, running: bool):
+        if self.running != running:
+            log.info('Rocket League %s', 'running' if running else 'not running')
+        self.running = running
+        if not running:
+            self.connected = False
+            self.state = MatchState()
+            self.last_update = None
+            self.last_event = None
+            self.last_packet_at = None
+            self.packet_times.clear()
+            if self.stats_task is not None and not self.stats_task.done():
+                self.stats_task.cancel()
+        self.refresh(priority=True)
+
+    async def on_connection(self, connected: bool):
+        previous = self.connected
+        self.connected = connected and self.running
+        if not self.connected:
+            self.state = MatchState()
+            self.last_update = None
+        if self.connected:
+            self.last_event = None
+            self.last_packet_at = None
+            self.stats_error = ''
+            self.packet_times.clear()
+        if previous != self.connected:
+            log.info('Stats API %s', 'connected; awaiting match packets' if self.connected else 'disconnected; showing menus')
+        self.refresh(priority=True)
+
+    async def on_event(self, message):
+        if not self.running:
+            return
+        message = normalize_event(message)
+        if isinstance(message,dict) and isinstance(message.get('Event'),str):
+            self.last_event = message['Event']
+            self.last_packet_at = self.wall_clock()
+            self.packet_times.append(self.last_packet_at)
+            if message['Event'] == 'UpdateState' and isinstance(message.get('Data'),dict):
+                self.last_update = copy.deepcopy(message)
+            elif message['Event'] == 'MatchDestroyed':
+                self.last_update = None
+        old = self.state
+        self.state = reduce_event(old, message, self.config, self.wall_clock())
+        priority = (old.phase == Phase.MENU and self.state.phase != Phase.MENU) or (
+            old.match_guid != self.state.match_guid) or (old.phase != Phase.ENDED and self.state.phase == Phase.ENDED)
+        self.refresh(priority=priority)
+        if (self.config.auto_learn_primary_id and self.config.player_name
+            and not self.config.player_primary_id and self.state.local_primary_id
+            and self.state.local_player_name.casefold() == self.config.player_name.casefold()):
+            async with self.settings_lock:
+                self.config.player_primary_id = self.state.local_primary_id
+                if self.config_path:
+                    await asyncio.to_thread(save_config, self.config, self.config_path)
+            log.info('Learned PrimaryId for configured player name.')
+
+    async def stats_loop(self):
+        delay = 3.0
+        while not self.stop.is_set():
+            if not self.running:
+                delay = 3
+                await wait_or_stop(self.stop, 1)
+                continue
+            client = StatsClient(self.config, self.on_event, self.on_connection, self.raw_packets)
+            self.stats_task = asyncio.create_task(client.session(), name='stats-session')
+            try:
+                await self.stats_task
+                delay = 3
+            except asyncio.CancelledError:
+                if self.stop.is_set() or asyncio.current_task().cancelling():
+                    raise
+                continue  # process watcher cancelled the old game session
+            except Exception as exc:
+                await self.on_stats_error(exc)
+                log.debug('Stats API connect/read failed: %s', exc, exc_info=True)
+            finally:
+                self.stats_task = None
+            await wait_or_stop(self.stop, delay)
+            delay = min(5.0, delay*1.5)
+
+    async def presence_loop(self):
+        while not self.stop.is_set():
+            self.refresh()
+            if self.custom_discord_factory or (self.config.client_id.isascii() and self.config.client_id.isdigit() and self.config.client_id != '0'):
+                await self.publisher.pump()
+            await wait_or_stop(self.stop, 0.25)
+
+    async def run(self):
+        loop = asyncio.get_running_loop()
+        previous_handlers = {}
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            try:
+                previous = signal.getsignal(sig)
+                signal.signal(sig, lambda *_: loop.call_soon_threadsafe(self.stop.set))
+                previous_handlers[sig] = previous
+            except (ValueError, OSError):
+                pass
+        tasks = []
+        try:
+            detector = (lambda:True) if self.mock_game else rocket_league_running
+            tasks = [asyncio.create_task(supervise(name, factory, self.stop), name=name) for name,factory in [
+                ('game-watcher',lambda:watch_game(self.set_running,self.stop,detector)),
+                ('stats-client',self.stats_loop), ('discord-publisher',self.presence_loop)]]
+            await self.stop.wait()
+        finally:
+            self.stop.set()
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            await self.publisher.shutdown()
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
+            log.info('Presence cleared/IPC closed. Goodbye.')
+
+
+def cli(argv=None) -> int:
+    parser = argparse.ArgumentParser(description='Rocket League Discord Rich Presence (official Stats API, read-only)')
+    parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument('--config', type=Path, help='Alternate configuration JSON (default beside launcher/exe)')
+    parser.add_argument('--debug', action='store_true', help='DEBUG logs including every raw Stats event name')
+    parser.add_argument('--raw-packets', action='store_true', help='Also rotate full JSON in logs/raw_packets.log')
+    parser.add_argument('--skip-install', action='store_true', help='Do not discover or patch the game ini')
+    parser.add_argument('--mock-game', action='store_true', help='Test with the mock server without RocketLeague.exe')
+    parser.add_argument('--console', action='store_true', help='Run without the desktop interface (Ctrl+C to quit)')
+    args = parser.parse_args(argv)
+    base = app_directory()
+    config_path = args.config.resolve() if args.config else base/'config.json'
+    configure_logging(base/'logs', debug=args.debug or args.raw_packets, raw=args.raw_packets)
+    try:
+        # The verification harness uses an isolated, credential-free instance
+        # while the user's installed version may still be running.
+        mutex = 'Local\\rocket-league-rpc-7b543a5e'
+        if os.environ.get('RL_RPC_UI_SMOKE_PATH'):
+            mutex = f'Local\\rocket-league-rpc-smoke-{os.getpid()}'
+        with SingleInstance(base/'.app.lock',mutex):
+            config = load_config(config_path)
+            configure_logging(base/'logs', config.log_level, args.debug or args.raw_packets, args.raw_packets)
+            if not args.console:
+                from .gui import launch
+                launch(config,config_path,base/'logs',mock_game=args.mock_game,raw_packets=args.raw_packets)
+                return 0
+            if not args.skip_install and not args.mock_game:
+                try:
+                    running = rocket_league_running()
+                except Exception as exc:
+                    log.debug('Initial process scan failed: %s', exc)
+                    running = False
+                setup_install(config, config_path, running)
+            if not config.client_id.isascii() or not config.client_id.isdigit() or config.client_id == '0':
+                print(f'Set client_id to your Discord Developer Portal Application ID in {config_path}. No bot token is needed.')
+                return 2
+            log.info('rocket-league-rpc %s. Ctrl+C to quit. Config: %s', __version__, config_path)
+            asyncio.run(Application(config, config_path, mock_game=args.mock_game, raw_packets=args.raw_packets).run())
+    except AlreadyRunning as exc:
+        if args.console:
+            print(exc)
+        else:
+            show_startup_error('RL Presence zaten açık. Yeni sürümü açmadan önce eski RPC uygulamasını kapatın.')
+        return 1
+    except KeyboardInterrupt:
+        return 0
+    except (OSError,RuntimeError) as exc:
+        log.error('Startup failed: %s. Use a writable app folder.', exc)
+        if not args.console:
+            show_startup_error(f'Uygulama açılamadı: {exc}\nYazılabilir bir klasör, .NET Framework 4.8 ve WebView2 Runtime kullanın. Ayrıntılar logs/app.log dosyasında.')
+        return 1
+    return 0
+
+
+def show_startup_error(message):
+    if os.name == 'nt':
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(None,str(message),'RL Presence',0x10)
+    else:
+        print(message)
+
+
+if __name__ == '__main__':
+    raise SystemExit(cli())
