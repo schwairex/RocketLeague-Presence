@@ -2,6 +2,34 @@
 
 Rocket League için Windows üzerinde Python 3.11+ ile çalışan Discord Rich Presence uygulaması. Veriler yalnızca [resmî yerel Stats API](https://www.rocketleague.com/developer/stats-api) üzerinden okunur. Oyun belleğine erişilmez; oyun komutu gönderilmez. [English guide](README.md).
 
+## Dil seçimi ve Sorun Bildir (v0.2.2)
+
+**Genel → Arayüz dili** alanından Türkçe veya English seçin ve **Kaydet**’e basın.
+Seçim hemen önizlenir ve kaydedildikten sonra yeniden açılışta korunur. İptal,
+kayıtlı dile döner. Resmî harita/mod/rank adları, Discord oyun metinleri, ham
+günlükler ve GitHub’da yazılmış sürüm notları kendi dilinde kalır.
+
+**Hakkında’nın hemen sağındaki Sorun Bildir** sekmesinde başlık (5–100 karakter)
+ve açıklama (10–2000 karakter) girip **Gönder**’e basın. Üstte raporun herkese
+açık olduğu ve şifre/kişisel bilgi yazılmaması gerektiği belirtilir. Yalnızca
+başlık, açıklama, otomatik uygulama sürümü ve işletim sistemi JSON olarak
+`https://bug-report.kralsefo123.workers.dev` adresine gönderilir. Günlükler,
+oyuncu kimlikleri, token ve API anahtarları eklenmez. Worker adresi tek yerde,
+`rocket_league_rpc/reports.py` içinde tanımlıdır. Bu özellik doğrudan GitHub’a
+istek atmaz; mevcut GitHub güncelleyicisi bağımsız çalışmaya devam eder.
+
+Alanlar arayüzde ve Python tarafında doğrulanır. Gönderim ayrı köprü thread’inde
+çalışır, 10 saniye zaman aşımı kullanır; buton kilitlenir ve yüklenme göstergesi
+çıkar. HTTP 200’de teşekkür mesajı gösterilir ve alanlar temizlenir. 429, 400,
+ağ/sunucu hatalarında Türkçe/İngilizce açıklama gösterilir, yazdıklarınız korunur.
+Yönlendirme ve otomatik rapor tekrarları kapalıdır. Zaman aşımında istek sunucuya
+ulaşmış olabilir; yinelenen rapor oluşturmamak için bilinçli olarak tekrar deneyin.
+
+Discord etkinlik adı bütün durumlarda **Rocket League** gönderilir. Gol sonrası
+Kickoff countdown etiketi kaldırılmıştır. Discord’un yerel yeşil sayacı gerçek
+anlamda duraklatılamaz; önceki zaman damgası korunur ve kickoff’ta yeniden
+eşitlenir. Testler gerçek herkese açık rapor oluşturmadan mock sunucuyla yapıldı.
+
 ## Kurulum ve çalıştırma
 
 Projeyi yazılabilir bir klasöre çıkarın. PowerShell:
@@ -15,7 +43,7 @@ python -m venv .venv
 Hazır derleme varsa `rl-presence.exe` dosyasını çalıştırabilirsiniz. `config.json` ve `logs/`, kaynak kullanımında `run.py` yanında, exe kullanımında exe yanında bulunur. Alternatif ayar dosyası: `--config C:\klasor\config.json`. Arayüzde Kaydet ile ayarlar hemen uygulanır; JSON dosyasını dışarıdan düzenlediyseniz RPC’yi yeniden başlatın.
 
 
-## Yeni masaüstü arayüzü (v0.2.1)
+## Yeni masaüstü arayüzü (v0.2.2)
 
 Eski RPC’yi kapatıp yeni EXE’yi açın. Mevcut config.json dosyanızı yeni EXE’nin yanında tutarak oyuncu/harita/rank ayarlarınızı koruyabilirsiniz. Application ID bu sürümde sabittir; eski client_id yok sayılır ve kaldırılır. Windows 10/11, .NET Framework 4.8 ve Microsoft Edge WebView2 Runtime gerekir. Python, yazı tipleri ve verilen SVG görselleri EXE’ye dahildir; arayüz internet gerektirmez.
 
@@ -31,7 +59,7 @@ Discord ve Rocket League göstergeleri gerçek bağlantı durumunu kullanır. St
 
 Son kullanıcılar yeni Discord uygulaması oluşturmaz. Bu derleme mevcut **802869954805760020** Application ID’sini kullanır; Genel sekmesinde salt okunur görünür. Aşağıdaki görsel yükleme adımları uygulamanın bakımcısı içindir.
 
-1. [Discord Developer Portal](https://discord.com/developers/applications) üzerinde bu uygulamayı yönetin. Discord’daki uygulama adını portal belirler.
+1. [Discord Developer Portal](https://discord.com/developers/applications) üzerinde bu uygulamayı yönetin. Bu sürüm bütün etkinliklerde `name: Rocket League` gönderir; sabit Application ID ve görseller değişmez.
 2. ID yapılandırma dosyasından veya arayüzden değiştirilemez. Bot token, OAuth veya client secret gerekmez.
 3. Rich Presence / Art Assets bölümüne aşağıdaki anahtarlarla görseller yükleyin. Anahtarlar küçük harflerle **birebir aynı** olmalıdır. Liste `maps.py` tarafından kullanılan bütün farklı anahtarları ve genel/takım simgelerini kapsar. Kullanma hakkınız olan görseller seçin; varyantlar temel harita görselini paylaşır.
 4. Aynı Windows oturumunda Discord masaüstü uygulamasını açın. Aktivite görünmüyorsa Discord'un aktivite paylaşımı gizlilik ayarını kontrol edin.
@@ -81,6 +109,7 @@ Application ID hazırdır. Bundan sonra oyun ve Discord herhangi bir sırada aç
 
 | Alan | Varsayılan / açıklama |
 |---|---|
+| `language` | `tr`; arayüz dili `tr` / `en` |
 | `schema_version` | `3`; eski ayar geçişi için yönetilir; client_id ayarı bulunmaz |
 | `install_path` | Boş; otomatik arama veya tek seferlik soru |
 | `player_name` | Boş; kendi oyuncu adınız, harf duyarsız eşleşme |
@@ -108,11 +137,11 @@ Application ID hazırdır. Bundan sonra oyun ve Discord herhangi bir sırada aç
 
 Geri sayım, normal oyun, gol tekrarı, duraklatma, uzatma, maç sonu ve geçmiş tekrar durumları ayrı işlenir. Yeni MatchGuid maç durumunu sıfırlar. Boş çevrimdışı MatchGuid ayrılana kadar tek maçtır. ReplayCreated sonrasında MatchDestroyed gelene kadar `Watching a replay` gösterilir; canlı skor/saat gönderilmez. Skor UpdateState'ten alınır; GoalScored'dan kendi kalesine gol gibi durumlarda tahmin edilmez.
 
-RoundStarted bitiş zamanını eşitler. Saat tahminden **2 saniyeden fazla** saparsa yeniden eşitlenir. Gol bildirimi, gol tekrarı, geri sayım, duraklatma ve maç sonunda hareketli zaman damgası yoktur. Sonuç MatchDestroyed gelene veya 60 saniye dolana kadar tutulur. Bilinen yerel takım için Win/Loss, bilinmiyorsa Blue wins/Orange wins gösterilir.
+RoundStarted bitiş zamanını eşitler. Saat tahminden **2 saniyeden fazla** saparsa yeniden eşitlenir. Gol ve gol sonrası geri sayımda son Discord bitiş zaman damgası korunur; kickoff ile kalan süreye yeniden eşitlenir. İç oyun saati bu arada durur. Discord’un yeşil sayacında duraklatma alanı olmadığı için sayaç gol arası boyunca ilerler, kickoff’ta düzeltilir. Açık duraklatma ve maç sonunda hareketli zaman damgası yoktur. Sonuç MatchDestroyed gelene veya 60 saniye dolana kadar tutulur. Bilinen yerel takım için Win/Loss, bilinmiyorsa Blue wins/Orange wins gösterilir.
 
 **Uzatmada TimeSeconds yönü doğrulanmamıştır.** Yerel geçen süre başlangıcı kullanılır. İlk gözlenen uzatma başlangıcı esas alınır; maçın ortasında yeniden bağlanılırsa ilk paket geçici başlangıç olur ve geçen süre eksik görünebilir. DEBUG günlükleri gerçek TimeSeconds örneklerini içerir. Politikayı değiştirmek için tek yer `state.overtime_clock_start()` fonksiyonudur.
 
-Sabit 15 saniyelik bekleme yoktur. [Discord sınırı](https://docs.discord.com/developers/developer-tools/game-sdk) uyarınca kayan her 20 saniyede en fazla 5 aktivite yazılır. Başlangıç, skor, eğitim, tekrar ve bitiş geçişleri izin varsa hemen gönderilir. Normal istatistik değişiklikleri en az 4 saniye birleştirilir. Aynı içerik yeniden gönderilmez; son durum kazanır. Başarısız yazımlar/temizleme de bütçeyi tüketir, yeniden bağlanmak bütçeyi sıfırlamaz. Sayaç her saniye paket istemez: ilk eşitlenen bitiş zamanından Discord kendi geri sayar. Eğitimde P/G/S yoktur. Maçta kalan süre metni ve gol tekrar etiketi kaldırılmıştır; tekrar/duraklama sırasında hareketli zaman damgası gönderilmez. Bütçe dolarsa kısa durumlar birleştirilebilir. Kapanışta uygunsa temizleme yazılır; aksi halde IPC kapanır.
+Sabit 15 saniyelik bekleme yoktur. [Discord sınırı](https://docs.discord.com/developers/developer-tools/game-sdk) uyarınca kayan her 20 saniyede en fazla 5 aktivite yazılır. Başlangıç, skor, eğitim, tekrar ve bitiş geçişleri izin varsa hemen gönderilir. Normal istatistik değişiklikleri en az 4 saniye birleştirilir. Aynı içerik yeniden gönderilmez; son durum kazanır. Başarısız yazımlar/temizleme de bütçeyi tüketir, yeniden bağlanmak bütçeyi sıfırlamaz. Sayaç her saniye paket istemez: ilk eşitlenen bitiş zamanından Discord kendi geri sayar. Eğitimde P/G/S yoktur. Maçta kalan süre metni ve gol tekrar etiketi kaldırılmıştır; açık duraklatmada zaman damgası kaldırılır; gol arasında önceki damga korunur. Bütçe dolarsa kısa durumlar birleştirilebilir. Kapanışta uygunsa temizleme yazılır; aksi halde IPC kapanır.
 
 ## Hata ayıklama ve test
 
@@ -153,7 +182,7 @@ Kimlik ve uzatma davranışı gerçek paketlerle doğrulanmalıdır. ReplayCreat
 
 Sahte sunucuda `--encoded-data`, gerçek TCP’de gözlenen zarf biçimini canlandırır. Katlicia/LOLCustomRPC yalnızca arayüz/iş parçacığı ve Kaydet/İptal mimarisi için incelendi; League veri mantığı kullanılmadı.
 
-## GitHub güncellemeleri (v0.2.1)
+## GitHub güncellemeleri (v0.2.2)
 
 Her açılışta [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases) kontrol edilir. Yeni kararlı sürümde uygulama içi bildirim gelir; EXE indirilir, SHA-256 doğrulanır, gizli bir Windows yardımcısı uygulama kapandıktan sonra EXE’yi değiştirip yeniden açar. config.json ve günlükler korunur. Yeni pencere ve motor sağlıklı açıldığını onaylamazsa eski EXE geri yüklenir. Başarısız aynı sürüm tekrar otomatik denenmez; Güncellemeleri kontrol et ile elle denenebilir. Kaynak/Python kullanımında sürüm notları görünür fakat Python dosyası değiştirilmez.
 

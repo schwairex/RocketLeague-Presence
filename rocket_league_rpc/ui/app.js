@@ -2,6 +2,23 @@
 (() => {
   let bridge=null, persisted=null, draft=null, snapshot=null, busy=false, previewToken=0, updateNotice='';
   const $=id=>document.getElementById(id);
+
+  const dictionaries=window.RL_TRANSLATIONS;
+  const language=()=>draft?.language||persisted?.language||'tr';
+  const locale=()=>language()==='en'?'en-US':'tr-TR';
+  function t(key,values={}){let message=dictionaries[language()]?.[key]??key;for(const [key,value] of Object.entries(values))message=message.split('{'+key+'}').join(String(value));return message;}
+  const staticText=[],staticAttrs=[];
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  while(walker.nextNode()){const node=walker.currentNode;const key=node.textContent.trim();if(!node.parentElement.closest('script,style,svg,pre,#log-lines')&&dictionaries.tr[key])staticText.push([node,node.textContent,key]);}
+  for(const el of document.querySelectorAll('[title],[aria-label],[placeholder]'))for(const attr of ['title','aria-label','placeholder']){const key=el.getAttribute(attr);if(dictionaries.tr[key])staticAttrs.push([el,attr,key]);}
+  function applyLanguage(){
+    document.documentElement.lang=language();document.title=t('RL Presence – Ana pencere');
+    for(const [node,original,key] of staticText)node.textContent=original.replace(key,t(key));
+    for(const [el,attr,key] of staticAttrs)el.setAttribute(attr,t(key));
+    text('report-button-label',t(reportBusy?'Gönderiliyor…':'Gönder'));
+    if(reportFeedback)showReportFeedback(reportFeedback);
+  }
+  let reportBusy=false,reportFeedback='';
   const clone=value=>JSON.parse(JSON.stringify(value));
   const text=(id,value)=>{$(id).textContent=value??'—';};
   const pad=n=>String(n).padStart(2,'0');
@@ -12,12 +29,13 @@
   let toastTimer;
   function toast(message,error=false){text('toast',message);$('toast').hidden=false;$('toast').style.borderColor=error?'#FF8F2B':'#3D8BFF';clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,6500);}
   async function invoke(method,...args){
-    if(!bridge)throw Error('Masaüstü bağlantısı hazırlanıyor.');
+    if(!bridge)throw Error(t('Masaüstü bağlantısı hazırlanıyor.'));
     const result=await bridge[method](...args);
-    if(!result||!result.ok)throw Error(result?.error||'İşlem tamamlanamadı.');
+    if(!result||!result.ok)throw Error(t(result?.error||'İşlem tamamlanamadı.'));
     return result.data;
   }
   function hydrate(){
+    applyLanguage();
     $('application-id').value=draft.client_id||'';
     for(const el of document.querySelectorAll('[data-field]'))el.value=draft[el.dataset.field]??'';
     for(const button of document.querySelectorAll('[data-setting]')){
@@ -32,15 +50,15 @@
     previewArt.replaceChildren((isMap?fieldArt:logoArt).cloneNode(true));
     previewArt.style.background=isMap?'#0E3A2E':'#172040';
     previewArt.title=payload?.large_text||'Rocket League';
-    text('preview-details',payload?.details||'Rocket League kapalı');
-    text('preview-status',payload?.state||'Oyun açılınca presence etkinleşir.');
+    text('preview-details',payload?.details||t('Rocket League kapalı'));
+    text('preview-status',payload?.state||t('Oyun açılınca presence etkinleşir.'));
     let timer='';
-    if(payload?.end)timer=`${clock(Math.ceil(payload.end-Date.now()/1000)).padStart(5,'0')} kaldı`;
-    else if(payload?.start)timer=`${clock(Math.round(Date.now()/1000-payload.start))} uzatma`;
+    if(payload?.end)timer=t('{time} kaldı',{time:clock(Math.ceil(payload.end-Date.now()/1000)).padStart(5,'0')});
+    else if(payload?.start)timer=t('{time} uzatma',{time:clock(Math.round(Date.now()/1000-payload.start))});
     text('preview-timer',timer);
     const team=$('preview-team');team.hidden=!payload?.small_image||payload.small_image==='rl_logo';
     team.style.background=payload?.small_image==='orange'?'#FF8F2B':'#3D8BFF';
-    $('discord-preview').title='Kaydedildiğinde gönderilecek içerik. Örnek önizleme Discord’a gönderilmez.';
+    $('discord-preview').title=t('Kaydedildiğinde gönderilecek içerik. Örnek önizleme Discord’a gönderilmez.');
   }
   async function preview(){
     if(!draft||!bridge)return;
@@ -51,61 +69,65 @@
   function pill(id,ok,label){const el=$('pill-'+id);el.querySelector('.dot').style.background=ok?'#3DDC97':'#FFC24D';el.title=label;}
   const phases={MENU:'Menü',COUNTDOWN:'Başlama geri sayımı',PLAYING:'Yayında',GOAL_REPLAY:'Gol tekrarı',PAUSED:'Duraklatıldı',OVERTIME:'Uzatma',ENDED:'Maç bitti',REPLAY_VIEWER:'Tekrar izleniyor',TRAINING:'Eğitim'};
   function statusMessage(s){
-    if(!s.game_running)return 'Rocket League kapalı';
-    if(!s.stats.connected)return 'Stats API bağlantısı bekleniyor';
-    if(s.stats.status==='awaiting_data')return 'Bağlandı · maç verisi bekleniyor';
-    return phases[s.match.phase]||s.match.phase;
+    if(!s.game_running)return t('Rocket League kapalı');
+    if(!s.stats.connected)return t('Stats API bağlantısı bekleniyor');
+    if(s.stats.status==='awaiting_data')return t('Bağlandı · maç verisi bekleniyor');
+    return t(phases[s.match.phase]||s.match.phase);
   }
   function renderDiagnostics(){
     if(!snapshot)return;
-    text('diagnostic-status',`${statusMessage(snapshot)} · Son olay: ${snapshot.stats.last_event||'Henüz yok'}${snapshot.stats.error?' · '+snapshot.stats.error:''}`);
+    text('diagnostic-status',t('{status} · Son olay: {event}',{status:statusMessage(snapshot),event:snapshot.stats.last_event||t('Henüz yok')})+(snapshot.stats.error?' · '+snapshot.stats.error:''));
     const container=$('player-stats');container.replaceChildren();
     const table=document.createElement('table');const head=document.createElement('tr');
-    for(const title of ['Oyuncu','Takım','Puan','Gol','Kurtarış']){const th=document.createElement('th');th.textContent=title;head.append(th);}table.append(head);
-    for(const p of snapshot.match.players){const row=document.createElement('tr');for(const value of [p.name,p.team===0?'Mavi':p.team===1?'Turuncu':'—',p.score,p.goals,p.saves]){const td=document.createElement('td');td.textContent=value??'—';row.append(td);}table.append(row);}container.append(table);
+    for(const title of [t('Oyuncu'),t('Takım'),t('Puan'),t('Gol'),t('Kurtarış')]){const th=document.createElement('th');th.textContent=title;head.append(th);}table.append(head);
+    for(const p of snapshot.match.players){const row=document.createElement('tr');for(const value of [p.name,p.team===0?t('Mavi'):p.team===1?t('Turuncu'):'—',p.score,p.goals,p.saves]){const td=document.createElement('td');td.textContent=value??'—';row.append(td);}table.append(row);}container.append(table);
     text('diagnostic-json',JSON.stringify({stats:snapshot.stats,match:snapshot.match,discord:snapshot.discord},null,2));
   }
   function render(s){
     snapshot=s;
-    pill('discord',s.discord.connected,'Discord: '+(s.discord.connected?'bağlı':s.discord.error||'bağlantı bekleniyor'));
-    pill('game',s.game_running,s.game_running?'Rocket League çalışıyor':'Rocket League kapalı');
+    pill('discord',s.discord.connected,'Discord: '+(s.discord.connected?t('bağlı'):s.discord.error||t('bağlantı bekleniyor')));
+    pill('game',s.game_running,s.game_running?t('Rocket League çalışıyor'):t('Rocket League kapalı'));
     pill('stats',s.stats.connected&&s.stats.status==='live',statusMessage(s)+(s.stats.error?' · '+s.stats.error:''));
     const m=s.match;const hasMatch=s.stats.connected&&m.phase!=='MENU'&&m.phase!=='REPLAY_VIEWER';
     const competitive=hasMatch&&m.phase!=='TRAINING';
     text('blue-score',competitive?m.blue_score:'—');text('orange-score',competitive?m.orange_score:'—');
     text('match-clock',competitive?(m.is_overtime?'OT':clock(m.time_remaining)):'—');
-    text('clock-label',competitive?(m.is_overtime?'uzatma':'kalan süre'):m.phase==='TRAINING'?'eğitim':'veri bekleniyor');
+    text('clock-label',competitive?(m.is_overtime?t('uzatma'):t('kalan süre')):m.phase==='TRAINING'?t('eğitim'):t('veri bekleniyor'));
     text('live-map',hasMatch?m.map_name:'—');text('live-mode',hasMatch?m.mode_name:'—');
     const label=$('live-label');label.replaceChildren();const dot=document.createElement('span');dot.className='dot';dot.style.background=hasMatch?'#3DDC97':'#FFC24D';label.append(dot,document.createTextNode(statusMessage(s)));label.style.color=hasMatch?'#3DDC97':'#FFC24D';
     const log=$('log-lines');log.replaceChildren();
     for(const row of (s.logs||[]).slice(-35)){const line=document.createElement('div');const time=document.createElement('span');time.style.color='#5E6A92';time.textContent=`[${row.time}] `;const level=document.createElement('span');level.style.color=row.level==='INFO'?'#3DDC97':row.level==='MAÇ'?'#3D8BFF':'#FF8F2B';level.textContent=row.level+' ';line.append(time,level,document.createTextNode(`${row.logger?row.logger+': ':''}${row.message}`));log.append(line);}log.scrollTop=log.scrollHeight;
     const port=s.config.stats_transport==='websocket'?s.config.stats_web_port:s.config.stats_port;
-    text('footer-status',`Stats API · ${s.config.stats_host}:${port} · ${s.stats.packets_per_second} paket/sn${s.discord.next_send_in>0?' · RPC '+Math.ceil(s.discord.next_send_in)+' sn':''}`);
-    text('install-result',s.install_result||'Yolu kaydet, ardından yapılandır. INI değişirse oyunu tamamen yeniden başlat.');
-    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.1');
+    text('footer-status',`Stats API · ${s.config.stats_host}:${port} · ${t('{rate} paket/sn',{rate:s.stats.packets_per_second})}${s.discord.next_send_in>0?' · RPC '+t('{seconds} sn',{seconds:Math.ceil(s.discord.next_send_in)}):''}`);
+    text('install-result',t(s.install_result||'Yolu kaydet, ardından yapılandır. INI değişirse oyunu tamamen yeniden başlat.'));
+    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.2');
     renderUpdates(s.updates);
     if(!$('diagnostics').hidden&&$('diagnostics').open)renderDiagnostics();
     preview();
   }
+  function updateMessage(u){
+    const messages={idle:'Açılışta otomatik kontrol edilir.',checking:'GitHub sürümleri kontrol ediliyor…',current:'En güncel sürümü kullanıyorsun.',empty:'GitHub üzerinde henüz yayımlanmış sürüm yok.',available:u.automatic?'Yeni sürüm hazır. Otomatik güncelleme başlıyor…':'Kaynak sürümünde EXE güncellemesi uygulanmaz.',downloading:'Yeni sürüm indiriliyor ve doğrulanıyor…',restarting:'Güncelleme hazır; uygulama yeniden açılıyor…',error:'GitHub sürümlerine ulaşılamadı. İnternet bağlantısını ve depoyu kontrol et.',blocked:'Bu sürüm önceki denemede açılamadı. Mevcut sürüm korundu. Tekrar kontrol ederek yeniden deneyebilirsin.'};
+    return t(messages[u.status]||messages.idle);
+  }
   function renderUpdates(u){
     if(!u)return;
-    const titles={idle:'Sürüm kontrolü hazırlanıyor',checking:'Yeni sürümler kontrol ediliyor',current:'Güncelsin',available:'Yeni sürüm hazır',downloading:'Güncelleme indiriliyor',restarting:'Yeniden başlatılıyor',empty:'İlk sürüm bekleniyor',error:'Güncelleme kontrolü tamamlanamadı',blocked:'Güncelleme ertelendi'};
-    const labels={idle:'OTOMATİK KONTROL',checking:'GITHUB BAĞLANTISI',current:'EN GÜNCEL SÜRÜM',available:'v'+u.latest_version,downloading:'OTOMATİK GÜNCELLEME',restarting:'GÜNCELLEME HAZIR',empty:'GITHUB RELEASES',error:'TEKRAR DENEYEBİLİRSİN'};
-    text('update-title',titles[u.status]||titles.idle);text('update-status-label',labels[u.status]||labels.idle);text('update-message',u.message);
+    const titles={idle:t('Sürüm kontrolü hazırlanıyor'),checking:t('Yeni sürümler kontrol ediliyor'),current:t('Güncelsin'),available:t('Yeni sürüm hazır'),downloading:t('Güncelleme indiriliyor'),restarting:t('Yeniden başlatılıyor'),empty:t('İlk sürüm bekleniyor'),error:t('Güncelleme kontrolü tamamlanamadı'),blocked:t('Güncelleme ertelendi')};
+    const labels={idle:t('OTOMATİK KONTROL'),checking:t('GITHUB BAĞLANTISI'),current:t('EN GÜNCEL SÜRÜM'),available:'v'+u.latest_version,downloading:t('OTOMATİK GÜNCELLEME'),restarting:t('GÜNCELLEME HAZIR'),empty:'GITHUB RELEASES',error:t('TEKRAR DENEYEBİLİRSİN')};
+    text('update-title',titles[u.status]||titles.idle);text('update-status-label',labels[u.status]||labels.idle);text('update-message',updateMessage(u));
     $('check-updates').disabled=['checking','available','downloading','restarting'].includes(u.status)&&u.automatic;
     if(u.status==='checking')$('check-updates').disabled=true;
     $('update-progress-wrap').hidden=!['downloading','restarting'].includes(u.status);
     $('update-progress').value=u.progress||0;text('update-percent',(u.progress||0)+'%');
-    text('update-checked',u.checked_at?'Son kontrol: '+new Date(u.checked_at*1000).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'Açılışta otomatik kontrol');
+    text('update-checked',u.checked_at?t('Son kontrol: {time}',{time:new Date(u.checked_at*1000).toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})}):t('Açılışta otomatik kontrol'));
     const list=$('release-notes');list.replaceChildren();
     for(const release of u.releases||[]){
       const article=document.createElement('article');article.className='release-entry';
       const header=document.createElement('header');const name=document.createElement('span');name.textContent=release.name||'v'+release.version;
-      const date=document.createElement('time');date.textContent=release.published?new Date(release.published).toLocaleDateString('tr-TR'):'';header.append(name,date);
-      const notes=document.createElement('pre');notes.textContent=release.notes||'Bu sürüm için not yayımlanmamış.';article.append(header,notes);list.append(article);
+      const date=document.createElement('time');date.textContent=release.published?new Date(release.published).toLocaleDateString(locale()):'';header.append(name,date);
+      const notes=document.createElement('pre');notes.textContent=release.notes||t('Bu sürüm için not yayımlanmamış.');article.append(header,notes);list.append(article);
     }
-    if(!list.children.length){const p=document.createElement('p');p.className='empty-release';p.textContent=u.status==='error'?'GitHub bağlantısı kurulunca sürüm notları burada görünür.':'Yayımlanmış sürümler kontrol sonrası burada görünür.';list.append(p);}
-    if(['available','downloading','restarting'].includes(u.status)&&u.latest_version&&updateNotice!==u.latest_version){updateNotice=u.latest_version;toast('RL Presence v'+u.latest_version+' hazır. '+(u.automatic?'Uygulama otomatik güncellenecek ve yeniden açılacak.':'Yeni sürümü GitHub sürümlerinden indirebilirsin.'));}
+    if(!list.children.length){const p=document.createElement('p');p.className='empty-release';p.textContent=u.status==='error'?t('GitHub bağlantısı kurulunca sürüm notları burada görünür.'):t('Yayımlanmış sürümler kontrol sonrası burada görünür.');list.append(p);}
+    if(['available','downloading','restarting'].includes(u.status)&&u.latest_version&&updateNotice!==u.latest_version){updateNotice=u.latest_version;toast(t('RL Presence v{version} hazır.',{version:u.latest_version})+' '+(u.automatic?t('Uygulama otomatik güncellenecek ve yeniden açılacak.'):t('Yeni sürümü GitHub sürümlerinden indirebilirsin.')));}
   }
   async function refresh(){
     if(busy)return;
@@ -123,23 +145,24 @@
     }catch(e){toast(e.message,true);}finally{busy=false;}
   }
   for(const el of document.querySelectorAll('[data-field]'))el.addEventListener('input',()=>{
-    if(!draft)return;const key=el.dataset.field;draft[key]=el.type==='number'||key==='rank_division'?Number(el.value):el.value;hydrateTogglesOnly();preview();
+    if(!draft)return;const key=el.dataset.field;draft[key]=el.type==='number'||key==='rank_division'?Number(el.value):el.value;hydrateTogglesOnly();if(key==='language'){applyLanguage();if(snapshot)render(snapshot);}preview();
   });
   function hydrateTogglesOnly(){document.querySelector('[data-field="rank_division"]').disabled=['Unranked','Supersonic Legend'].includes(draft.rank_tier);}
   for(const button of document.querySelectorAll('[data-setting]'))button.addEventListener('click',()=>{if(!draft)return;draft[button.dataset.setting]=!draft[button.dataset.setting];hydrate();preview();});
   for(const tab of document.querySelectorAll('[data-tab]'))tab.addEventListener('click',()=>{
     for(const other of document.querySelectorAll('[data-tab]'))other.classList.toggle('act',other===tab);
     for(const page of document.querySelectorAll('.tab-content'))page.hidden=page.id!==tab.dataset.tab;
+    $('save').hidden=tab.dataset.tab==='report';$('cancel').hidden=tab.dataset.tab==='report';
   });
   for(const button of document.querySelectorAll('[data-window]'))button.addEventListener('click',async()=>{try{await invoke('window_action',button.dataset.window);}catch(e){toast(e.message,true);}});
   $('preview-state').addEventListener('change',preview);
-  $('cancel').addEventListener('click',()=>{if(!persisted)return;draft=clone(persisted);hydrate();preview();toast('Kaydedilmemiş değişiklikler geri alındı.');});
+  $('cancel').addEventListener('click',()=>{if(!persisted)return;draft=clone(persisted);hydrate();preview();toast(t('Kaydedilmemiş değişiklikler geri alındı.'));});
   $('save').addEventListener('click',async()=>{
     if(!draft)return;const button=$('save');button.disabled=true;
-    try{const changes=Object.fromEntries(Object.entries(draft).filter(([key,value])=>value!==persisted[key]));const s=await invoke('save_settings',changes);persisted=clone(s.config);draft=clone(s.config);hydrate();await refresh();toast('Ayarlar kaydedildi. Discord görünümü güncelleniyor.');}
+    try{const changes=Object.fromEntries(Object.entries(draft).filter(([key,value])=>value!==persisted[key]));const s=await invoke('save_settings',changes);persisted=clone(s.config);draft=clone(s.config);hydrate();await refresh();toast(t('Ayarlar kaydedildi. Discord görünümü güncelleniyor.'));}
     catch(e){toast(e.message,true);}finally{button.disabled=false;}
   });
-  async function action(id,method){$(id).disabled=true;try{const message=await invoke(method);toast(typeof message==='string'?message:'Günlük klasörü açıldı.');await refresh();}catch(e){toast(e.message,true);}finally{$(id).disabled=false;}}
+  async function action(id,method){$(id).disabled=true;try{const message=await invoke(method);toast(typeof message==='string'?t(message):t('Günlük klasörü açıldı.'));await refresh();}catch(e){toast(e.message,true);}finally{$(id).disabled=false;}}
   $('setup-api').addEventListener('click',()=>action('setup-api','setup_stats_api'));
   $('open-logs').addEventListener('click',()=>action('open-logs','open_logs'));
   $('export-report').addEventListener('click',()=>action('export-report','export_diagnostics'));
@@ -149,6 +172,26 @@
   $('diagnostics-button').addEventListener('click',diagnostics);$('live-panel').addEventListener('click',diagnostics);
   $('live-panel').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();diagnostics();}});
   $('close-diagnostics').addEventListener('click',()=>$('diagnostics').close());
+  const reportMessages={sent:'Raporun için teşekkürler',limited:'Günlük bildirim limitine ulaştın, yarın tekrar dene',invalid:'Başlık veya açıklama geçersiz. Uzunluk kurallarını kontrol et.',validation:'Başlık 5–100, açıklama 10–2000 karakter olmalı.',network:'İnternet bağlantısı kurulamadı veya istek zaman aşımına uğradı. Tekrar dene.',error:'Rapor gönderilemedi. Biraz sonra tekrar dene.',busy:'Rapor gönderimi devam ediyor.'};
+  function showReportFeedback(status){
+    reportFeedback=status;const el=$('report-feedback');el.hidden=!status;
+    if(status){el.textContent=t(reportMessages[status]||reportMessages.error);el.style.color=status==='sent'?'#3DDC97':'#FFBC80';}
+  }
+  const charCount=value=>Array.from(value).length;
+  function reportCounts(){text('report-title-count',charCount($('report-title').value)+' / 100');text('report-description-count',charCount($('report-description').value)+' / 2000');}
+  for(const id of ['report-title','report-description'])$(id).addEventListener('input',()=>{$(id).removeAttribute('aria-invalid');reportCounts();if(!reportBusy)showReportFeedback('');});
+  $('report-form').addEventListener('submit',async event=>{
+    event.preventDefault();if(reportBusy)return;
+    const title=$('report-title').value.trim(),description=$('report-description').value.trim();
+    const titleOk=charCount(title)>=5&&charCount(title)<=100,descriptionOk=charCount(description)>=10&&charCount(description)<=2000;
+    $('report-title').setAttribute('aria-invalid',String(!titleOk));$('report-description').setAttribute('aria-invalid',String(!descriptionOk));
+    if(!titleOk||!descriptionOk){showReportFeedback('validation');(!titleOk?$('report-title'):$('report-description')).focus();return;}
+    reportBusy=true;showReportFeedback('');$('report-submit').disabled=true;$('report-title').disabled=true;$('report-description').disabled=true;$('report-spinner').hidden=false;$('report-form').setAttribute('aria-busy','true');text('report-button-label',t('Gönderiliyor…'));
+    try{const result=await invoke('submit_report',title,description);showReportFeedback(result?.status||'error');if(result?.status==='sent'){$('report-title').value='';$('report-description').value='';reportCounts();}}
+    catch(e){showReportFeedback('network');}
+    finally{reportBusy=false;$('report-submit').disabled=false;$('report-title').disabled=false;$('report-description').disabled=false;$('report-spinner').hidden=true;$('report-form').removeAttribute('aria-busy');text('report-button-label',t('Gönder'));}
+  });
+  applyLanguage();
   function start(api){if(bridge)return;bridge=api;refresh();setInterval(refresh,1000);}
   window.addEventListener('pywebviewready',()=>start(window.pywebview.api));
   if(window.rpcBrowserBridge)start(window.rpcBrowserBridge);

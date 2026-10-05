@@ -17,7 +17,7 @@ python -m venv .venv
 Or run the built `rl-presence.exe` in a writable folder. The default `config.json` and `logs/` live beside `run.py` for source runs, or beside the executable for packaged runs. `--config path\config.json` selects another config file; logs still live beside the launcher.
 
 
-## Desktop window (v0.2.1)
+## Desktop window (v0.2.2)
 
 Close the old RPC before launching this version. Keep your existing config.json beside the new EXE to preserve player/rank preferences. Application ID is now fixed; legacy client_id is ignored and removed. Windows 10/11, .NET Framework 4.8 and Microsoft Edge WebView2 Runtime are required. The EXE includes Python and the UI fonts/SVGs; the interface loads offline.
 
@@ -29,11 +29,40 @@ The previous menu-stuck bug was reproduced with real TCP: Data arrived as a JSON
 
 The built-in Application ID is read-only in Genel and absent from saved config. Changes made by editing JSON outside the app require a restart. Use `--console --skip-install` for console-only diagnostic runs; the GUI setup button remains an explicit action.
 
+## Language and public issue reports (v0.2.2)
+
+In **General / Genel → Interface language / Arayüz dili**, choose Türkçe or
+English, then **Save / Kaydet**. Language previews immediately and persists
+across launches. Cancel restores the saved choice. Official map/mode/rank names,
+Discord game text, raw logs and publisher-written release notes retain their
+original wording.
+
+**Report an Issue / Sorun Bildir** is the tab immediately after **About / Hakkında**.
+The public-report warning appears above the form. Enter a 5–100 character title
+and a 10–2000 character description, then send. Only the trimmed title,
+description, app version and OS are posted as JSON to
+`https://bug-report.kralsefo123.workers.dev`. No logs, account identifiers,
+passwords, API keys or tokens are attached. The endpoint is defined once in
+`rocket_league_rpc/reports.py`. Reporting does not call GitHub directly; the
+existing GitHub updater remains independent.
+
+Validation occurs in both JavaScript and Python before any request. Submitting
+disables the form and shows a spinner while the desktop bridge worker handles
+the request with a 10-second timeout. HTTP 200 shows thanks and clears fields;
+429, 400 and network/server failures show localized messages and retain your
+text. Redirects and automatic report retries are disabled. A timed-out request
+may already have reached the server; retry deliberately to avoid duplicates.
+
+Activity payloads use **Rocket League** for the Discord card/profile name.
+Goal/kickoff time is re-synchronized at RoundStarted; Discord's native timer
+cannot truly freeze during goal replay because it only supports start/end
+timestamps. No real public test report was submitted during verification.
+
 ## Discord application and images
 
 End users do not create a Discord application. This build uses the existing **802869954805760020** Application ID. The asset instructions are for its maintainer.
 
-1. Manage that application in the [Developer Portal](https://discord.com/developers/applications). Discord displays its portal name.
+1. Manage that application in the [Developer Portal](https://discord.com/developers/applications). Activity payloads explicitly set `name: Rocket League`; the fixed Application ID and art assets stay the same.
 2. Application ID cannot be changed in config or the UI. No bot token, OAuth login or client secret is required.
 3. In the application's Rich Presence / Art Assets area, upload images using the exact lowercase keys below. These are **every unique key used by `maps.py`**, plus the generic and team icons. Use artwork you have permission to use. Variants share their base arena image.
 4. Start the Discord **desktop** app on this Windows session. Enable activity sharing in Discord's privacy settings if the activity is hidden.
@@ -83,6 +112,7 @@ Copy `config.example.json` if desired; first run also generates defaults. Restar
 
 | Key | Default / meaning |
 |---|---|
+| `language` | `tr`; interface language `tr` / `en` |
 | `schema_version` | `3`; managed for migrations; there is no client_id preference |
 | `install_path` | `""`; discovery or one-time prompt |
 | `player_name` | `""`; case-insensitive explicit local player name |
@@ -110,11 +140,12 @@ Explicit ID/name detection takes priority and never falls through to a viewed op
 
 The reducer handles menu, countdown, active play, goal replay, pause, overtime, ended and history replay phases. It resets for a new online MatchGuid and treats an empty offline guid as one match until leave. `ReplayCreated` stays `Watching a replay` through live-shaped replay events and never shows a live score/timer. Scores are authoritative from UpdateState, not guessed from GoalScored (which may involve own goals).
 
-RoundStarted synchronizes the live end timestamp; clock samples resynchronize only when they differ by **more than 2 seconds**. Countdown, goal replay (also immediately after GoalScored), pause and finished states have no ticking timestamp. A skipped replay can recover through CountdownBegin or `bReplay: false`. The final result expires after 60 seconds or on MatchDestroyed.
+RoundStarted re-syncs the end timestamp; drift over two seconds triggers a clock correction. Explicit pauses and finished matches have no ticking timestamp. Goal/replay/kickoff breaks retain the prior countdown anchor, while the internal game clock stays stopped. Discord has no pause field for its native green clock: it continues during the break and is corrected at kickoff. Kickoff countdown and duplicate remaining-time text are omitted. Results last until leaving or 60 seconds.
 
 **Overtime direction is unverified.** The app uses an elapsed start anchor rather than deriving it from TimeSeconds. The first observed overtime kickoff establishes it; on a mid-overtime reconnect the first observed packet is a provisional anchor, so elapsed time can be incomplete. DEBUG logs include raw overtime TimeSeconds samples. `state.overtime_clock_start()` is the single policy function to change after real packets establish the direction.
 
-The fixed 15-second wait is removed. The publisher obeys [Discord’s limit](https://docs.discord.com/developers/developer-tools/game-sdk) of at most 5 activity writes in any rolling 20 seconds. Phase/score/clock changes publish immediately when budget permits; normal statistics coalesce for at least 4 seconds. Latest payload wins and unchanged payloads are skipped. Failed writes and clears consume budget; reconnecting does not reset it. An anchored end timestamp lets Discord count down every second without repeated packets, including when a packet is delayed. Training omits P/G/S. Live match text omits duplicate remaining time and the goal-replay label. Stopped clocks never send ticking timestamps. Rapid phases can still be coalesced when the Discord budget is exhausted. Exit clears if eligible; otherwise IPC closure removes the activity.
+The fixed 15-second wait is removed. The publisher obeys [Discord’s limit](https://docs.discord.com/developers/developer-tools/game-sdk) of at most 5 activity writes in any rolling 20 seconds. Phase/score/clock changes publish immediately when budget permits; normal statistics coalesce for at least 4 seconds. Latest payload wins and unchanged payloads are skipped. Failed writes and clears consume budget; reconnecting does not reset it. An anchored end timestamp lets Discord count down every second without repeated packets, including when a packet is delayed. Training omits P/G/S. Live match text omits duplicate remaining time and the goal-replay label. Explicit pauses have no ticking timestamp; goal breaks preserve the existing countdown anchor until kickoff re-sync. Rapid phases can still be coalesced when the Discord budget is exhausted. Exit clears if eligible; otherwise IPC closure removes the activity.
+
 
 ## Debugging and test match
 
@@ -163,7 +194,7 @@ The current [Its-Haze/league-rpc](https://github.com/Its-Haze/league-rpc) was re
 
 The mock also supports `--encoded-data` to replay the observed real TCP envelope. Katlicia/LOLCustomRPC was consulted only for GUI/worker-thread and save/cancel architecture; no League data logic is used.
 
-## GitHub updates (v0.2.1)
+## GitHub updates (v0.2.2)
 
 Each launch checks [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases). A newer stable release triggers an in-app notification, verified SHA-256 download and a hidden Windows helper that waits for exit, replaces the EXE and relaunches it. Config/logs remain intact. The new window/engine must acknowledge healthy startup or the helper restores the previous EXE. A failed release is blocked from automatic retries until a different version; the check button permits explicit retry. Source/Python runs display releases but never replace Python.
 

@@ -1,5 +1,5 @@
 {
-  "version": "0.2.1",
+  "version": "0.2.2",
   "gui_subsystem": 2,
   "native_viewport": [
     1120,
@@ -11,6 +11,9 @@
   "config_migration": true,
   "offline_resources": true,
   "native_bridge": true,
+  "language_persisted": true,
+  "report_api_exposed": true,
+  "report_after_about": true,
   "healthy_startup_ack": true,
   "real_discord_pipe_used": false,
   "updater_native_scenarios": [

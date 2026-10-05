@@ -92,6 +92,13 @@ class GuiBridge:
         self._install_result = ''
         self._version = __version__
         self._updates = updates
+        from .reports import ReportClient
+        self._reports = ReportClient()
+
+    def submit_report(self, title, description):
+        # pywebview executes JS API calls on background threads. Never block the
+        # UI or the asyncio game/RPC engine while waiting for the Worker.
+        return self._result(lambda: self._reports.submit(title, description))
 
     def _result(self, operation):
         try:
@@ -200,9 +207,11 @@ class GuiBridge:
 
 
 def ui_document() -> str:
+    from .i18n import TRANSLATIONS
     folder = Path(__file__).resolve().parent/'ui'
     html = (folder/'index.html').read_text(encoding='utf-8')
-    return html.replace('<!--APP_SCRIPT-->', '<script>'+(folder/'app.js').read_text(encoding='utf-8')+'</script>')
+    translations = json.dumps(TRANSLATIONS,ensure_ascii=False).replace('<','\\u003c')
+    return html.replace('<!--APP_SCRIPT-->', '<script>window.RL_TRANSLATIONS='+translations+';</script><script>'+(folder/'app.js').read_text(encoding='utf-8')+'</script>')
 
 
 def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, update_ready_file=None):
@@ -253,7 +262,7 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
             def smoke():
                 time.sleep(2)
                 try:
-                    dom = window.evaluate_js("JSON.stringify({title:document.title,ready:!!window.rpcUI,body:document.body.innerText,frame:[innerWidth,innerHeight],identityReadonly:document.getElementById('application-id').readOnly,identity:document.getElementById('application-id').value,remote:Array.from(document.querySelectorAll('script[src],link[href]')).map(e=>e.src||e.href)})")
+                    dom = window.evaluate_js("JSON.stringify({language:document.documentElement.lang,reportApi:typeof window.pywebview.api.submit_report==='function',reportTabAfterAbout:Array.from(document.querySelectorAll('[data-tab]')).map(e=>e.dataset.tab).join(',').includes('about,report'),title:document.title,ready:!!window.rpcUI,body:document.body.innerText,frame:[innerWidth,innerHeight],identityReadonly:document.getElementById('application-id').readOnly,identity:document.getElementById('application-id').value,remote:Array.from(document.querySelectorAll('script[src],link[href]')).map(e=>e.src||e.href)})")
                     Path(smoke_path).write_text(json.dumps({'dom':json.loads(dom),'bridge':bridge.get_snapshot()},ensure_ascii=False,indent=2),encoding='utf-8')
                 finally:
                     window.destroy()

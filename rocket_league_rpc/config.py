@@ -28,6 +28,7 @@ def app_directory() -> Path:
 @dataclass
 class Config:
     schema_version: int = 3
+    language: str = 'tr'
     install_path: str = ''
     player_name: str = ''
     player_primary_id: str = ''
@@ -105,6 +106,9 @@ def _port(value, default: int) -> int:
 
 def validate_config(data: dict) -> Config:
     cfg = Config()
+    language = data.get('language')
+    if isinstance(language, str) and language.casefold() in ('tr', 'en'):
+        cfg.language = language.casefold()
     for key in ('install_path', 'player_name', 'player_primary_id', 'stats_host'):
         value = data.get(key)
         if isinstance(value, str):

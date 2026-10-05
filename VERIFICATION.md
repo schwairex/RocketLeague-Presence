@@ -1,12 +1,26 @@
-# Verification — v0.2.1
+# Verification — v0.2.2
 
 Windows 11, Python 3.12.10, PyInstaller 6.22.3, 2026-10-05. Python 3.11+
 is supported; Python 3.11 was not separately exercised on this host.
 
-- **104 pytest tests passed**, including both real TCP mock-server formats
+- **136 pytest tests passed**, including both real TCP mock-server formats
   (object and JSON-string Data), fragmented/concatenated packets, match lifecycle,
   training, manual rank, config/INI recovery and GUI engine shutdown.
-- New regressions verify immutable ID, direct training entry, omitted training
+
+- v0.2.2 regressions verify the retained goal/replay/kickoff anchor, scoreboard
+  changes during the break, kickoff resync and Rocket League name in every phase.
+  A pypresence IPC wire test verifies the name and NAME status display type.
+- Turkish/English UI selection persisted in the native EXE. Report an Issue
+  follows About; no horizontal overflow at 1120x760 or 940x680. The full form
+  and send button fit the default viewport. No browser JS errors/warnings.
+- Report tests verify Worker-only endpoint, exact JSON keys, automatic version/OS,
+  validation before IO, Unicode lengths, timeout, no redirects, concurrent-submit
+  rejection, HTTP 200/429/400/500 and offline/unexpected failures. Browser mock QA
+  verifies disabled/loading state, responsive tab navigation, success clearing,
+  error retention and validation stopping requests. No real public report sent.
+- Independent review found Unicode native-input/counter mismatch; removed UTF-16
+  native limits so frontend and Python consistently validate code-point lengths.
+- Prior regressions verify immutable ID, direct training entry, omitted training
   P/G/S, removed replay/time text, stable timestamps, five-write rolling budget,
   coalescing and delayed timestamp synchronization.
 - Update tests cover version comparison, malformed/foreign assets, checksum
@@ -39,7 +53,9 @@ python -m pytest rocket_league_rpc/tests/test_v2_e2e.py -v
 .\build.ps1 -Python python
 ```
 
-Limits: actual Discord rendering/art assets were not exercised. Prior v0.2 real
+Limits: Discord's native green timer has no pause field; it advances across
+goal breaks and is corrected at kickoff. Actual Discord rendering/art assets
+were not exercised; name/timestamp payloads were verified on the IPC wire. Prior v0.2 real
 read-only game packets verified JSON-string Data, Stadium_P and training ID 9.
 Other playlist/arena values and real overtime direction remain best effort.
 Rank/menu detail remains manual by the official-API-only choice. Real game INI

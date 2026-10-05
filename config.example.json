@@ -22,5 +22,6 @@
   "stats_transport": "tcp",
   "spectating": false,
   "auto_learn_primary_id": true,
-  "install_prompted": false
+  "install_prompted": false,
+  "language": "tr"
 }

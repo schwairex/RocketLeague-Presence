@@ -7,7 +7,32 @@
 body{background:#0A0F1F}#app-frame{width:100vw!important;height:100vh!important;border-radius:12px}#titlebar,#app-frame>div:nth-child(2),#app-frame>div:last-of-type{flex-shrink:0}#titlebar{flex:none}.pywebview-drag-region{height:100%;flex:1}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[role=button]:focus-visible{outline:2px solid #FF8F2B;outline-offset:3px}button:hover{filter:brightness(1.12)}button:disabled{opacity:.5;cursor:wait}.wc[data-window=close]:hover{background:#C53F51;color:white}[hidden]{display:none!important}#log-lines{overflow:auto!important}#live-panel{cursor:pointer}#live-label{max-width:170px;text-align:right}#live-map,#live-mode{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#preview-details,#preview-status{overflow-wrap:anywhere}#preview-timer:empty{display:none}.extra-page{flex:1;min-height:0;overflow:auto;padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:28px}.extra-page section{min-width:0}.extra-page label{display:block;font-size:12px;color:#98A3C7;margin:14px 0 10px}.extra-page input,.extra-page select{box-sizing:border-box;display:block;width:100%;height:44px;margin-top:6px;border-radius:8px;border:1px solid #2A3560;background:#11182E;color:#EEF2FF;padding:0 14px;font:400 14px 'DM Sans',sans-serif}.extra-page p{font-size:14px;line-height:1.65}.extra-page .hint{font-size:12px}.secondary{background:none;border:1px solid #2A3560;color:#C9D1EE;padding:0 16px;margin-top:8px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}summary{font-size:13px;color:#C9D1EE;cursor:pointer;margin-top:16px}#toast{position:fixed;bottom:84px;left:28px;right:28px;z-index:5;padding:12px 18px;border:1px solid #3D8BFF;background:#172040;border-radius:8px;font-size:13px;box-shadow:0 4px 24px #0008}dialog{width:min(900px,90vw);max-height:85vh;overflow:auto;background:#0A0F1F;color:#EEF2FF;border:1px solid #2A3560;border-radius:12px;padding:24px;font:14px 'DM Sans',sans-serif}dialog::backdrop{background:#0009}.dialog-header{display:flex;align-items:center;justify-content:space-between}pre{font:12px/1.6 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#98A3C7}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid #243052}th{color:#98A3C7}#footer-status{max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:1000px){#app-frame>div:nth-child(2){padding:0 18px!important}#app-frame>div:nth-child(2)>div:first-child{gap:12px!important}.tab{padding:0 8px}.pill{font-size:12px}#app-frame>div:nth-child(2)>div:last-child{gap:12px!important}#appearance{padding:20px!important;gap:20px!important}#appearance>div:last-child{width:370px!important}}</style><style>
 .fixed-tag{color:#98A3C7;font-size:10px;letter-spacing:.08em;border:1px solid #2A3560;padding:2px 6px;border-radius:4px;margin-left:8px}input[readonly]{color:#98A3C7;cursor:text;background:#10182D!important}
 #updates,#about{display:block;padding:26px 28px 20px!important;overflow:auto}#updates h1,#about h1{font:700 32px 'Barlow Condensed',sans-serif;margin:4px 0 6px;letter-spacing:.01em}#updates h2,#about h2{font:600 16px 'DM Sans',sans-serif;margin:0 0 6px}#updates p,#about p{line-height:1.55}.eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;color:#98A3C7}.subtext{font-size:13px;color:#98A3C7;margin:0}.release-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.release-chip{display:inline-flex;gap:7px;align-items:center;padding:7px 10px;border:1px solid #2A3560;border-radius:6px;font-size:11px;color:#98A3C7}.release-chip strong{color:#EEF2FF}.update-card{display:flex;align-items:flex-start;gap:16px;background:linear-gradient(115deg,#142443,#10182D);border:1px solid #2A456E;border-radius:12px;padding:20px!important;margin:0!important;min-height:112px;box-sizing:border-box}.update-symbol{display:flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:12px;background:#1A355B;color:#6FAAFF;font-size:29px}.update-copy{min-width:0;flex:1}.update-copy h2{margin:5px 0 7px!important;font-size:19px!important}.update-copy p{font-size:12px;color:#BCC7E6;margin:0;overflow-wrap:anywhere}.release-actions{display:flex;align-items:center;gap:10px;margin:16px 0}.release-actions .btn{font-size:12px;padding:0 15px;height:38px}.release-actions .hint{margin-left:auto;font-size:10px}.primary-action{border:1px solid #3D8BFF;background:#3D8BFF;color:#fff}.secondary-action{border:1px solid #2A3560;background:#10182D;color:#C9D1EE}.primary-action:hover{background:#2C78E9}.secondary-action:hover{background:#1A2543;border-color:#5370A0}.btn:disabled{opacity:.55;cursor:wait}.update-steps{display:flex;gap:12px;justify-content:space-between;margin:19px 0 24px;font-size:10px;color:#98A3C7}.update-steps b{color:#6FAAFF;border:1px solid #2A3560;border-radius:4px;padding:3px 5px;margin-right:5px;font-size:9px}.release-list-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}.release-list-heading h2{margin:0!important}.release-notes{border-top:1px solid #243052}.release-entry{padding:14px 0;border-bottom:1px solid #243052}.release-entry header{display:flex;justify-content:space-between;gap:12px;font-size:12px;font-weight:600}.release-entry time{font-size:10px;font-weight:400;color:#98A3C7}.release-entry pre{font-family:'DM Sans',sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:#BCC7E6;line-height:1.6;margin:9px 0 0}.empty-release{font-size:12px;color:#98A3C7;padding:16px 0}.download-track{display:flex;align-items:center;gap:10px;margin-top:13px;color:#C9D1EE;font-size:10px}.download-track progress{appearance:none;width:100%;height:5px;border:0;border-radius:8px;overflow:hidden}.download-track progress::-webkit-progress-bar{background:#243052}.download-track progress::-webkit-progress-value{background:#3D8BFF}.about-brand{display:flex;gap:18px;align-items:center;padding-bottom:16px;border-bottom:1px solid #243052}.about-logo svg{width:78px;height:78px}.about-brand h1{font-size:37px!important;letter-spacing:.05em!important}.brand-blue{color:#3D8BFF}.brand-orange{color:#FF8F2B}.about-brand .release-chip{margin-top:10px}.about-intro{font-size:13px;color:#C9D1EE;margin:16px 0}.about-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.about-features section{padding:15px!important;margin:0!important;border:1px solid #243052;border-radius:10px;background:#10182D}.about-features h2{font-size:12px!important;margin:10px 0 7px!important}.about-features p{font-size:11px;color:#98A3C7;margin:0}.feature-icon{color:#6FAAFF;font-size:23px;line-height:1}.feature-icon.orange{color:#FFAF66}.about-note{display:flex;flex-direction:column;gap:6px;margin:16px 0;padding:12px 16px;border-left:2px solid #FF8F2B;background:#181C2D;border-radius:0 8px 8px 0;font-size:11px;color:#BCC7E6;line-height:1.55}.about-note strong{color:#EEF2FF}.about-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid #243052;padding-top:17px}.about-bottom>div:first-child{display:flex;flex-direction:column;gap:5px}.about-bottom strong{font-size:13px}.about-bottom .hint{font-size:10px;max-width:300px}.about-links{display:flex;gap:8px}.about-links .btn{font-size:11px;height:36px;padding:0 12px}button:focus-visible,input:focus-visible{outline:2px solid #6FAAFF;outline-offset:3px}
-</style></head>
+</style>
+<style>
+#app-frame>div:nth-child(2)>div:first-child{gap:20px!important}
+#app-frame>div:nth-child(2)>div:last-child{gap:12px!important}
+.tab{padding:9px 10px!important;white-space:nowrap}
+#report .release-heading{margin-bottom:14px}#report .release-heading h1{font-size:30px;margin:10px 0}#report .release-heading p{margin:0}
+.report-warning{display:flex;align-items:center;gap:12px;border:1px solid #694321;background:#221b17;border-radius:10px;padding:12px 16px;color:#ffbc80;margin:0 0 20px}
+.report-warning>span{display:grid;place-items:center;border:1px solid #ff8f2b;border-radius:50%;width:24px;height:24px;flex:none;font-weight:700}
+.report-warning p{margin:0;font-size:13px;line-height:1.5}
+#report.extra-page{display:block;overflow:auto}
+.report-form{max-width:880px;margin:0 auto;background:#11182e;border:1px solid #243052;border-radius:12px;padding:18px 24px}
+.report-form label{display:block;color:#eef2ff;font-size:13px;font-weight:600;margin:0 0 8px}
+.report-form input,.report-form textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #2a3560;border-radius:8px;background:#0b1123;color:#eef2ff;padding:12px 14px;font:14px/1.5 'DM Sans',sans-serif}
+.report-form textarea{resize:vertical;height:108px;min-height:108px;max-height:260px}
+.report-form [aria-invalid=true]{border-color:#ff8f2b}
+.report-field-hint{display:flex;justify-content:space-between;font-size:11px;color:#98a3c7;margin:6px 0 18px}
+.report-submit-row{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-top:18px}
+.report-submit-row .hint{max-width:590px;margin:0;line-height:1.6}
+#report-submit{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:140px;justify-content:center}
+#report-feedback{font-size:13px;line-height:1.5;border-radius:8px;padding:10px 12px;background:#172040;color:#b7d5ff}
+.spinner{width:14px;height:14px;border:2px solid #06122b55;border-top-color:#06122b;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+@media(max-width:1030px){#app-frame>div:nth-child(2){padding:0 20px!important}.pill{font-size:0!important;gap:0!important}.tab{font-size:12px!important}}
+</style>
+</head>
 <body>
 <style>/* vietnamese */
 @font-face {
@@ -163,6 +188,7 @@ RL Presence
 <button class="tab" data-tab="general">Genel</button>
 <button class="tab" data-tab="updates">Güncellemeler</button>
 <button class="tab" data-tab="about">Hakkında</button>
+<button class="tab" data-tab="report">Sorun Bildir</button>
 </nav>
 </div>
 <div style="display:flex;align-items:center;gap:22px">
@@ -250,6 +276,7 @@ RL Presence
 <!-- Footer -->
 <div class="tab-content extra-page" hidden="" id="general">
 <section><h2 class="sec"><i></i>Bağlantı ve oyuncu</h2>
+<label>Arayüz dili<select id="ui-language" data-field="language"><option value="tr">Türkçe</option><option value="en">English</option></select></label><p class="hint">Dil değişikliği hemen önizlenir; kalıcı olması için Kaydet’e bas.</p>
 <label>Discord Application ID <span class="fixed-tag">SABİT</span><input id="application-id" readonly aria-readonly="true" title="Uygulama kimliği bu sürüme sabitlenmiştir; kopyalayabilirsiniz."/><span class="hint">RL Presence uygulama kimliği. Değiştirilemez.</span></label>
 <p class="hint">Bot token gerekmez. Discord masaüstü uygulamasını açık tut.</p>
 <label>Rocket League kurulum yolu<input data-field="install_path" placeholder="D:\SteamLibrary\steamapps\common\rocketleague"/></label>
@@ -286,6 +313,20 @@ RL Presence
 <div class="about-note"><strong>Kontrol sende.</strong><span>Rank/küme ile API’nin bildirmediği menü, sıra ve mağaza durumlarını Genel sekmesinden seçebilirsin. Stats API ayarını değiştirdikten sonra oyunu yeniden başlat.</span></div>
 <div class="about-bottom"><div><span class="eyebrow">GELİŞTİRİCİ</span><strong>schwairex</strong><span class="hint">Bağımsız topluluk uygulaması · Epic Games / Psyonix ile bağlantılı değildir.</span></div><div class="about-links"><button class="btn secondary-action" data-project="stats">API belgesi ↗</button><button class="btn primary-action" data-project="project">GitHub ↗</button></div></div>
 </div>
+
+<div id="report" class="tab-content extra-page" hidden>
+  <div class="release-heading"><div><div class="eyebrow">RL PRESENCE / <span>Sorun Bildir</span></div><h1>Birlikte daha iyi.</h1><p class="subtext">Karşılaştığın sorunu anlat; çözmemize yardımcı ol.</p></div><span class="release-chip"><span>Sürüm</span> <strong class="version"></strong></span></div>
+  <div class="report-warning" role="note"><span aria-hidden="true">!</span><p>Şifre veya kişisel bilgi yazmayın. Rapor herkese açık olarak yayınlanır.</p></div>
+  <form id="report-form" class="report-form" novalidate>
+    <label for="report-title">Başlık</label><input id="report-title" type="text" data-min-characters="5" data-max-characters="100" placeholder="Sorunu kısaca özetle" aria-describedby="report-title-hint" required>
+    <div class="report-field-hint" id="report-title-hint"><span>5–100 karakter</span><span id="report-title-count">0 / 100</span></div>
+    <label for="report-description">Açıklama</label><textarea id="report-description" rows="5" data-min-characters="10" data-max-characters="2000" placeholder="Ne oldu? Ne olmasını bekliyordun? Sorunu tekrar oluşturma adımlarını yaz." aria-describedby="report-description-hint" required></textarea>
+    <div class="report-field-hint" id="report-description-hint"><span>10–2000 karakter</span><span id="report-description-count">0 / 2000</span></div>
+    <div id="report-feedback" role="status" aria-live="polite" hidden></div>
+    <div class="report-submit-row"><p class="hint">Yalnızca başlık, açıklama, sürüm ve işletim sistemi gönderilir. Günlükler ve oyuncu bilgileri eklenmez.</p><button id="report-submit" class="btn primary-action" type="submit"><span id="report-spinner" class="spinner" aria-hidden="true" hidden></span><span id="report-button-label">Gönder</span></button></div>
+  </form>
+</div>
+
 <div hidden="" id="toast" role="status"></div>
 <dialog id="diagnostics"><div class="dialog-header"><h2 class="sec"><i></i>Canlı veriler ve bağlantı</h2><button class="btn secondary" id="close-diagnostics">Kapat</button></div><p id="diagnostic-status"></p><div id="player-stats"></div><pre id="diagnostic-json"></pre></dialog><div style="height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-top:1px solid #1B2547;background:#080C19">
 <div id="footer-status" style="font-size:12px;color:#98A3C7">Stats API · 127.0.0.1:49123 · 30 paket/sn</div>

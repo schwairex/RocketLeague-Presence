@@ -21,7 +21,7 @@ def rank_label(config: Config) -> str:
 
 def menu_presence(config: Config | None = None) -> dict:
     config = config or Config()
-    return {'details': limit_text(' | '.join(filter(None, ['Rocket League', rank_label(config)]))),
+    return {'name': 'Rocket League', 'details': limit_text(' | '.join(filter(None, ['Rocket League', rank_label(config)]))),
             'state': ACTIVITIES.get(config.manual_activity, ACTIVITIES['auto']),
             'large_image': 'rl_logo', 'large_text': 'Rocket League'}
 
@@ -31,7 +31,7 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     if state.phase == Phase.MENU or (state.phase == Phase.ENDED and state.ended_at is not None and now-state.ended_at >= 60):
         return menu_presence(config)
     if state.phase == Phase.REPLAY_VIEWER:
-        return {'details': 'Rocket League', 'state': 'Watching a replay',
+        return {'name': 'Rocket League', 'details': 'Rocket League', 'state': 'Watching a replay',
                 'large_image':'rl_logo', 'large_text':'Rocket League'}
     if state.phase in (Phase.COUNTDOWN, Phase.PLAYING) and state.playlist_id is None and not state.arena:
         # Lifecycle events precede the first authoritative mode/map snapshot.
@@ -46,8 +46,7 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     if state.phase == Phase.TRAINING:
         details = 'Training'
     clock = ''  # running time is rendered by Discord's anchored timestamp
-    label = {Phase.COUNTDOWN:'Kickoff countdown',
-             Phase.PAUSED:'Paused', Phase.ENDED:'Match finished'}.get(state.phase, '')
+    label = {Phase.PAUSED:'Paused', Phase.ENDED:'Match finished'}.get(state.phase, '')
     if state.phase == Phase.OVERTIME:
         clock = 'Overtime'
     elif state.is_overtime and label:
@@ -66,7 +65,7 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
             ('P',state.local_player_score), ('G',state.local_player_goals), ('S',state.local_player_saves)) if value is not None)
     details = ' | '.join(filter(None, [details, rank_label(config)]))
     status = ' | '.join(filter(None, [map_name if config.show_map else '', label, clock, stats])) or 'Playing Rocket League'
-    payload = {'details':details, 'state':status,
+    payload = {'name':'Rocket League', 'details':details, 'state':status,
                'large_image':asset if config.show_map else 'rl_logo',
                'large_text':map_name if config.show_map else 'Rocket League',
                'small_image': 'blue' if state.local_team == 0 else 'orange' if state.local_team == 1 else 'rl_logo',
@@ -75,4 +74,8 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
         payload['end'] = int(state.clock_end)
     elif config.show_time and state.phase == Phase.OVERTIME:
         payload['start'] = int(overtime_clock_start(state, now))
+    elif config.show_time and not state.is_overtime and state.phase in (Phase.GOAL_REPLAY, Phase.COUNTDOWN) and state.goal_clock_end is not None:
+        # Keeping the previous end avoids Discord's fallback 0:00 elapsed timer.
+        # Native green time still advances during the break; kickoff re-syncs it.
+        payload['end'] = int(state.goal_clock_end)
     return {k: limit_text(v) if isinstance(v, str) else v for k,v in payload.items()}
