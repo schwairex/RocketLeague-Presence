@@ -33,6 +33,10 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     if state.phase == Phase.REPLAY_VIEWER:
         return {'details': 'Rocket League', 'state': 'Watching a replay',
                 'large_image':'rl_logo', 'large_text':'Rocket League'}
+    if state.phase in (Phase.COUNTDOWN, Phase.PLAYING) and state.playlist_id is None and not state.arena:
+        # Lifecycle events precede the first authoritative mode/map snapshot.
+        # Do not flash a fake 0-0 kickoff card when entering free play.
+        return menu_presence(config)
     map_name, asset = lookup_map(state.arena)
     score = f'Blue {state.blue_score} - {state.orange_score} Orange'
     if config.show_perspective and state.local_team in (0, 1):
@@ -41,8 +45,8 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     details = ' | '.join(filter(None, [lookup_mode(state.playlist_id) if config.show_mode else '', score if config.show_score else ''])) or 'Rocket League'
     if state.phase == Phase.TRAINING:
         details = 'Training'
-    clock = '' if state.time_remaining is None else f'{max(0,state.time_remaining)//60}:{max(0,state.time_remaining)%60:02d} left'
-    label = {Phase.COUNTDOWN:'Kickoff countdown', Phase.GOAL_REPLAY:'Goal replay',
+    clock = ''  # running time is rendered by Discord's anchored timestamp
+    label = {Phase.COUNTDOWN:'Kickoff countdown',
              Phase.PAUSED:'Paused', Phase.ENDED:'Match finished'}.get(state.phase, '')
     if state.phase == Phase.OVERTIME:
         clock = 'Overtime'
@@ -57,7 +61,7 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     if not config.show_time or state.phase == Phase.TRAINING:
         clock = ''
     stats = ''
-    if config.show_player_stats:
+    if config.show_player_stats and state.phase != Phase.TRAINING:
         stats = ' '.join(f'{key}:{value}' for key,value in (
             ('P',state.local_player_score), ('G',state.local_player_goals), ('S',state.local_player_saves)) if value is not None)
     details = ' | '.join(filter(None, [details, rank_label(config)]))

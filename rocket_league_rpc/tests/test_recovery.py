@@ -147,7 +147,7 @@ def test_config_nonstandard_nan_and_null_root_regenerate(tmp_path):
     from rocket_league_rpc.config import load_config
     path=tmp_path/'config.json'
     path.write_text('{"update_interval":NaN}')
-    assert load_config(path).update_interval==15
+    assert load_config(path).update_interval==1
     path.write_text('null')
     assert load_config(path).stats_port==49123
     assert list(tmp_path.glob('*.bak'))

@@ -60,7 +60,7 @@ class Application:
         match['mode_name'] = lookup_mode(self.state.playlist_id) if self.state.playlist_id is not None else '—'
         status = ('game_off' if not self.running else 'disconnected' if not self.connected else
                   'awaiting_data' if self.last_event is None else 'menu' if self.state.phase == Phase.MENU else 'live')
-        return {'config':asdict(self.config), 'game_running':self.running, 'match':match,
+        return {'config':{**asdict(self.config), 'client_id':self.config.client_id}, 'game_running':self.running, 'match':match,
                 'stats':{'connected':self.connected, 'status':status, 'last_event':self.last_event,
                          'last_packet_at':self.last_packet_at, 'error':self.stats_error,
                          'packets_per_second':sum(t >= now-1 for t in self.packet_times)},
@@ -68,7 +68,7 @@ class Application:
                            'error':self.publisher.error,
                            'sent_payload':copy.deepcopy(self.publisher.sent) if self.publisher.sent is not UNSET else None,
                            'pending_payload':self.current_payload(),
-                           'next_send_in':max(0,15-(self.publisher.clock()-self.publisher.last_attempt))}}
+                           'next_send_in':self.publisher.next_send_in() if self.publisher.desired != self.publisher.sent else 0}}
 
     async def apply_config(self, changes: dict) -> dict:
         if not isinstance(changes,dict):
@@ -80,10 +80,6 @@ class Application:
             old = self.config
             self.config = candidate
             self.publisher.interval = candidate.update_interval
-            if old.client_id != candidate.client_id:
-                async with self.publisher.lock:
-                    await self.publisher._disconnect()
-                    self.publisher.retry_at = float('-inf')
             if any(getattr(old,k) != getattr(candidate,k) for k in ('stats_host','stats_port','stats_web_port','stats_transport')):
                 self.connected = False
                 self.state = MatchState()
@@ -158,8 +154,9 @@ class Application:
                 self.last_update = None
         old = self.state
         self.state = reduce_event(old, message, self.config, self.wall_clock())
-        priority = (old.phase == Phase.MENU and self.state.phase != Phase.MENU) or (
-            old.match_guid != self.state.match_guid) or (old.phase != Phase.ENDED and self.state.phase == Phase.ENDED)
+        priority = (old.phase != self.state.phase or old.match_guid != self.state.match_guid
+                    or old.playlist_id != self.state.playlist_id or old.clock_end != self.state.clock_end
+                    or (old.blue_score,old.orange_score) != (self.state.blue_score,self.state.orange_score))
         self.refresh(priority=priority)
         if (self.config.auto_learn_primary_id and self.config.player_name
             and not self.config.player_primary_id and self.state.local_primary_id
@@ -201,7 +198,7 @@ class Application:
                 await self.publisher.pump()
             await wait_or_stop(self.stop, 0.25)
 
-    async def run(self):
+    async def run(self, on_ready=None):
         loop = asyncio.get_running_loop()
         previous_handlers = {}
         for sig in (signal.SIGINT, signal.SIGTERM):
@@ -217,6 +214,8 @@ class Application:
             tasks = [asyncio.create_task(supervise(name, factory, self.stop), name=name) for name,factory in [
                 ('game-watcher',lambda:watch_game(self.set_running,self.stop,detector)),
                 ('stats-client',self.stats_loop), ('discord-publisher',self.presence_loop)]]
+            if on_ready:
+                on_ready()
             await self.stop.wait()
         finally:
             self.stop.set()
@@ -238,6 +237,7 @@ def cli(argv=None) -> int:
     parser.add_argument('--skip-install', action='store_true', help='Do not discover or patch the game ini')
     parser.add_argument('--mock-game', action='store_true', help='Test with the mock server without RocketLeague.exe')
     parser.add_argument('--console', action='store_true', help='Run without the desktop interface (Ctrl+C to quit)')
+    parser.add_argument('--update-ready-file',type=Path,help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     base = app_directory()
     config_path = args.config.resolve() if args.config else base/'config.json'
@@ -253,7 +253,8 @@ def cli(argv=None) -> int:
             configure_logging(base/'logs', config.log_level, args.debug or args.raw_packets, args.raw_packets)
             if not args.console:
                 from .gui import launch
-                launch(config,config_path,base/'logs',mock_game=args.mock_game,raw_packets=args.raw_packets)
+                launch(config,config_path,base/'logs',mock_game=args.mock_game,raw_packets=args.raw_packets,
+                       update_ready_file=args.update_ready_file)
                 return 0
             if not args.skip_install and not args.mock_game:
                 try:
@@ -262,11 +263,19 @@ def cli(argv=None) -> int:
                     log.debug('Initial process scan failed: %s', exc)
                     running = False
                 setup_install(config, config_path, running)
-            if not config.client_id.isascii() or not config.client_id.isdigit() or config.client_id == '0':
-                print(f'Set client_id to your Discord Developer Portal Application ID in {config_path}. No bot token is needed.')
-                return 2
             log.info('rocket-league-rpc %s. Ctrl+C to quit. Config: %s', __version__, config_path)
-            asyncio.run(Application(config, config_path, mock_game=args.mock_game, raw_packets=args.raw_packets).run())
+            async def console_run():
+                import sys
+                from .updates import UpdateManager, launch_handoff, relaunch_args, acknowledge_startup
+                app = Application(config, config_path, mock_game=args.mock_game, raw_packets=args.raw_packets)
+                def ready(staged):
+                    launch_handoff(Path(sys.executable), staged, relaunch_args(sys.argv[1:],config_path))
+                    loop.call_soon_threadsafe(app.stop.set)
+                loop = asyncio.get_running_loop()
+                updates = UpdateManager(base, on_ready=ready)
+                updates.check()
+                await app.run(on_ready=lambda:acknowledge_startup(args.update_ready_file))
+            asyncio.run(console_run())
     except AlreadyRunning as exc:
         if args.console:
             print(exc)

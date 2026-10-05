@@ -14,7 +14,7 @@ async def test_fragmented_mock_match_updates_all_stats_and_rpc_with_both_envelop
     client=FakeDiscord(lambda:now[0])
     phases=set();seen=[];payloads=[]
     async with MockStatsServer(port=0,delay=0,encoded_data=encoded) as server:
-        app=Application(Config(client_id='123',stats_port=server.port,player_name='PlayerA',
+        app=Application(Config(stats_port=server.port,player_name='PlayerA',
                                rank_tier='Diamond II',rank_division=3),
                         discord_factory=lambda:client,wall_clock=lambda:now[0],monotonic_clock=lambda:now[0])
         await app.set_running(True)

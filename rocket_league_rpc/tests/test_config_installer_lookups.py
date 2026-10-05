@@ -7,7 +7,7 @@ def test_config_default_malformed_backup_and_clamping(tmp_path):
     from rocket_league_rpc.config import Config, load_config
     path = tmp_path/'config.json'
     cfg = load_config(path)
-    assert path.exists() and cfg.stats_port == 49123 and cfg.update_interval >= 15
+    assert path.exists() and cfg.stats_port == 49123 and cfg.update_interval >= 1
     path.write_text('{broken', encoding='utf-8')
     assert load_config(path).stats_port == 49123
     assert list(tmp_path.glob('config.json*.bak'))
@@ -15,9 +15,9 @@ def test_config_default_malformed_backup_and_clamping(tmp_path):
         'show_map': 'false', 'log_level': 'nonsense', 'stats_transport': 'UDP',
         'client_id': 123, 'stats_web_port': 49123}), encoding='utf-8')
     cfg = load_config(path)
-    assert cfg.update_interval == 15 and cfg.stats_port == 49123
+    assert cfg.update_interval == 1 and cfg.stats_port == 49123
     assert cfg.show_map is False and cfg.log_level == 'INFO' and cfg.stats_transport == 'tcp'
-    assert cfg.client_id == '123' and cfg.stats_web_port != cfg.stats_port
+    assert cfg.client_id == '802869954805760020' and cfg.stats_web_port != cfg.stats_port
 
 
 @pytest.mark.parametrize('existing', ['TAStatsAPI.ini','DefaultStatsAPI.ini',None])
@@ -70,4 +70,3 @@ def test_maps_modes_unknown_fallback_and_logged_once(caplog):
     assert lookup_mode(987654) == 'Playlist 987654'
     lookup_mode(987654)
     assert len([r for r in caplog.records if 'Unknown' in r.message]) == 2
-

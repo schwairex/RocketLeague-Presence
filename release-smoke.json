@@ -1,16 +1,30 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "gui_subsystem": 2,
   "native_viewport": [
     1120,
     760
   ],
+  "embedded_icon": true,
+  "identity_readonly": true,
+  "identity_tamper_ignored": true,
+  "config_migration": true,
   "offline_resources": true,
   "native_bridge": true,
-  "stats_status": "live",
-  "phase": "TRAINING",
-  "arena": "Stadium_P",
-  "packets_per_second": 30,
-  "console_missing_id_exit_code": 2,
-  "real_discord_credentials_used": false
+  "healthy_startup_ack": true,
+  "real_discord_pipe_used": false,
+  "updater_native_scenarios": [
+    {
+      "scenario": "success",
+      "verified": true,
+      "config_preserved": true,
+      "report": "Update installed and restarted."
+    },
+    {
+      "scenario": "rollback",
+      "verified": true,
+      "config_preserved": true,
+      "report": "Update failed: New application exited: 17. Previous application preserved."
+    }
+  ]
 }

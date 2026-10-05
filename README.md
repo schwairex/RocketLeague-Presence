@@ -14,12 +14,12 @@ python -m venv .venv
 .\.venv\Scripts\python.exe run.py
 ```
 
-Or run the built `rocket-league-rpc.exe` in a writable folder. The default `config.json` and `logs/` live beside `run.py` for source runs, or beside the executable for packaged runs. `--config path\config.json` selects another config file; logs still live beside the launcher.
+Or run the built `rl-presence.exe` in a writable folder. The default `config.json` and `logs/` live beside `run.py` for source runs, or beside the executable for packaged runs. `--config path\config.json` selects another config file; logs still live beside the launcher.
 
 
-## Desktop window (v0.2)
+## Desktop window (v0.2.1)
 
-Close the old RPC before launching this version. Copy/keep your existing config.json beside the new EXE to preserve the Application ID. Windows 10/11, .NET Framework 4.8 and Microsoft Edge WebView2 Runtime are required. The EXE includes Python and the UI fonts/SVGs; the interface loads offline.
+Close the old RPC before launching this version. Keep your existing config.json beside the new EXE to preserve player/rank preferences. Application ID is now fixed; legacy client_id is ignored and removed. Windows 10/11, .NET Framework 4.8 and Microsoft Edge WebView2 Runtime are required. The EXE includes Python and the UI fonts/SVGs; the interface loads offline.
 
 Görünüm retains the supplied design. Genel adds manual rank/division, main menu, queue, shop, free play, custom training and garage. These choices persist; real match telemetry takes priority. **The official API does not provide rank or detailed menu status.** A single manually selected rank is displayed across modes; it is not automatically refreshed.
 
@@ -27,12 +27,14 @@ Kaydet atomically applies settings without restarting RPC; İptal discards unsav
 
 The previous menu-stuck bug was reproduced with real TCP: Data arrived as a JSON-encoded string. v0.2 accepts both this form and the documented object after stream framing. Training TimeSeconds is available in diagnostics but is not labeled as match time remaining. Packet rate shown in the footer is measured, not assumed.
 
-GUI mode remains open without client_id; enter it in Genel. Console mode exits with instructions when it is missing. Changes made by editing JSON outside the app require a restart. Use `--console --skip-install` for console-only diagnostic runs; the GUI setup button remains an explicit action.
+The built-in Application ID is read-only in Genel and absent from saved config. Changes made by editing JSON outside the app require a restart. Use `--console --skip-install` for console-only diagnostic runs; the GUI setup button remains an explicit action.
 
 ## Discord application and images
 
-1. Create an application in the [Developer Portal](https://discord.com/developers/applications), with a name such as **Rocket League**. Discord displays the application's name.
-2. Enter its **Application ID** in the **Genel** tab and click **Kaydet**, or set `client_id` in JSON. No bot token, OAuth login or client secret is required.
+End users do not create a Discord application. This build uses the existing **802869954805760020** Application ID. The asset instructions are for its maintainer.
+
+1. Manage that application in the [Developer Portal](https://discord.com/developers/applications). Discord displays its portal name.
+2. Application ID cannot be changed in config or the UI. No bot token, OAuth login or client secret is required.
 3. In the application's Rich Presence / Art Assets area, upload images using the exact lowercase keys below. These are **every unique key used by `maps.py`**, plus the generic and team icons. Use artwork you have permission to use. Variants share their base arena image.
 4. Start the Discord **desktop** app on this Windows session. Enable activity sharing in Discord's privacy settings if the activity is hidden.
 
@@ -52,11 +54,11 @@ GUI mode remains open without client_id; enter it in Genel. Console mode exits w
 | `forbidden_temple` | Forbidden Temple |
 | `farmstead` | Farmstead |
 
-Missing uploaded assets do not affect the match text but the images may not appear. This distribution contains no arena artwork and no preconfigured Discord Application ID.
+Missing uploaded assets do not affect the match text but the images may not appear. This distribution uses a fixed Application ID; arena art is uploaded to that Discord application.
 
 ## First run and enabling the Stats API
 
-The desktop window stays open on first run even with no Application ID. In **Genel**, enter your ID, select rank/division and your activity outside a match, then click **Kaydet**. In **Görünüm**, enter your game name/platform and save to enable personal points/goals/saves. Explicit PrimaryId takes priority; clear an old ID when changing accounts.
+The desktop window creates defaults on first run. In **Genel**, select rank/division and your activity outside a match, then click **Kaydet**. In **Görünüm**, enter your game name/platform and save to enable personal points/goals/saves. Explicit PrimaryId takes priority; clear an old ID when changing accounts.
 
 Click **Stats API’yi yapılandır** in **Genel**. The installer discovers Steam through registry/libraryfolders.vdf, or Epic through .item manifests (including Sugar). If discovery fails, enter the folder containing TAGame, save, then click again. Console mode retains its once-only install-path prompt.
 
@@ -73,7 +75,7 @@ An existing positive packet rate up to 120 is preserved. Disabled/invalid rates 
 
 **Fully quit and restart Rocket League after any patch**, including when the app warns that the game is already running. A successful ini edit cannot enable the API in an already running game. Permission errors suggest administrator privileges; moving the RPC app to a writable folder also helps config/log writes. `--skip-install` leaves discovery and patching to you.
 
-The GUI waits for an Application ID in Genel; console mode exits with instructions if it is blank. The app retries Stats every 3–5 seconds and Discord with a capped 3–30 second backoff. Game stopped → clear presence; game running without a match → the selected manual activity, or `In menus / Queueing` when set to auto. The API cannot distinguish an actual queue from other menu activity.
+Application ID is already included. The app retries Stats every 3–5 seconds and Discord with a capped 3–30 second backoff. Game stopped → clear presence; game running without a match → the selected manual activity, or `In menus / Queueing` when set to auto. The API cannot distinguish an actual queue from other menu activity.
 
 ## Configuration
 
@@ -81,7 +83,7 @@ Copy `config.example.json` if desired; first run also generates defaults. Restar
 
 | Key | Default / meaning |
 |---|---|
-| `client_id` | `""`; your Application ID, required for RPC |
+| `schema_version` | `3`; managed for migrations; there is no client_id preference |
 | `install_path` | `""`; discovery or one-time prompt |
 | `player_name` | `""`; case-insensitive explicit local player name |
 | `player_primary_id` | `""`; `Platform\|Uid\|Splitscreen`, preferred over name |
@@ -89,11 +91,11 @@ Copy `config.example.json` if desired; first run also generates defaults. Restar
 | `stats_port` | `49123`; TCP port, 1–65535 |
 | `stats_web_port` | `49124`; optional WebSocket port, distinct from TCP |
 | `stats_transport` | `"tcp"`; set `"websocket"` to opt into the alternative transport |
-| `update_interval` | `15`; clamped to 15–3600 seconds |
+| `update_interval` | `1`; clamped to 1–3600 s; normal sends coalesce for at least 4 s, priority events bypass that delay |
 | `log_level` | `"INFO"`; DEBUG / INFO / WARNING / ERROR / CRITICAL |
 | `show_score`, `show_map`, `show_mode` | `true`; map off also removes map images/tooltips |
 | `show_perspective` | `false`; show `You … Opp` when local team is known |
-| `show_time` | `true`; controls timer text and timestamps |
+| `show_time` | `true`; Discord timestamps, without duplicate remaining-time text |
 | `show_rank`, `show_player_stats` | `true`; manual rank and local P/G/S |
 | `rank_tier`, `rank_division` | `Unranked`, `1`; division is 1–4; SSL has none |
 | `manual_activity` | `auto`; main_menu/menu/queue/shop/training/custom_training/garage |
@@ -112,7 +114,7 @@ RoundStarted synchronizes the live end timestamp; clock samples resynchronize on
 
 **Overtime direction is unverified.** The app uses an elapsed start anchor rather than deriving it from TimeSeconds. The first observed overtime kickoff establishes it; on a mid-overtime reconnect the first observed packet is a provisional anchor, so elapsed time can be incomplete. DEBUG logs include raw overtime TimeSeconds samples. `state.overtime_clock_start()` is the single policy function to change after real packets establish the direction.
 
-All activity writes, including normal clears, are at least **15 seconds apart**, measured with a monotonic clock. Latest payload wins; unchanged payloads are skipped. Start/end transitions bypass a longer configured update interval when the 15-second floor permits. Failed writes consume the window too; reconnect resends the current state without resetting it. Fast phases or a start/end that both happen inside one window can be coalesced away. Discord can therefore display a previous phase for up to 15 seconds. On Ctrl+C, an eligible activity is cleared; otherwise the app closes the owning IPC connection without another activity write, removing its presence on disconnect.
+The fixed 15-second wait is removed. The publisher obeys [Discord’s limit](https://docs.discord.com/developers/developer-tools/game-sdk) of at most 5 activity writes in any rolling 20 seconds. Phase/score/clock changes publish immediately when budget permits; normal statistics coalesce for at least 4 seconds. Latest payload wins and unchanged payloads are skipped. Failed writes and clears consume budget; reconnecting does not reset it. An anchored end timestamp lets Discord count down every second without repeated packets, including when a packet is delayed. Training omits P/G/S. Live match text omits duplicate remaining time and the goal-replay label. Stopped clocks never send ticking timestamps. Rapid phases can still be coalesced when the Discord budget is exhausted. Exit clears if eligible; otherwise IPC closure removes the activity.
 
 ## Debugging and test match
 
@@ -130,7 +132,7 @@ To run a simulated match, **quit Rocket League** to free port 49123. In separate
 .\.venv\Scripts\python.exe run.py --mock-game --debug --raw-packets
 ```
 
-You still need a valid client_id and desktop Discord for a visible manual test. The mock deliberately splits and concatenates exact documented envelopes. It replays countdown, regular clocks, a goal replay, pause, overtime, end/podium and leave. Its overtime TimeSeconds increases **as a simulation choice**, not evidence about the real API. The pytest end-to-end test needs neither Discord nor Rocket League: it uses a real ephemeral TCP listener and a mocked Discord client, advances injected clocks 15 seconds per event, and verifies the actual publisher's hard limit.
+Desktop Discord is needed for a visible manual test; application identity is built in. The mock deliberately splits and concatenates exact documented envelopes. It replays countdown, regular clocks, a goal replay, pause, overtime, end/podium and leave. Its overtime TimeSeconds increases **as a simulation choice**, not evidence about the real API. The pytest end-to-end test needs neither Discord nor Rocket League: it uses a real ephemeral TCP listener and a mocked Discord client, uses injected clocks and verifies the production publisher, with additional burst-budget and delayed-clock synchronization tests.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
@@ -142,7 +144,7 @@ You still need a valid client_id and desktop Discord for a visible manual test. 
 
 ```powershell
 .\build.ps1 -Python .\.venv\Scripts\python.exe -InstallDependencies
-# Output: dist\rocket-league-rpc.exe
+# Output: dist\rl-presence.exe
 ```
 
 Build on Windows to obtain a Windows exe. The single-file build opens the supplied HTML design as a window, without a PowerShell/console window. The optional tray icon is not included. Source users can opt into console mode with `run.py --console`. There is one named mutex per Windows login session to prevent duplicate publishers; it is released automatically on process exit.
@@ -160,3 +162,9 @@ The current [Its-Haze/league-rpc](https://github.com/Its-Haze/league-rpc) was re
 - Stats WebSocket is an explicitly configured alternative, not automatic failover. The game API is disabled by default and always requires a full restart after ini changes.
 
 The mock also supports `--encoded-data` to replay the observed real TCP envelope. Katlicia/LOLCustomRPC was consulted only for GUI/worker-thread and save/cancel architecture; no League data logic is used.
+
+## GitHub updates (v0.2.1)
+
+Each launch checks [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases). A newer stable release triggers an in-app notification, verified SHA-256 download and a hidden Windows helper that waits for exit, replaces the EXE and relaunches it. Config/logs remain intact. The new window/engine must acknowledge healthy startup or the helper restores the previous EXE. A failed release is blocked from automatic retries until a different version; the check button permits explicit retry. Source/Python runs display releases but never replace Python.
+
+The repository and Releases must be publicly accessible. Publish `rl-presence.exe` with GitHub’s SHA-256 asset digest or `SHA256SUMS.txt`. See [RELEASING.md](RELEASING.md). The supplied repository’s Releases API returned 404 when checked on 2026-10-05; network/repository errors do not stop RPC. This deliverable does not publish to GitHub.

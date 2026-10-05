@@ -11,6 +11,7 @@ import sys
 import time
 
 log = logging.getLogger(__name__)
+APPLICATION_ID = '802869954805760020'
 
 RANK_TIERS = ('Unranked',) + tuple(f'{rank} {level}' for rank in (
     'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Champion', 'Grand Champion')
@@ -26,14 +27,14 @@ def app_directory() -> Path:
 
 @dataclass
 class Config:
-    client_id: str = ''
+    schema_version: int = 3
     install_path: str = ''
     player_name: str = ''
     player_primary_id: str = ''
     stats_host: str = '127.0.0.1'
     stats_port: int = 49123
     stats_web_port: int = 49124
-    update_interval: float = 15.0
+    update_interval: float = 1.0
     log_level: str = 'INFO'
     show_score: bool = True
     show_map: bool = True
@@ -50,6 +51,11 @@ class Config:
     spectating: bool = False
     auto_learn_primary_id: bool = True
     install_prompted: bool = False
+
+    @property
+    def client_id(self) -> str:
+        """Application identity belongs to the build, never to user settings."""
+        return APPLICATION_ID
 
 
 def backup_file(path: Path) -> Path:
@@ -99,7 +105,7 @@ def _port(value, default: int) -> int:
 
 def validate_config(data: dict) -> Config:
     cfg = Config()
-    for key in ('client_id', 'install_path', 'player_name', 'player_primary_id', 'stats_host'):
+    for key in ('install_path', 'player_name', 'player_primary_id', 'stats_host'):
         value = data.get(key)
         if isinstance(value, str):
             try:
@@ -108,8 +114,6 @@ def validate_config(data: dict) -> Config:
                 log.warning('Invalid Unicode in config field %s; using its default.', key)
                 continue
             setattr(cfg, key, value.strip())
-        elif key == 'client_id' and type(value) is int:
-            cfg.client_id = str(value)
     cfg.stats_host = cfg.stats_host or '127.0.0.1'
     cfg.stats_port = _port(data.get('stats_port'), 49123)
     cfg.stats_web_port = _port(data.get('stats_web_port'), 49124)
@@ -117,9 +121,11 @@ def validate_config(data: dict) -> Config:
         cfg.stats_web_port = 49124 if cfg.stats_port != 49124 else 49123
     value = data.get('update_interval')
     if type(value) is int:
-        cfg.update_interval = float(min(3600, max(15, value)))
+        cfg.update_interval = float(min(3600, max(1, value)))
     elif type(value) is float and math.isfinite(value):
-        cfg.update_interval = min(3600.0, max(15.0, float(value)))
+        cfg.update_interval = min(3600.0, max(1.0, float(value)))
+    if data.get('schema_version') != 3 and cfg.update_interval == 15:
+        cfg.update_interval = 1.0  # migrate the old mandatory 15-second floor
     level = data.get('log_level')
     if isinstance(level, str) and level.upper() in ('DEBUG','INFO','WARNING','ERROR','CRITICAL'):
         cfg.log_level = level.upper()

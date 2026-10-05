@@ -6,7 +6,9 @@ import pytest
 def test_gui_engine_runs_in_worker_thread_and_shuts_down(tmp_path):
     from rocket_league_rpc.gui import EngineHost, GuiBridge
     from rocket_league_rpc.config import Config
-    host=EngineHost(Config(),tmp_path/'config.json',mock_game=False)
+    from .test_runtime import FakeDiscord
+    host=EngineHost(Config(),tmp_path/'config.json',mock_game=False,
+                    discord_factory=lambda:FakeDiscord(lambda:0))
     host.start()
     try:
         bridge=GuiBridge(host,tmp_path/'logs')

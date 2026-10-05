@@ -13,9 +13,10 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed" }
     }
     $UiPath = Join-Path $ProjectRoot 'rocket_league_rpc/ui'
-    & $Python -m PyInstaller --noconfirm --onefile --windowed --name rocket-league-rpc --distpath dist --workpath build/work --specpath build --hidden-import websockets.asyncio.client --add-data "${UiPath}:rocket_league_rpc/ui" run.py
+    $IconPath = Join-Path $UiPath 'app.ico'
+    & $Python -m PyInstaller --noconfirm --onefile --windowed --name rl-presence --icon $IconPath --distpath dist --workpath build/work --specpath build --hidden-import websockets.asyncio.client --add-data "${UiPath}:rocket_league_rpc/ui" run.py
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
-    Write-Output "Built: $ProjectRoot\dist\rocket-league-rpc.exe"
+    Write-Output "Built: $ProjectRoot\dist\rl-presence.exe"
 } finally {
     Pop-Location
 }

@@ -26,7 +26,7 @@ class FakeDiscord:
         self.closed = True
 
 
-async def test_coalesces_latest_and_priorities_never_bypass_15_seconds():
+async def test_normal_updates_coalesce_and_priority_skips_interval():
     from rocket_league_rpc.rpc import PresencePublisher
     now = [100.0]
     clock = lambda: now[0]
@@ -34,11 +34,11 @@ async def test_coalesces_latest_and_priorities_never_bypass_15_seconds():
     publisher = PresencePublisher(lambda:client, interval=1, clock=clock)
     publisher.offer({'details':'Menu'})
     assert await publisher.pump()
-    publisher.offer({'details':'Match start'}, priority=True)
-    now[0] = 114.999
+    publisher.offer({'details':'Score 1'})
+    now[0] = 103.999
     assert not await publisher.pump()
     publisher.offer({'details':'Match finished'}, priority=True)
-    now[0] = 115
+    now[0] = 104
     assert await publisher.pump()
     assert [op[2] for op in client.operations if op[0]=='update'] == [
         {'details':'Menu'}, {'details':'Match finished'}]
@@ -64,18 +64,18 @@ async def test_failed_send_reconnect_resends_current_without_resetting_window():
     publisher.offer({'details':'Latest score'})
     assert not await publisher.pump()
     assert clients[0].closed
-    now[0] = 119
+    now[0] = 117.999
     assert not await publisher.pump()
-    now[0] = 130
+    now[0] = 119
     assert await publisher.pump()
     assert clients[-1].operations[-1][2] == {'details':'Latest score'}
     times = [op[1] for client in clients for op in client.operations if op[0]=='update']
-    assert times == [100, 115, 130]
+    assert times == [100, 115, 119]
     await publisher.shutdown()
     assert clients[-1].closed
 
 
-async def test_clear_is_coalesced_with_game_restart_and_rate_limited():
+async def test_clear_is_immediate_and_game_restart_is_coalesced():
     from rocket_league_rpc.rpc import PresencePublisher
     now=[100.0]
     client=FakeDiscord(lambda:now[0])
@@ -84,14 +84,12 @@ async def test_clear_is_coalesced_with_game_restart_and_rate_limited():
     await pub.pump()
     pub.offer(None)
     now[0]=101
-    assert not await pub.pump()
-    now[0]=115
     assert await pub.pump()
     assert client.operations[-1][0]=='clear'
     pub.offer({'details':'Menus'})
-    now[0]=120
+    now[0]=104.999
     assert not await pub.pump()
-    now[0]=130
+    now[0]=105
     assert await pub.pump()
     assert client.operations[-1][2]=={'details':'Menus'}
 

@@ -7,6 +7,7 @@ import json
 import logging
 import struct
 import time
+from collections import deque
 
 from pypresence import AioPresence
 from pypresence.exceptions import DiscordError, DiscordNotFound, PipeClosed, ServerError
@@ -92,19 +93,20 @@ class DiscordClient(AioPresence):
 
 
 class PresencePublisher:
-    """Latest payload wins. No activity write (including clear) beats 15 s.
+    """Latest payload wins; at most five activity writes in any 20 seconds.
 
     Failed writes also consume a window because Discord may have received
     them before its response pipe closed. Reconnection never resets this.
-    Priority bypasses a longer configured interval, never the hard floor.
+    Priority bypasses coalescing delay, never Discord's rolling budget.
     """
-    def __init__(self, factory, interval: float = 15, clock=time.monotonic):
+    def __init__(self, factory, interval: float = 1, clock=time.monotonic):
         self.factory = factory
-        self.interval = max(15.0, interval)
+        self.interval = max(1.0, interval)
         self.clock = clock
         self.desired = None
         self.sent = UNSET
         self.last_attempt = float('-inf')
+        self.attempts = deque()
         self.retry_at = float('-inf')
         self.retry_delay = 3.0
         self.priority = False
@@ -112,6 +114,14 @@ class PresencePublisher:
         self.client = None
         self.error = ''
         self.lock = asyncio.Lock()
+
+    def next_send_in(self) -> float:
+        now = self.clock()
+        while self.attempts and self.attempts[0] <= now - 20:
+            self.attempts.popleft()
+        budget = self.attempts[0] + 20 if len(self.attempts) >= 5 else now
+        due = self.last_attempt + (0 if self.priority or self.desired is None else max(4.0, self.interval))
+        return max(0.0, budget - now, due - now, self.retry_at - now)
 
     def offer(self, payload: dict | None, priority: bool = False):
         if payload != self.desired or priority:
@@ -134,8 +144,7 @@ class PresencePublisher:
             if self.client is not None and hasattr(self.client, 'is_connected') and not self.client.is_connected():
                 log.info('Discord IPC closed; reconnecting to resend current presence')
                 await self._disconnect()
-            floor = 15.0 if self.priority or self.desired is None else self.interval
-            if now < self.retry_at or now-self.last_attempt < floor:
+            if self.next_send_in() > 0:
                 return False
             if self.client is not None and self.desired == self.sent:
                 self.priority = False
@@ -153,6 +162,7 @@ class PresencePublisher:
                 payload = copy.deepcopy(self.desired)
                 revision = self.revision
                 self.last_attempt = self.clock()
+                self.attempts.append(self.last_attempt)
                 if payload is None:
                     await asyncio.wait_for(self.client.clear(), 6)
                 else:
@@ -178,9 +188,11 @@ class PresencePublisher:
         async with self.lock:
             # Clear explicitly if eligible; otherwise closing the owning IPC
             # session removes its activity without another SET_ACTIVITY write.
-            if self.client is not None and self.clock()-self.last_attempt >= 15:
+            self.priority = True
+            if self.client is not None and self.next_send_in() == 0:
                 try:
                     self.last_attempt = self.clock()
+                    self.attempts.append(self.last_attempt)
                     await asyncio.wait_for(self.client.clear(), 3)
                 except Exception:
                     log.debug('Discord shutdown clear failed', exc_info=True)

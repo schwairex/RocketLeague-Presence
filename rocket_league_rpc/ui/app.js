@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  let bridge=null, persisted=null, draft=null, snapshot=null, busy=false, previewToken=0;
+  let bridge=null, persisted=null, draft=null, snapshot=null, busy=false, previewToken=0, updateNotice='';
   const $=id=>document.getElementById(id);
   const clone=value=>JSON.parse(JSON.stringify(value));
   const text=(id,value)=>{$(id).textContent=value??'—';};
@@ -18,6 +18,7 @@
     return result.data;
   }
   function hydrate(){
+    $('application-id').value=draft.client_id||'';
     for(const el of document.querySelectorAll('[data-field]'))el.value=draft[el.dataset.field]??'';
     for(const button of document.querySelectorAll('[data-setting]')){
       const on=!!draft[button.dataset.setting];button.setAttribute('aria-pressed',String(on));
@@ -66,7 +67,7 @@
   }
   function render(s){
     snapshot=s;
-    pill('discord',s.discord.connected,s.config.client_id?'Discord: '+(s.discord.connected?'bağlı':s.discord.error||'bağlantı bekleniyor'):'Genel sekmesinde Discord Application ID gir.');
+    pill('discord',s.discord.connected,'Discord: '+(s.discord.connected?'bağlı':s.discord.error||'bağlantı bekleniyor'));
     pill('game',s.game_running,s.game_running?'Rocket League çalışıyor':'Rocket League kapalı');
     pill('stats',s.stats.connected&&s.stats.status==='live',statusMessage(s)+(s.stats.error?' · '+s.stats.error:''));
     const m=s.match;const hasMatch=s.stats.connected&&m.phase!=='MENU'&&m.phase!=='REPLAY_VIEWER';
@@ -81,9 +82,30 @@
     const port=s.config.stats_transport==='websocket'?s.config.stats_web_port:s.config.stats_port;
     text('footer-status',`Stats API · ${s.config.stats_host}:${port} · ${s.stats.packets_per_second} paket/sn${s.discord.next_send_in>0?' · RPC '+Math.ceil(s.discord.next_send_in)+' sn':''}`);
     text('install-result',s.install_result||'Yolu kaydet, ardından yapılandır. INI değişirse oyunu tamamen yeniden başlat.');
-    for(const el of document.querySelectorAll('.version'))el.textContent=s.version||'0.2.0';
+    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.1');
+    renderUpdates(s.updates);
     if(!$('diagnostics').hidden&&$('diagnostics').open)renderDiagnostics();
     preview();
+  }
+  function renderUpdates(u){
+    if(!u)return;
+    const titles={idle:'Sürüm kontrolü hazırlanıyor',checking:'Yeni sürümler kontrol ediliyor',current:'Güncelsin',available:'Yeni sürüm hazır',downloading:'Güncelleme indiriliyor',restarting:'Yeniden başlatılıyor',empty:'İlk sürüm bekleniyor',error:'Güncelleme kontrolü tamamlanamadı',blocked:'Güncelleme ertelendi'};
+    const labels={idle:'OTOMATİK KONTROL',checking:'GITHUB BAĞLANTISI',current:'EN GÜNCEL SÜRÜM',available:'v'+u.latest_version,downloading:'OTOMATİK GÜNCELLEME',restarting:'GÜNCELLEME HAZIR',empty:'GITHUB RELEASES',error:'TEKRAR DENEYEBİLİRSİN'};
+    text('update-title',titles[u.status]||titles.idle);text('update-status-label',labels[u.status]||labels.idle);text('update-message',u.message);
+    $('check-updates').disabled=['checking','available','downloading','restarting'].includes(u.status)&&u.automatic;
+    if(u.status==='checking')$('check-updates').disabled=true;
+    $('update-progress-wrap').hidden=!['downloading','restarting'].includes(u.status);
+    $('update-progress').value=u.progress||0;text('update-percent',(u.progress||0)+'%');
+    text('update-checked',u.checked_at?'Son kontrol: '+new Date(u.checked_at*1000).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'Açılışta otomatik kontrol');
+    const list=$('release-notes');list.replaceChildren();
+    for(const release of u.releases||[]){
+      const article=document.createElement('article');article.className='release-entry';
+      const header=document.createElement('header');const name=document.createElement('span');name.textContent=release.name||'v'+release.version;
+      const date=document.createElement('time');date.textContent=release.published?new Date(release.published).toLocaleDateString('tr-TR'):'';header.append(name,date);
+      const notes=document.createElement('pre');notes.textContent=release.notes||'Bu sürüm için not yayımlanmamış.';article.append(header,notes);list.append(article);
+    }
+    if(!list.children.length){const p=document.createElement('p');p.className='empty-release';p.textContent=u.status==='error'?'GitHub bağlantısı kurulunca sürüm notları burada görünür.':'Yayımlanmış sürümler kontrol sonrası burada görünür.';list.append(p);}
+    if(['available','downloading','restarting'].includes(u.status)&&u.latest_version&&updateNotice!==u.latest_version){updateNotice=u.latest_version;toast('RL Presence v'+u.latest_version+' hazır. '+(u.automatic?'Uygulama otomatik güncellenecek ve yeniden açılacak.':'Yeni sürümü GitHub sürümlerinden indirebilirsin.'));}
   }
   async function refresh(){
     if(busy)return;
@@ -114,13 +136,15 @@
   $('cancel').addEventListener('click',()=>{if(!persisted)return;draft=clone(persisted);hydrate();preview();toast('Kaydedilmemiş değişiklikler geri alındı.');});
   $('save').addEventListener('click',async()=>{
     if(!draft)return;const button=$('save');button.disabled=true;
-    try{const changes=Object.fromEntries(Object.entries(draft).filter(([key,value])=>value!==persisted[key]));const s=await invoke('save_settings',changes);persisted=clone(s.config);draft=clone(s.config);hydrate();await refresh();toast('Ayarlar kaydedildi. RPC en erken 15 saniyelik pencere açıldığında güncellenir.');}
+    try{const changes=Object.fromEntries(Object.entries(draft).filter(([key,value])=>value!==persisted[key]));const s=await invoke('save_settings',changes);persisted=clone(s.config);draft=clone(s.config);hydrate();await refresh();toast('Ayarlar kaydedildi. Discord görünümü güncelleniyor.');}
     catch(e){toast(e.message,true);}finally{button.disabled=false;}
   });
   async function action(id,method){$(id).disabled=true;try{const message=await invoke(method);toast(typeof message==='string'?message:'Günlük klasörü açıldı.');await refresh();}catch(e){toast(e.message,true);}finally{$(id).disabled=false;}}
   $('setup-api').addEventListener('click',()=>action('setup-api','setup_stats_api'));
   $('open-logs').addEventListener('click',()=>action('open-logs','open_logs'));
   $('export-report').addEventListener('click',()=>action('export-report','export_diagnostics'));
+  $('check-updates').addEventListener('click',async()=>{try{renderUpdates(await invoke('check_updates'));}catch(e){toast(e.message,true);}});
+  for(const button of document.querySelectorAll('[data-project]'))button.addEventListener('click',async()=>{try{await invoke('open_project',button.dataset.project);}catch(e){toast(e.message,true);}});
   function diagnostics(){renderDiagnostics();$('diagnostics').showModal();}
   $('diagnostics-button').addEventListener('click',diagnostics);$('live-panel').addEventListener('click',diagnostics);
   $('live-panel').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();diagnostics();}});
