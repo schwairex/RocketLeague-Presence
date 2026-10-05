@@ -1,5 +1,5 @@
 {
-  "version": "0.2.2",
+  "version": "0.2.3",
   "gui_subsystem": 2,
   "native_viewport": [
     1120,
@@ -13,6 +13,10 @@
   "native_bridge": true,
   "language_persisted": true,
   "report_api_exposed": true,
+  "native_mocked_report_form": true,
+  "per_mode_rank_cards": 8,
+  "both_developer_profiles": true,
+  "startup_dict_error_fixed": true,
   "report_after_about": true,
   "healthy_startup_ack": true,
   "real_discord_pipe_used": false,
@@ -29,5 +33,7 @@
       "config_preserved": true,
       "report": "Update failed: New application exited: 17. Previous application preserved."
     }
-  ]
+  ],
+  "fresh_config_rank_defaults": true,
+  "native_turkish_report_form": true
 }

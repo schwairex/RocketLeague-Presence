@@ -3,7 +3,7 @@ import time
 
 from .config import Config, ACTIVITIES
 from .maps import lookup_map
-from .modes import lookup_mode
+from .modes import lookup_mode, RANK_KEY_BY_PLAYLIST
 from .state import MatchState, Phase, overtime_clock_start
 
 
@@ -12,11 +12,15 @@ def limit_text(value: str) -> str:
     return value[:128] if len(value) >= 2 else (value + ' ') if value else 'RL'
 
 
-def rank_label(config: Config) -> str:
-    if not config.show_rank or config.rank_tier == 'Unranked':
+def rank_label(config: Config, playlist_id=None) -> str:
+    key = RANK_KEY_BY_PLAYLIST.get(playlist_id) if type(playlist_id) is int else None
+    if not config.show_rank or key is None:
         return ''
-    division = '' if config.rank_tier == 'Supersonic Legend' else f" Div {('I','II','III','IV')[config.rank_division-1]}"
-    return config.rank_tier + division
+    rank = config.mode_ranks.get(key, {'tier':config.rank_tier,'division':config.rank_division})
+    tier = rank['tier']
+    if tier == 'Unranked':return ''
+    division = '' if tier == 'Supersonic Legend' else f" Div {('I','II','III','IV')[rank['division']-1]}"
+    return tier + division
 
 
 def menu_presence(config: Config | None = None) -> dict:
@@ -63,7 +67,7 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     if config.show_player_stats and state.phase != Phase.TRAINING:
         stats = ' '.join(f'{key}:{value}' for key,value in (
             ('P',state.local_player_score), ('G',state.local_player_goals), ('S',state.local_player_saves)) if value is not None)
-    details = ' | '.join(filter(None, [details, rank_label(config)]))
+    details = ' | '.join(filter(None, [details, rank_label(config,state.playlist_id)]))
     status = ' | '.join(filter(None, [map_name if config.show_map else '', label, clock, stats])) or 'Playing Rocket League'
     payload = {'name':'Rocket League', 'details':details, 'state':status,
                'large_image':asset if config.show_map else 'rl_logo',

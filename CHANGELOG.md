@@ -1,3 +1,17 @@
+# v0.2.3 — RL Presence
+
+- Sekiz ranked mod için ayrı manuel rank/küme terchileri eklendi.
+- Casual ve Ranked mod adları düzenlendi.
+- Genişletilmiş harita/varyant tablosu ve Discord RCP için 'ART_ASSETS' eklendi.
+- Açılışta bütün Steam/Epic kurulumlarında otomatik Stats API seçilme ayarı eklendi.
+- pywebview açılışındaki “unhashable type: dict” callback hatası giderildi.
+- Worker’a tanımlayıcı User-Agent ile rapor gönderimi düzenlendi.
+
+English: per-playlist manual ranks, sized mode names, expanded arena catalog,
+automatic multi-install setup/active executable selection, startup callback and
+report HTTP fixes, and two developer profiles. Official API only; restart the
+game when an INI is edited while it is running. Arena tables remain best effort.
+
 # v0.2.2 — RL Presence
 
 - Gol sonrası Kickoff countdown etiketi kaldırıldı; Discord sayacı artık silinmiyor, son zaman damgası korunuyor ve kickoff’ta kalan süreye tekrar eşitleniyor.
@@ -13,11 +27,16 @@ and is corrected on kickoff. This platform limitation remains explicit.
 
 # v0.2.1 — RL Presence
 
+- Discord Application ID sabitlendi; arayüz salt okunur, eski config ID'si yok sayılır.
+- Sabit 15 saniyelik bekleme kaldırıldı. Discord sayacı oyun zamanına eşitlenir;
+  güncellemeler kayan 20 saniyede en fazla 5 gönderim sınırına uyar.
 - Eğitim açılışında mod verisi gelmeden yanlış 0–0 geri sayım kartı gönderilmez.
 - Eğitimde P/G/S kaldırıldı. Maç kartında yinelenen süre ve Goal replay metni kaldırıldı.
-- Uygulama logosu güncellendi.
-- Uygulamadaki "Güncellemeler" ve "Hakkında" sekmeleri mevcut tema içinde yenilendi.
-- Her açılışta GitHub Release kontrolü, bildirim, SHA-256 doğrulamalı indirme, otomatik değiştirme/yeniden açma, sağlıklı açılış kontrolü ve geri alma eklendi.
+- Mevcut mavi/turuncu logo EXE/pencere/görev çubuğu simgesine uygulandı.
+- Dağıtılan çalıştırılabilir dosyanın adı `rl-presence.exe` oldu.
+- Güncellemeler ve Hakkında sekmeleri mevcut tema içinde yenilendi.
+- Her açılışta GitHub Release kontrolü, bildirim, SHA-256 doğrulamalı indirme,
+  otomatik değiştirme/yeniden açma, sağlıklı açılış kontrolü ve geri alma eklendi.
 - Başarısız aynı sürümün yeniden başlatma döngüsüne girmesi önlendi.
 - Eski ayarlar korunur; özel config yolu yeniden açılışta mutlak yol olarak taşınır.
 

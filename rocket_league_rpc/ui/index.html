@@ -32,7 +32,13 @@ body{background:#0A0F1F}#app-frame{width:100vw!important;height:100vh!important;
 @media(prefers-reduced-motion:reduce){.spinner{animation:none}}
 @media(max-width:1030px){#app-frame>div:nth-child(2){padding:0 20px!important}.pill{font-size:0!important;gap:0!important}.tab{font-size:12px!important}}
 </style>
-</head>
+<style>
+#setup-banner{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 28px;background:#241e18;border-bottom:1px solid #694321;font-size:12px;line-height:1.45;color:#ffbc80}#setup-banner button{background:transparent;color:#ffbc80;border:1px solid #694321;border-radius:6px;padding:5px 10px;white-space:nowrap;cursor:pointer;font:inherit}
+#installations{margin:12px 0}.install-card{border:1px solid #243052;background:#10182d;padding:10px 12px;border-radius:8px;margin:8px 0}.install-card header{display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:600;color:#c9d1ee}.install-card p{margin:5px 0 0;font:11px/1.5 Consolas,monospace;overflow-wrap:anywhere;color:#98a3c7}.install-card .install-state{font-size:10px;color:#3ddc97}.install-card .install-state.warning{color:#ffbc80}.rank-heading{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#c9d1ee;margin:18px 0 10px}.mode-ranks{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rank-card{border:1px solid #243052;border-radius:9px;background:#10182d;padding:10px;min-width:0}.rank-card h3{font-size:12px;color:#eef2ff;margin:0 0 8px}.rank-card label{font-size:10px;margin:8px 0 0}.rank-card select{height:33px;font-size:11px;padding:0 8px;margin-top:4px}.rank-card select:disabled{opacity:.45}.developer-list{min-width:245px}.developer-profile{display:flex;flex-direction:column;gap:4px;margin-top:7px}.developer-roles{font-size:11px;color:#98a3c7}.developer-roles>span{color:#3d8bff;margin:0 5px}
+</style><style>
+.rank-card{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);gap:8px}.rank-card h3{grid-column:1/-1;margin:0}.rank-card label{margin:0;min-width:0}.rank-card select{min-width:0}
+#about{padding-top:20px!important}.about-logo svg{width:64px;height:64px}.about-brand{gap:16px;padding-bottom:12px}.about-brand h1{font-size:32px!important}.about-brand .release-chip{margin-top:4px}.about-intro{margin:12px 0}.about-features section{padding:12px!important}.about-features h2{margin:8px 0 6px!important}.feature-icon{font-size:20px}.about-note{margin:12px 0;padding:10px 14px}.about-bottom{padding-top:12px}.developer-profile{gap:3px;margin-top:6px}
+</style></head>
 <body>
 <style>/* vietnamese */
 @font-face {
@@ -199,6 +205,7 @@ RL Presence
 </div>
 </div>
 <!-- Body -->
+<div id="setup-banner" role="status" hidden><span id="setup-banner-message"></span><button id="setup-details" type="button">Kurulum ayrıntıları</button></div>
 <div class="tab-content" id="appearance" style="flex:1;display:flex;gap:28px;padding:24px 28px;min-height:0">
 <!-- Left column -->
 <div style="flex:1;display:flex;flex-direction:column;gap:20px;min-width:0">
@@ -280,7 +287,7 @@ RL Presence
 <label>Discord Application ID <span class="fixed-tag">SABİT</span><input id="application-id" readonly aria-readonly="true" title="Uygulama kimliği bu sürüme sabitlenmiştir; kopyalayabilirsiniz."/><span class="hint">RL Presence uygulama kimliği. Değiştirilemez.</span></label>
 <p class="hint">Bot token gerekmez. Discord masaüstü uygulamasını açık tut.</p>
 <label>Rocket League kurulum yolu<input data-field="install_path" placeholder="D:\SteamLibrary\steamapps\common\rocketleague"/></label>
-<button class="btn secondary" id="setup-api">Stats API’yi yapılandır</button>
+<div id="installations" aria-live="polite"></div><button class="btn secondary" id="setup-api">Kurulumları yeniden denetle</button>
 <p class="hint" id="install-result">Yolu kaydet, ardından yapılandır. INI değişirse oyunu tamamen yeniden başlat.</p>
 <label>PrimaryId (isteğe bağlı)<input data-field="player_primary_id" placeholder="Platform|Uid|Splitscreen"/></label>
 <div class="row"><span class="lbl">İzleyici modu</span><button aria-label="İzleyici modu" aria-pressed="false" class="swb" data-setting="spectating"><span class="tr off"><span class="kn"></span></span></button></div>
@@ -290,12 +297,13 @@ RL Presence
 <label>Normal güncellemeleri birleştirme aralığı (sn)<input data-field="update_interval" max="3600" min="1" type="number"/></label></details></section>
 <section><h2 class="sec"><i></i>Rank ve oyun durumu</h2>
 <p class="hint">Resmî Stats API rank, mağaza ve sıra durumunu sağlamaz. Bunları elle seçebilirsin. Canlı maç bilgisi otomatik öncelik alır.</p>
-<label>Rank<select data-field="rank_tier" id="rank-tier"></select></label>
-<label>Küme<select data-field="rank_division"><option value="1">Division I</option><option value="2">Division II</option><option value="3">Division III</option><option value="4">Division IV</option></select></label>
+<div class="rank-heading"><span>Moda özel rank ve küme</span><span class="fixed-tag">MANUEL</span></div>
+<div id="mode-ranks" class="mode-ranks"></div>
+<p class="hint">Her modun rankı ayrı kaydedilir. Yalnızca oynanan ranked modun rankı Discord’da gösterilir.</p>
 <label>Maç dışında durum<select data-field="manual_activity"><option value="auto">Menü / Sıra (otomatik genel)</option><option value="main_menu">Ana menü</option><option value="menu">Menü</option><option value="queue">Sırada</option><option value="shop">Mağaza</option><option value="training">Serbest antrenman</option><option value="custom_training">Özel antrenman</option><option value="garage">Garaj</option></select></label>
 <div class="row"><span class="lbl">Rank ve kümeyi göster</span><button aria-label="Rank ve kümeyi göster" aria-pressed="true" class="swb" data-setting="show_rank"><span class="tr on"><span class="kn"></span></span></button></div>
 <div class="row"><span class="lbl">Puan / gol / kurtarış</span><button aria-label="Oyuncu istatistiklerini göster" aria-pressed="true" class="swb" data-setting="show_player_stats"><span class="tr on"><span class="kn"></span></span></button></div>
-<p class="hint">Rank seçimi manuel olarak tüm modlarda gösterilir. Canlı istatistikler eşleşen oyuncudan alınır. P: puan · G: gol · S: kurtarış.</p>
+<p class="hint">Canlı istatistikler eşleşen oyuncudan alınır. P: puan · G: gol · S: kurtarış.</p>
 <button class="btn secondary" id="open-logs">Günlük klasörünü aç</button>
 <button class="btn secondary" id="export-report">Tanılama raporu kaydet</button>
 </section></div>
@@ -311,7 +319,7 @@ RL Presence
 <p class="about-intro">Harita, mod, skor ve oyuncu istatistiklerin oyundan alınır; Discord profilindeki etkinliğin oyunla birlikte değişir.</p>
 <div class="about-features"><section><div class="feature-icon">◎</div><h2>Resmî oyun verisi</h2><p>Rocket League Stats API ile salt okunur bağlantı. Maç, eğitim ve tekrar durumları otomatik algılanır.</p></section><section><div class="feature-icon orange">◷</div><h2>Senkron sayaç</h2><p>Maç saati zaman damgasıyla ilerler. Durum değişiklikleri Discord’un gönderim sınırında güncellenir.</p></section><section><div class="feature-icon">↻</div><h2>Kolay güncelleme</h2><p>Yeni GitHub sürümü açılışta kontrol edilir. Ayarların korunarak uygulama güncellenir.</p></section></div>
 <div class="about-note"><strong>Kontrol sende.</strong><span>Rank/küme ile API’nin bildirmediği menü, sıra ve mağaza durumlarını Genel sekmesinden seçebilirsin. Stats API ayarını değiştirdikten sonra oyunu yeniden başlat.</span></div>
-<div class="about-bottom"><div><span class="eyebrow">GELİŞTİRİCİ</span><strong>schwairex</strong><span class="hint">Bağımsız topluluk uygulaması · Epic Games / Psyonix ile bağlantılı değildir.</span></div><div class="about-links"><button class="btn secondary-action" data-project="stats">API belgesi ↗</button><button class="btn primary-action" data-project="project">GitHub ↗</button></div></div>
+<div class="about-bottom"><div class="developer-list"><span class="eyebrow">GELİŞTİRİCİLER</span><div class="developer-profile"><strong>schwairex</strong><span class="developer-roles">Founder <span>·</span> App Developer</span></div><div class="developer-profile"><strong>Nyris</strong><span class="developer-roles">Co-Developer <span>·</span> QA</span></div></div><div class="about-links"><button class="btn secondary-action" data-project="stats">API belgesi ↗</button><button class="btn primary-action" data-project="project">GitHub ↗</button></div></div>
 </div>
 
 <div id="report" class="tab-content extra-page" hidden>

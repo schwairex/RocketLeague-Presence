@@ -2,7 +2,7 @@
 
 Güncelleyici yalnızca `schwairex/RocketLeague-Presence` deposunun herkese açık,
 kararlı GitHub Releases kayıtlarını kullanır. Taslak/pre-release kayıtları atlanır.
-Sürüm etiketi `v0.2.2` gibi üç sayılı olmalıdır. Bir dal commit'i güncelleme sayılmaz.
+Sürüm etiketi `v0.2.3` gibi üç sayılı olmalıdır. Bir dal commit'i güncelleme sayılmaz.
 
 1. `rocket_league_rpc/__init__.py` ve `pyproject.toml` sürümünü aynı değere yükseltin.
 2. Windows üzerinde bağımlılıkları kurun, `python -m pytest` ve `build.ps1` çalıştırın.

@@ -41,13 +41,16 @@ class ReportClient:
             data = json.dumps({'title':title, 'description':description,
                 'version':__version__, 'os':' '.join((platform.system(),platform.release(),platform.version()))},
                 ensure_ascii=False).encode('utf-8')
-            request = Request(REPORT_ENDPOINT,data=data,headers={'Content-Type':'application/json'},method='POST')
+            request = Request(REPORT_ENDPOINT,data=data,headers={'Content-Type':'application/json',
+                'User-Agent':f'RL-Presence/{__version__} (+https://github.com/schwairex/RocketLeague-Presence)',
+                'Accept':'application/json'},method='POST')
             with self._send(request,timeout=REPORT_TIMEOUT) as response:
                 return {'status':_status(response.status)}
         except HTTPError as exc:
             code = exc.code
+            log.warning('Report Worker returned HTTP %s',code)
             exc.close()
-            return {'status':_status(code)}
+            return {'status':_status(code),'http_status':code}
         except (URLError, TimeoutError, OSError):
             log.warning('Report request failed: network unavailable or timed out')
             return {'status':'network'}

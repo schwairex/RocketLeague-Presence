@@ -1,7 +1,7 @@
 """Validated preferences and atomic, recoverable JSON persistence."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import json
 import logging
 import math
@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import sys
 import time
+from .modes import RANKED_MODES
 
 log = logging.getLogger(__name__)
 APPLICATION_ID = '802869954805760020'
@@ -46,12 +47,18 @@ class Config:
     show_player_stats: bool = True
     rank_tier: str = 'Unranked'
     rank_division: int = 1
+    mode_ranks: dict = field(default_factory=dict)
     manual_activity: str = 'auto'
     player_platform: str = 'auto'
     stats_transport: str = 'tcp'
     spectating: bool = False
     auto_learn_primary_id: bool = True
     install_prompted: bool = False
+
+    def __post_init__(self):
+        if not self.mode_ranks:
+            self.mode_ranks={key:{'tier':self.rank_tier,'division':self.rank_division}
+                             for key in RANKED_MODES}
 
     @property
     def client_id(self) -> str:
@@ -144,6 +151,17 @@ def validate_config(data: dict) -> Config:
         cfg.rank_tier = data['rank_tier']
     if type(data.get('rank_division')) is int:
         cfg.rank_division = min(4, max(1, data['rank_division']))
+    ranks = data.get('mode_ranks')
+    if not isinstance(ranks,dict):
+        ranks = {}
+    for key in RANKED_MODES:
+        item = ranks.get(key)
+        if not isinstance(item,dict):
+            item = {'tier':cfg.rank_tier,'division':cfg.rank_division}
+        tier = item.get('tier')
+        division = item.get('division')
+        cfg.mode_ranks[key] = {'tier':tier if isinstance(tier,str) and tier in RANK_TIERS else 'Unranked',
+                               'division':min(4,max(1,division)) if type(division) is int else 1}
     if isinstance(data.get('manual_activity'), str) and data['manual_activity'] in ACTIVITIES:
         cfg.manual_activity = data['manual_activity']
     if data.get('player_platform') in ('auto', 'steam', 'epic'):

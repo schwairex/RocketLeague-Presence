@@ -72,7 +72,8 @@ def test_report_request_and_status(status,code):
         data=json.loads(request.data)
         assert set(data)=={'title','description','version','os'}
         assert data['title']=='Bir hata 🚀' and data['description']=='Açıklama\niki satır'
-        assert data['version']=='0.2.2' and data['os']
+        from rocket_league_rpc import __version__
+        assert data['version']==__version__ and data['os']
         return Response(status)
     result=ReportClient(send).submit(' Bir hata 🚀 ','Açıklama\niki satır')
     assert result['status']==code and len(calls)==1

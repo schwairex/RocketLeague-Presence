@@ -1,5 +1,6 @@
 {
   "schema_version": 3,
+  "language": "tr",
   "install_path": "",
   "player_name": "",
   "player_primary_id": "",
@@ -17,11 +18,44 @@
   "show_player_stats": true,
   "rank_tier": "Unranked",
   "rank_division": 1,
+  "mode_ranks": {
+    "standard": {
+      "tier": "Unranked",
+      "division": 1
+    },
+    "doubles": {
+      "tier": "Unranked",
+      "division": 1
+    },
+    "duel": {
+      "tier": "Unranked",
+      "division": 1
+    },
+    "heatseeker": {
+      "tier": "Unranked",
+      "division": 1
+    },
+    "rumble": {
+      "tier": "Unranked",
+      "division": 1
+    },
+    "hoops": {
+      "tier": "Unranked",
+      "division": 1
+    },
+    "snow_day": {
+      "tier": "Unranked",
+      "division": 1
+    },
+    "dropshot": {
+      "tier": "Unranked",
+      "division": 1
+    }
+  },
   "manual_activity": "auto",
   "player_platform": "auto",
   "stats_transport": "tcp",
   "spectating": false,
   "auto_learn_primary_id": true,
-  "install_prompted": false,
-  "language": "tr"
+  "install_prompted": false
 }

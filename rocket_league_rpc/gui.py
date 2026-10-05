@@ -13,11 +13,17 @@ import time
 
 from . import __version__
 from .config import Config, RANK_TIERS, ACTIVITIES
-from .installer import discover_install, patch_stats_ini
+from .modes import RANKED_MODES
 from .main import Application
 from .updates import UpdateManager, PROJECT_URL, RELEASES_URL, launch_handoff, relaunch_args, acknowledge_startup
 
 log = logging.getLogger(__name__)
+
+
+def startup_update_check(updates):
+    # pywebview.Event stores callback results in a set. Do not return check()'s
+    # dict: that caused the startup "unhashable type: dict" error.
+    updates.check()
 
 
 class UiLogHandler(logging.Handler):
@@ -110,6 +116,7 @@ class GuiBridge:
     async def _snapshot(self):
         result = self._host.app.snapshot()
         result.update(logs=self._handler.snapshot(),rank_tiers=list(RANK_TIERS),
+                      ranked_modes={key:label for key,(_,label) in RANKED_MODES.items()},
                       activities=ACTIVITIES,version=self._version,install_result=self._install_result)
         result['updates'] = self._updates.snapshot() if self._updates else None
         return result
@@ -154,21 +161,7 @@ class GuiBridge:
         return self._result(lambda:self._host.call(preview()))
 
     def setup_stats_api(self):
-        def setup():
-            config = self._host.call(self._snapshot())['config']
-            path = Path(config['install_path']) if config['install_path'] else discover_install()
-            if not path or not (path/'TAGame').is_dir():
-                raise ValueError('Kurulum bulunamadı. Genel sekmesinde TAGame klasörünü içeren Rocket League yolunu kaydedin.')
-            try:
-                result = patch_stats_ini(path,config['stats_port'],config['stats_web_port'])
-            except PermissionError as exc:
-                raise PermissionError('INI dosyasına yazılamadı. Uygulamayı yönetici olarak açıp tekrar deneyin.') from exc
-            self._host.call(self._host.app.apply_config({'install_path':str(path.resolve())}))
-            self._install_result = ('Stats API yapılandırıldı. Rocket League’i tamamen kapatıp yeniden açın.'
-                                   if result.changed else 'Stats API ayarları zaten doğru. Maça girerek veri akışını kontrol edin.')
-            log.info('%s File: %s',self._install_result,result.path)
-            return self._install_result
-        return self._result(setup)
+        return self._result(lambda:self._host.call(self._host.app.configure_game_installs()))
 
     def open_logs(self):
         def open_folder():
@@ -214,7 +207,7 @@ def ui_document() -> str:
     return html.replace('<!--APP_SCRIPT-->', '<script>window.RL_TRANSLATIONS='+translations+';</script><script>'+(folder/'app.js').read_text(encoding='utf-8')+'</script>')
 
 
-def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, update_ready_file=None):
+def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, update_ready_file=None, skip_install=False):
     import webview
     import ctypes
     import sys
@@ -223,7 +216,7 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
     handler = UiLogHandler()
     logging.getLogger().addHandler(handler)
     smoke_path = os.environ.get('RL_RPC_UI_SMOKE_PATH')
-    options = {}
+    options = {'auto_setup':not (smoke_path or skip_install or mock_game)}
     if smoke_path:
         # Native release QA must never write to the user's actual Discord pipe.
         class SmokeDiscord:
@@ -236,6 +229,20 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
     host.start()
     updates = UpdateManager(Path(sys.executable).parent if getattr(sys,'frozen',False) else config_path.parent)
     bridge = GuiBridge(host,log_dir,handler,updates)
+    report_requests=[]
+    if smoke_path:
+        from .reports import ReportClient
+        class SmokeResponse:
+            status=200
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+        def report_send(request,timeout):
+            report_requests.append({'headers':dict(request.header_items()),'data':json.loads(request.data),'timeout':timeout,'url':request.full_url})
+            time.sleep(.3)
+            return SmokeResponse()
+        bridge._reports=ReportClient(report_send)
+        # Exercise the same loaded-event callback without a live update.
+        updates.check=lambda:{'status':'checking'}
     try:
         window = webview.create_window('RL Presence',html=ui_document(),js_api=bridge,
             width=1120,height=760,min_size=(940,680),frameless=True,easy_drag=False,
@@ -262,13 +269,18 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
             def smoke():
                 time.sleep(2)
                 try:
+                    window.evaluate_js("document.querySelector('[data-tab=report]').click();document.getElementById('report-title').value='Native release verification';document.getElementById('report-description').value='Isolated mocked report from the packaged desktop application.';document.getElementById('report-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));")
+                    time.sleep(.1)
+                    loading=window.evaluate_js("document.getElementById('report-submit').disabled && !document.getElementById('report-spinner').hidden")
+                    time.sleep(.8)
                     dom = window.evaluate_js("JSON.stringify({language:document.documentElement.lang,reportApi:typeof window.pywebview.api.submit_report==='function',reportTabAfterAbout:Array.from(document.querySelectorAll('[data-tab]')).map(e=>e.dataset.tab).join(',').includes('about,report'),title:document.title,ready:!!window.rpcUI,body:document.body.innerText,frame:[innerWidth,innerHeight],identityReadonly:document.getElementById('application-id').readOnly,identity:document.getElementById('application-id').value,remote:Array.from(document.querySelectorAll('script[src],link[href]')).map(e=>e.src||e.href)})")
-                    Path(smoke_path).write_text(json.dumps({'dom':json.loads(dom),'bridge':bridge.get_snapshot()},ensure_ascii=False,indent=2),encoding='utf-8')
+                    form=window.evaluate_js("JSON.stringify({feedback:document.getElementById('report-feedback').textContent,title:document.getElementById('report-title').value,description:document.getElementById('report-description').value,rankCards:document.querySelectorAll('.rank-card').length,developers:document.getElementById('about').textContent})")
+                    Path(smoke_path).write_text(json.dumps({'dom':json.loads(dom),'bridge':bridge.get_snapshot(),'report':{'loading':loading,'form':json.loads(form),'requests':report_requests}},ensure_ascii=False,indent=2),encoding='utf-8')
+                    window.evaluate_js('window.rpcUI.stop()')
                 finally:
                     window.destroy()
             window.events.loaded += lambda:threading.Thread(target=smoke,daemon=True).start()
-        else:
-            window.events.loaded += lambda:updates.check()
+        window.events.loaded += lambda:startup_update_check(updates)
         webview.start(gui='edgechromium',private_mode=True,icon=str(Path(__file__).parent/'ui'/'app.ico'))
     finally:
         host.close()

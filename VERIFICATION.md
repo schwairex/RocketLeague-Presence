@@ -1,48 +1,44 @@
-# Verification — v0.2.2
+# Verification — v0.2.3
 
-Windows 11, Python 3.12.10, PyInstaller 6.22.3, 2026-10-05. Python 3.11+
-is supported; Python 3.11 was not separately exercised on this host.
+Windows 11, Python 3.12.10, PyInstaller 6.22.3, 2026-10-05–06 (Europe/Istanbul).
+Python 3.11+ is supported; 3.11 was not separately exercised on this host.
 
-- **136 pytest tests passed**, including both real TCP mock-server formats
-  (object and JSON-string Data), fragmented/concatenated packets, match lifecycle,
-  training, manual rank, config/INI recovery and GUI engine shutdown.
-
-- v0.2.2 regressions verify the retained goal/replay/kickoff anchor, scoreboard
-  changes during the break, kickoff resync and Rocket League name in every phase.
-  A pypresence IPC wire test verifies the name and NAME status display type.
-- Turkish/English UI selection persisted in the native EXE. Report an Issue
-  follows About; no horizontal overflow at 1120x760 or 940x680. The full form
-  and send button fit the default viewport. No browser JS errors/warnings.
-- Report tests verify Worker-only endpoint, exact JSON keys, automatic version/OS,
-  validation before IO, Unicode lengths, timeout, no redirects, concurrent-submit
-  rejection, HTTP 200/429/400/500 and offline/unexpected failures. Browser mock QA
-  verifies disabled/loading state, responsive tab navigation, success clearing,
-  error retention and validation stopping requests. No real public report sent.
-- Independent review found Unicode native-input/counter mismatch; removed UTF-16
-  native limits so frontend and Python consistently validate code-point lengths.
-- Prior regressions verify immutable ID, direct training entry, omitted training
-  P/G/S, removed replay/time text, stable timestamps, five-write rolling budget,
-  coalescing and delayed timestamp synchronization.
-- Update tests cover version comparison, malformed/foreign assets, checksum
-  fallback/mismatch, non-EXE/incomplete files, offline/source-run protection,
-  relaunch config paths, notifications, failures and retry-loop prevention.
-- Production Windows helper ran against locally compiled dummy EXEs: successful
-  replacement/startup acknowledgement and failed-startup rollback. Both preserved
-  config; rollback actually restarted the old executable. The verified release
-  digest is carried into handoff and checked against the copied incoming EXE.
-- Final frozen **rl-presence.exe** loaded WebView2 at **1120 × 760**, offline
-  resources and working bridge; fixed ID tampering was ignored, old config
-  migrated and healthy startup was acknowledged. No GUI ERROR logs.
-- PE subsystem 2 confirms windowed launch; embedded icon/group-icon resources
-  exist. The packaged ICO is also assigned to the WinForms window, with a
-  dedicated AppUserModelID for taskbar branding.
-- Browser QA checked Updates/About, immutable ID, GitHub failure/retry at
-  1120 × 760 and 940 × 680. No horizontal overflow or JS warnings/errors.
-  Screenshots show fixture data, not live GitHub release claims.
-- Independent review findings were fixed: relative config relaunch, failed-update
-  loops, startup-dialog rollback and digest handoff integrity.
-- release-smoke.json records sanitized native results. Fake Discord adapters
-  and a separate test mutex were used; no real Discord pipe was touched.
+- **163 pytest tests passed**, including real TCP mock-server end-to-end tests
+  with fragmented/concatenated packets and object/JSON-string Data envelopes.
+- Per-mode rank migration, eight independent defaults, malformed config
+  recovery, independent persistence/presence, eight renamed playlists, expanded
+  arena lookups and longest-family matching are covered.
+- Fake Steam/Epic installations verify discovery of both copies, backups and
+  idempotent patching, active executable selection, partial permission errors,
+  restart notices across RPC restarts and game relaunches, and startup when
+  executable inspection is denied but process-name detection works.
+- The actual pywebview Event class exercises the None-return loaded callback.
+  Independent review found the incomplete first-run rank defaults; fixed and
+  checked from both source and a fresh-config native EXE.
+- Final frozen **rl-presence.exe** opened at **1120 × 760** with offline UI
+  resources, fixed/read-only ID, embedded icons and working desktop bridge.
+  English legacy-config migration and Turkish first run both rendered eight
+  rank cards. No GUI ERROR logs were captured.
+- The native report form used the real JS/Python bridge and ReportClient with
+  an injected HTTP 200 sender. Loading/button lock, automatic version/OS,
+  honest User-Agent, thanks text and field clearing passed in both languages.
+- Real Worker reachability was verified through the production ReportClient
+  with only malformed JSON on the wire: HTTP **400**, rather than the old
+  Python-urllib HTTP 403 / Cloudflare 1010 response. **No public test report
+  was created.** Successful public issue creation remains an external check.
+- Local browser fixture QA verified rank Save/Cancel semantics, current-mode
+  preview, Turkish/English labels, both developer profiles, responsive navigation
+  while sending, HTTP 200/429/400 handling and retained error text. No JS
+  warnings/errors or horizontal overflow at 1120x760 and 940x680.
+- Existing regression coverage includes immutable app identity, training entry,
+  goal-break anchor/kickoff resync, pause/overtime/end/replay lifecycle,
+  five-write rolling budget/coalescing, parser/INI recovery and supervised shutdown.
+- The production GitHubReleases client read the public v0.2.2/v0.2.1 EXE assets
+  and SHA-256 digests. v0.2.3 is not uploaded by this delivery. Existing Windows
+  update replacement/rollback evidence is retained in release-smoke.json;
+  the final EXE independently acknowledged healthy v0.2.3 startup.
+- Source/Windows archives include ART_ASSETS.md and exclude live config, logs
+  and build caches. SHA-256 files accompany the release artifacts.
 
 Reproduce from source:
 
@@ -53,12 +49,11 @@ python -m pytest rocket_league_rpc/tests/test_v2_e2e.py -v
 .\build.ps1 -Python python
 ```
 
-Limits: Discord's native green timer has no pause field; it advances across
-goal breaks and is corrected at kickoff. Actual Discord rendering/art assets
-were not exercised; name/timestamp payloads were verified on the IPC wire. Prior v0.2 real
-read-only game packets verified JSON-string Data, Stadium_P and training ID 9.
-Other playlist/arena values and real overtime direction remain best effort.
-Rank/menu detail remains manual by the official-API-only choice. Real game INI
-and installed user app were not modified. Supplied GitHub Releases API returned
-404; live release discovery cannot be verified until the repository is public
-and a Release exists. Local Windows update/handoff/rollback tests passed.
+Limits: rank and detailed menu/shop/queue states remain manual because the
+official Stats API does not supply them. Maps/playlists remain best effort;
+104 exact Arena entries plus family matching do not guarantee all future maps.
+UF_Night_P → United Futura is inferred from the installed package and official
+Season 23 arena news. Discord artwork availability/rendering and real overtime
+direction were not exercised. The native green timer cannot pause during goal
+breaks; it is corrected at kickoff. Real game INIs and the real Discord pipe
+were not modified during QA; installation tests used temporary game folders.

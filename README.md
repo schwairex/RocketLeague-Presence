@@ -17,19 +17,19 @@ python -m venv .venv
 Or run the built `rl-presence.exe` in a writable folder. The default `config.json` and `logs/` live beside `run.py` for source runs, or beside the executable for packaged runs. `--config path\config.json` selects another config file; logs still live beside the launcher.
 
 
-## Desktop window (v0.2.2)
+## Desktop window (v0.2.3)
 
 Close the old RPC before launching this version. Keep your existing config.json beside the new EXE to preserve player/rank preferences. Application ID is now fixed; legacy client_id is ignored and removed. Windows 10/11, .NET Framework 4.8 and Microsoft Edge WebView2 Runtime are required. The EXE includes Python and the UI fonts/SVGs; the interface loads offline.
 
-Görünüm retains the supplied design. Genel adds manual rank/division, main menu, queue, shop, free play, custom training and garage. These choices persist; real match telemetry takes priority. **The official API does not provide rank or detailed menu status.** A single manually selected rank is displayed across modes; it is not automatically refreshed.
+Görünüm retains the supplied design. Genel adds manual rank/division, main menu, queue, shop, free play, custom training and garage. These choices persist; real match telemetry takes priority. **The official API does not provide rank or detailed menu status.** General now saves independent rank/division selections for Ranked 3v3, 2v2, 1v1, Heatseeker, Rumble, Hoops, Snow Day and Dropshot. Only the current ranked playlist’s selection appears; casual/training/menu views have no rank. Legacy single-rank preferences migrate to all eight slots once, then each can be edited independently.
 
 Kaydet atomically applies settings without restarting RPC; İptal discards unsaved edits. Preview samples never publish to Discord. The live card and bug button open all players' Score/Goals/Saves, raw match fields, last received event, connection errors, pending payload and last sent payload. Genel can open logs or save logs/diagnostics.json. Status dots distinguish a disconnected socket, connection without packets, live telemetry and the game being closed.
 
 The previous menu-stuck bug was reproduced with real TCP: Data arrived as a JSON-encoded string. v0.2 accepts both this form and the documented object after stream framing. Training TimeSeconds is available in diagnostics but is not labeled as match time remaining. Packet rate shown in the footer is measured, not assumed.
 
-The built-in Application ID is read-only in Genel and absent from saved config. Changes made by editing JSON outside the app require a restart. Use `--console --skip-install` for console-only diagnostic runs; the GUI setup button remains an explicit action.
+The built-in Application ID is read-only in Genel and absent from saved config. Changes made by editing JSON outside the app require a restart. Use `--console --skip-install` for console-only diagnostic runs; automatic discovery/setup is enabled by default; `--skip-install` disables it for diagnostics.
 
-## Language and public issue reports (v0.2.2)
+## Language and public issue reports
 
 In **General / Genel → Interface language / Arayüz dili**, choose Türkçe or
 English, then **Save / Kaydet**. Language previews immediately and persists
@@ -43,7 +43,7 @@ and a 10–2000 character description, then send. Only the trimmed title,
 description, app version and OS are posted as JSON to
 `https://bug-report.kralsefo123.workers.dev`. No logs, account identifiers,
 passwords, API keys or tokens are attached. The endpoint is defined once in
-`rocket_league_rpc/reports.py`. Reporting does not call GitHub directly; the
+`rocket_league_rpc/reports.py`. v0.2.3 identifies requests with an honest RL-Presence/version User-Agent, fixing the Worker’s rejection of default Python clients. Reporting does not call GitHub directly; the
 existing GitHub updater remains independent.
 
 Validation occurs in both JavaScript and Python before any request. Submitting
@@ -67,29 +67,59 @@ End users do not create a Discord application. This build uses the existing **80
 3. In the application's Rich Presence / Art Assets area, upload images using the exact lowercase keys below. These are **every unique key used by `maps.py`**, plus the generic and team icons. Use artwork you have permission to use. Variants share their base arena image.
 4. Start the Discord **desktop** app on this Windows session. Enable activity sharing in Discord's privacy settings if the activity is hidden.
 
-| Exact asset key | Artwork |
+| Exact key / Birebir anahtar | Artwork / Görsel |
 |---|---|
-| `rl_logo` | Generic Rocket League image |
-| `blue` | Blue team icon |
-| `orange` | Orange team icon |
-| `dfh_stadium` | DFH Stadium |
+| `aquadome` | Aquadome |
+| `arctagon` | Arctagon |
 | `beckwith_park` | Beckwith Park |
+| `blue` | Blue team icon / Mavi takım |
+| `boostfield_mall` | Boostfield Mall |
+| `calavera` | Calavera |
+| `carbon` | Carbon |
+| `champions_field` | Champions Field |
+| `core_707` | Core 707 |
+| `deadeye_canyon` | Deadeye Canyon |
+| `deadeye_canyon_oasis` | Deadeye Canyon (Oasis) |
+| `dfh_stadium` | DFH Stadium |
+| `drift_woods` | Drift Woods |
+| `dunk_house` | Dunk House |
+| `estadio_vida` | Estadio Vida |
+| `farmstead` | Farmstead |
+| `forbidden_temple` | Forbidden Temple |
+| `futura_garden` | Futura Garden |
+| `mannfield` | Mannfield |
+| `midnight_metro` | Midnight Metro |
+| `neo_tokyo` | Neo Tokyo |
+| `neon_fields` | Neon Fields |
+| `orange` | Orange team icon / Turuncu takım |
+| `parc_de_paris` | Parc de Paris |
+| `quadron` | Quadron |
+| `rivals_arena` | Rivals Arena |
+| `rl_logo` | Rocket League logo |
+| `rocket_labs` | Rocket Labs layouts / Rocket Labs ortak görseli |
+| `salty_shores` | Salty Shores |
+| `sovereign_heights` | Sovereign Heights |
+| `starbase_arc` | Starbase ARC |
+| `starbase_arc_aftermath` | Starbase ARC (Aftermath) |
+| `sunset_dunes` | Sunset Dunes |
+| `the_block` | The Block |
+| `throwback_stadium` | Throwback Stadium |
+| `united_futura` | United Futura |
+| `urban_central` | Urban Central |
 | `utopia_coliseum` | Utopia Coliseum |
 | `wasteland` | Wasteland |
-| `neo_tokyo` | Neo Tokyo |
-| `urban_central` | Urban Central |
-| `aquadome` | Aquadome |
-| `mannfield` | Mannfield |
-| `forbidden_temple` | Forbidden Temple |
-| `farmstead` | Farmstead |
+
+See [ART_ASSETS.md](ART_ASSETS.md) for the new-key checklist and all supported Arena names/variants.
 
 Missing uploaded assets do not affect the match text but the images may not appear. This distribution uses a fixed Application ID; arena art is uploaded to that Discord application.
 
 ## First run and enabling the Stats API
 
-The desktop window creates defaults on first run. In **Genel**, select rank/division and your activity outside a match, then click **Kaydet**. In **Görünüm**, enter your game name/platform and save to enable personal points/goals/saves. Explicit PrimaryId takes priority; clear an old ID when changing accounts.
+The desktop window creates defaults on first run. In **Genel**, select each ranked mode’s rank/division and your activity outside a match, then click **Kaydet**. In **Görünüm**, enter your game name/platform and save to enable personal points/goals/saves. Explicit PrimaryId takes priority; clear an old ID when changing accounts.
 
-Click **Stats API’yi yapılandır** in **Genel**. The installer discovers Steam through registry/libraryfolders.vdf, or Epic through .item manifests (including Sugar). If discovery fails, enter the folder containing TAGame, save, then click again. Console mode retains its once-only install-path prompt.
+On every normal GUI launch, the app automatically scans **all Steam libraries and Epic manifests**, includes a saved custom path, and configures **every discovered installation**. No setup-button click is required. When RocketLeague.exe runs, its executable path selects the active installation even when both launchers are installed. General lists the detected paths and active game. A startup banner explains missing installs, write permissions or a required game restart. “Check installations again” is a retry action, not a prerequisite.
+
+If discovery fails, enter the folder containing TAGame and save; the automatic check picks it up. A game already running during an INI edit must be fully closed/reopened; the app cannot enable the API inside that process. It never closes the game automatically. Restart detection also survives RPC restarts and game relaunches between checks. Console mode retains its once-only path prompt. Launch only one Rocket League copy at a time: both use the same configured local ports.
 
 The installer selects `<install>\TAGame\Config\TAStatsAPI.ini` when present; otherwise it selects/creates `DefaultStatsAPI.ini`. It ensures:
 
@@ -127,7 +157,8 @@ Copy `config.example.json` if desired; first run also generates defaults. Restar
 | `show_perspective` | `false`; show `You … Opp` when local team is known |
 | `show_time` | `true`; Discord timestamps, without duplicate remaining-time text |
 | `show_rank`, `show_player_stats` | `true`; manual rank and local P/G/S |
-| `rank_tier`, `rank_division` | `Unranked`, `1`; division is 1–4; SSL has none |
+| `mode_ranks` | Eight objects keyed by standard/doubles/duel/heatseeker/rumble/hoops/snow_day/dropshot, each with `tier` and `division` (1–4); SSL has none |
+| `rank_tier`, `rank_division` | Legacy migration inputs; the new UI edits `mode_ranks` |
 | `manual_activity` | `auto`; main_menu/menu/queue/shop/training/custom_training/garage |
 | `player_platform` | `auto`; steam/epic filters name matching |
 | `spectating` | `false`; set true when watching a live match to suppress Target inference |
@@ -194,8 +225,10 @@ The current [Its-Haze/league-rpc](https://github.com/Its-Haze/league-rpc) was re
 
 The mock also supports `--encoded-data` to replay the observed real TCP envelope. Katlicia/LOLCustomRPC was consulted only for GUI/worker-thread and save/cancel architecture; no League data logic is used.
 
-## GitHub updates (v0.2.2)
+## GitHub updates (v0.2.3)
 
 Each launch checks [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases). A newer stable release triggers an in-app notification, verified SHA-256 download and a hidden Windows helper that waits for exit, replaces the EXE and relaunches it. Config/logs remain intact. The new window/engine must acknowledge healthy startup or the helper restores the previous EXE. A failed release is blocked from automatic retries until a different version; the check button permits explicit retry. Source/Python runs display releases but never replace Python.
 
 The repository and Releases must be publicly accessible. Publish `rl-presence.exe` with GitHub’s SHA-256 asset digest or `SHA256SUMS.txt`. See [RELEASING.md](RELEASING.md). The supplied repository’s Releases API returned 404 when checked on 2026-10-05; network/repository errors do not stop RPC. This deliverable does not publish to GitHub.
+
+Ranked Heatseeker PlaylistId 63 mapping reference: [author-maintained playlist enum](https://github.com/GrantJL/rl-lobby-ranks/blob/master/lobby-ranks/types.h). This is a lookup fact, not a runtime data source.

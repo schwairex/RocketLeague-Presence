@@ -14,8 +14,8 @@ import time
 
 from . import __version__
 from .config import Config, app_directory, load_config, save_config, validate_config
-from .game_watcher import rocket_league_running, watch_game
-from .installer import setup_install
+from .game_watcher import rocket_league_running, watch_game, running_game_info
+from .installer import setup_install, InstallationSetup
 from .presence import build_presence
 from .rpc import DiscordClient, PresencePublisher, UNSET
 from .maps import lookup_map
@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 class Application:
     def __init__(self, config: Config, config_path: Path | None = None,
                  discord_factory=None, wall_clock=time.time, monotonic_clock=time.monotonic,
-                 mock_game: bool = False, raw_packets: bool = False):
+                 mock_game: bool = False, raw_packets: bool = False, auto_setup: bool = False):
         self.config = config
         self.config_path = config_path
         self.wall_clock = wall_clock
@@ -48,6 +48,10 @@ class Application:
         self.stats_error = ''
         self.packet_times = deque(maxlen=1000)
         self.settings_lock = asyncio.Lock()
+        self.setup_lock = asyncio.Lock()
+        self.auto_setup = auto_setup and not mock_game
+        self.install_setup = InstallationSetup()
+        if not self.auto_setup:self.install_setup.result['status']='manual'
         self.publisher = PresencePublisher(discord_factory or (lambda:DiscordClient(self.config.client_id)),
                                            interval=config.update_interval, clock=monotonic_clock)
 
@@ -61,6 +65,7 @@ class Application:
         status = ('game_off' if not self.running else 'disconnected' if not self.connected else
                   'awaiting_data' if self.last_event is None else 'menu' if self.state.phase == Phase.MENU else 'live')
         return {'config':{**asdict(self.config), 'client_id':self.config.client_id}, 'game_running':self.running, 'match':match,
+                'installation':copy.deepcopy(self.install_setup.result),
                 'stats':{'connected':self.connected, 'status':status, 'last_event':self.last_event,
                          'last_packet_at':self.last_packet_at, 'error':self.stats_error,
                          'packets_per_second':sum(t >= now-1 for t in self.packet_times)},
@@ -115,6 +120,7 @@ class Application:
             log.info('Rocket League %s', 'running' if running else 'not running')
         self.running = running
         if not running:
+            self.install_setup.pending.clear()
             self.connected = False
             self.state = MatchState()
             self.last_update = None
@@ -191,6 +197,23 @@ class Application:
             await wait_or_stop(self.stop, delay)
             delay = min(5.0, delay*1.5)
 
+    async def configure_game_installs(self):
+        async with self.setup_lock:
+            active,started_at=await asyncio.to_thread(running_game_info)
+            # Executable inspection can be denied while name detection works.
+            # On first launch the watcher may not have delivered its state yet.
+            running=self.running or active is not None or await asyncio.to_thread(rocket_league_running)
+            result=await asyncio.to_thread(self.install_setup.check,copy.deepcopy(self.config),running,active,started_at)
+            selected=result['active_path'] or (result['installs'][0]['path'] if result['installs'] else '')
+            if selected and selected!=self.config.install_path:
+                await self.apply_config({'install_path':selected})
+            return copy.deepcopy(result)
+
+    async def setup_loop(self):
+        while not self.stop.is_set():
+            await self.configure_game_installs()
+            await wait_or_stop(self.stop,5)
+
     async def presence_loop(self):
         while not self.stop.is_set():
             self.refresh()
@@ -214,6 +237,8 @@ class Application:
             tasks = [asyncio.create_task(supervise(name, factory, self.stop), name=name) for name,factory in [
                 ('game-watcher',lambda:watch_game(self.set_running,self.stop,detector)),
                 ('stats-client',self.stats_loop), ('discord-publisher',self.presence_loop)]]
+            if self.auto_setup:
+                tasks.append(asyncio.create_task(supervise('automatic-installation',self.setup_loop,self.stop),name='automatic-installation'))
             if on_ready:
                 on_ready()
             await self.stop.wait()
@@ -254,6 +279,7 @@ def cli(argv=None) -> int:
             if not args.console:
                 from .gui import launch
                 launch(config,config_path,base/'logs',mock_game=args.mock_game,raw_packets=args.raw_packets,
+                       skip_install=args.skip_install,
                        update_ready_file=args.update_ready_file)
                 return 0
             if not args.skip_install and not args.mock_game:

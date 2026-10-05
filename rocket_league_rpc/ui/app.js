@@ -42,8 +42,41 @@
       const on=!!draft[button.dataset.setting];button.setAttribute('aria-pressed',String(on));
       button.querySelector('.tr').className='tr '+(on?'on':'off');
     }
-    const noDivision=['Unranked','Supersonic Legend'].includes(draft.rank_tier);
-    document.querySelector('[data-field="rank_division"]').disabled=noDivision;
+    hydrateRanks();
+  }
+  function hydrateRanks(){
+    const container=$('mode-ranks');container.replaceChildren();
+    for(const [key,name] of Object.entries(snapshot?.ranked_modes||{})){
+      draft.mode_ranks??={};
+      const rank=draft.mode_ranks[key]??={tier:'Unranked',division:1};const card=document.createElement('div');card.className='rank-card';
+      const heading=document.createElement('h3');heading.textContent=name;card.append(heading);
+      for(const field of ['tier','division']){
+        const label=document.createElement('label');label.textContent=t(field==='tier'?'Rank':'Küme');
+        const select=document.createElement('select');select.dataset.rankMode=key;select.dataset.rankField=field;
+        select.setAttribute('aria-label',name+' · '+label.textContent);
+        for(const value of field==='tier'?snapshot.rank_tiers:[1,2,3,4]){const option=document.createElement('option');option.value=value;option.textContent=field==='tier'?value:['I','II','III','IV'][value-1];select.append(option);}
+        select.value=rank[field];select.disabled=field==='division'&&['Unranked','Supersonic Legend'].includes(rank.tier);
+        select.title=select.selectedOptions[0]?.textContent||'';
+        select.addEventListener('change',()=>{draft.mode_ranks[key][field]=field==='division'?Number(select.value):select.value;select.title=select.selectedOptions[0]?.textContent||'';card.querySelector('[data-rank-field="division"]').disabled=['Unranked','Supersonic Legend'].includes(draft.mode_ranks[key].tier);preview();});
+        label.append(select);card.append(label);
+      }
+      container.append(card);
+    }
+  }
+  const setupMessages={checking:'Rocket League kurulumları otomatik denetleniyor…',ready:'Stats API tüm bulunan kurulumlarda hazır. Oyunu açabilirsin.',restart_required:'Stats API etkinleştirildi. Veri akışı için Rocket League’i tamamen kapatıp yeniden aç.',missing:'Rocket League kurulumu bulunamadı. Genel sekmesinden TAGame içeren klasörü seç.',permission_denied:'Stats API dosyasına yazılamadı. Uygulamayı yönetici olarak açıp yeniden dene.',error:'Stats API yapılandırılamadı. Kurulum yolunu ve günlükleri kontrol et.',manual:'Otomatik kurulum bu oturumda kapalı.'};
+  function renderInstallation(info){
+    if(!info)return;
+    const warning=['restart_required','missing','permission_denied','error'].includes(info.status);
+    $('setup-banner').hidden=!warning;text('setup-banner-message',t(setupMessages[info.status]||setupMessages.checking));
+    text('install-result',t(setupMessages[info.status]||setupMessages.checking));
+    const list=$('installations');list.replaceChildren();
+    for(const item of info.installs||[]){
+      const card=document.createElement('div');card.className='install-card';const header=document.createElement('header');
+      const name=document.createElement('span');name.textContent=t('Kurulum')+(info.active_path===item.path?' · '+t('AKTİF OYUN'):'');
+      const status=document.createElement('span');status.className='install-state'+(item.status==='permission_denied'||item.status==='error'?' warning':'');
+      status.textContent=t(item.status==='permission_denied'?'Yazma izni gerekli':item.status==='error'?'Kurulum hatası':info.restart_required&&info.active_path===item.path?'Yeniden başlat':'Hazır');
+      const path=document.createElement('p');path.textContent=item.path;header.append(name,status);card.append(header,path);list.append(card);
+    }
   }
   function renderPreview(payload){
     const isMap=payload?.large_image&&payload.large_image!=='rl_logo';
@@ -99,8 +132,8 @@
     for(const row of (s.logs||[]).slice(-35)){const line=document.createElement('div');const time=document.createElement('span');time.style.color='#5E6A92';time.textContent=`[${row.time}] `;const level=document.createElement('span');level.style.color=row.level==='INFO'?'#3DDC97':row.level==='MAÇ'?'#3D8BFF':'#FF8F2B';level.textContent=row.level+' ';line.append(time,level,document.createTextNode(`${row.logger?row.logger+': ':''}${row.message}`));log.append(line);}log.scrollTop=log.scrollHeight;
     const port=s.config.stats_transport==='websocket'?s.config.stats_web_port:s.config.stats_port;
     text('footer-status',`Stats API · ${s.config.stats_host}:${port} · ${t('{rate} paket/sn',{rate:s.stats.packets_per_second})}${s.discord.next_send_in>0?' · RPC '+t('{seconds} sn',{seconds:Math.ceil(s.discord.next_send_in)}):''}`);
-    text('install-result',t(s.install_result||'Yolu kaydet, ardından yapılandır. INI değişirse oyunu tamamen yeniden başlat.'));
-    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.2');
+    renderInstallation(s.installation);
+    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.3');
     renderUpdates(s.updates);
     if(!$('diagnostics').hidden&&$('diagnostics').open)renderDiagnostics();
     preview();
@@ -134,20 +167,20 @@
     busy=true;
     try{
       const s=await invoke('get_snapshot');
-      if(!persisted){persisted=clone(s.config);draft=clone(s.config);const select=$('rank-tier');for(const rank of s.rank_tiers){const option=document.createElement('option');option.value=rank;option.textContent=rank;select.append(option);}hydrate();}
+      if(!persisted){snapshot=s;persisted=clone(s.config);draft=clone(s.config);hydrate();}
       else if(JSON.stringify(s.config)!==JSON.stringify(persisted)){
         // Keep unsaved user edits, while adopting engine-learned IDs and the
         // installer's discovered path for fields the user hasn't changed.
-        for(const key of Object.keys(s.config))if(draft[key]===persisted[key])draft[key]=s.config[key];
+        for(const key of Object.keys(s.config))if(JSON.stringify(draft[key])===JSON.stringify(persisted[key]))draft[key]=clone(s.config[key]);
         persisted=clone(s.config);hydrate();
       }
       render(s);
     }catch(e){toast(e.message,true);}finally{busy=false;}
   }
   for(const el of document.querySelectorAll('[data-field]'))el.addEventListener('input',()=>{
-    if(!draft)return;const key=el.dataset.field;draft[key]=el.type==='number'||key==='rank_division'?Number(el.value):el.value;hydrateTogglesOnly();if(key==='language'){applyLanguage();if(snapshot)render(snapshot);}preview();
+    if(!draft)return;const key=el.dataset.field;draft[key]=el.type==='number'||key==='rank_division'?Number(el.value):el.value;hydrateTogglesOnly();if(key==='language'){applyLanguage();hydrateRanks();if(snapshot)render(snapshot);}preview();
   });
-  function hydrateTogglesOnly(){document.querySelector('[data-field="rank_division"]').disabled=['Unranked','Supersonic Legend'].includes(draft.rank_tier);}
+  function hydrateTogglesOnly(){}
   for(const button of document.querySelectorAll('[data-setting]'))button.addEventListener('click',()=>{if(!draft)return;draft[button.dataset.setting]=!draft[button.dataset.setting];hydrate();preview();});
   for(const tab of document.querySelectorAll('[data-tab]'))tab.addEventListener('click',()=>{
     for(const other of document.querySelectorAll('[data-tab]'))other.classList.toggle('act',other===tab);
@@ -159,10 +192,11 @@
   $('cancel').addEventListener('click',()=>{if(!persisted)return;draft=clone(persisted);hydrate();preview();toast(t('Kaydedilmemiş değişiklikler geri alındı.'));});
   $('save').addEventListener('click',async()=>{
     if(!draft)return;const button=$('save');button.disabled=true;
-    try{const changes=Object.fromEntries(Object.entries(draft).filter(([key,value])=>value!==persisted[key]));const s=await invoke('save_settings',changes);persisted=clone(s.config);draft=clone(s.config);hydrate();await refresh();toast(t('Ayarlar kaydedildi. Discord görünümü güncelleniyor.'));}
+    try{const changes=Object.fromEntries(Object.entries(draft).filter(([key,value])=>JSON.stringify(value)!==JSON.stringify(persisted[key])));const s=await invoke('save_settings',changes);persisted=clone(s.config);draft=clone(s.config);hydrate();await refresh();toast(t('Ayarlar kaydedildi. Discord görünümü güncelleniyor.'));}
     catch(e){toast(e.message,true);}finally{button.disabled=false;}
   });
-  async function action(id,method){$(id).disabled=true;try{const message=await invoke(method);toast(typeof message==='string'?t(message):t('Günlük klasörü açıldı.'));await refresh();}catch(e){toast(e.message,true);}finally{$(id).disabled=false;}}
+  async function action(id,method){$(id).disabled=true;try{const message=await invoke(method);toast(method==='setup_stats_api'?t(setupMessages[message.status]||setupMessages.error):typeof message==='string'?t(message):t('Günlük klasörü açıldı.'),method==='setup_stats_api'&&['missing','error','permission_denied'].includes(message.status));await refresh();}catch(e){toast(e.message,true);}finally{$(id).disabled=false;}}
+  $('setup-details').addEventListener('click',()=>document.querySelector('[data-tab="general"]').click());
   $('setup-api').addEventListener('click',()=>action('setup-api','setup_stats_api'));
   $('open-logs').addEventListener('click',()=>action('open-logs','open_logs'));
   $('export-report').addEventListener('click',()=>action('export-report','export_diagnostics'));
@@ -192,8 +226,10 @@
     finally{reportBusy=false;$('report-submit').disabled=false;$('report-title').disabled=false;$('report-description').disabled=false;$('report-spinner').hidden=true;$('report-form').removeAttribute('aria-busy');text('report-button-label',t('Gönder'));}
   });
   applyLanguage();
-  function start(api){if(bridge)return;bridge=api;refresh();setInterval(refresh,1000);}
+  let refreshInterval;
+  function start(api){if(bridge)return;bridge=api;refresh();refreshInterval=setInterval(refresh,1000);}
   window.addEventListener('pywebviewready',()=>start(window.pywebview.api));
   if(window.rpcBrowserBridge)start(window.rpcBrowserBridge);
-  window.rpcUI={refresh,getDraft:()=>clone(draft)};
+  window.rpcUI={refresh,getDraft:()=>clone(draft),stop:()=>clearInterval(refreshInterval)};
+  window.addEventListener('beforeunload',window.rpcUI.stop);
 })();

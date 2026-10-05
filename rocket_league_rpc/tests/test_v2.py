@@ -103,7 +103,8 @@ async def test_hot_reload_identity_reduces_last_snapshot_and_transport_restarts(
     msg['Data']['Players'][0].update(Score=420,Goals=2,Saves=3)
     await app.on_event(msg)
     assert app.state.local_team is None
-    await app.apply_config({'player_name':'Çağrı','rank_tier':'Diamond II','rank_division':2})
+    await app.apply_config({'player_name':'Çağrı','mode_ranks':{
+        **app.config.mode_ranks,'doubles':{'tier':'Diamond II','division':2}}})
     assert app.state.local_team==0 and app.state.local_player_score==420
     assert 'Diamond II' in app.current_payload()['details']
     assert json.loads((tmp_path/'config.json').read_text(encoding='utf-8'))['player_name']=='Çağrı'

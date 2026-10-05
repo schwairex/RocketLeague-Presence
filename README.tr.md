@@ -2,7 +2,7 @@
 
 Rocket League için Windows üzerinde Python 3.11+ ile çalışan Discord Rich Presence uygulaması. Veriler yalnızca [resmî yerel Stats API](https://www.rocketleague.com/developer/stats-api) üzerinden okunur. Oyun belleğine erişilmez; oyun komutu gönderilmez. [English guide](README.md).
 
-## Dil seçimi ve Sorun Bildir (v0.2.2)
+## Dil seçimi ve Sorun Bildir (v0.2.3)
 
 **Genel → Arayüz dili** alanından Türkçe veya English seçin ve **Kaydet**’e basın.
 Seçim hemen önizlenir ve kaydedildikten sonra yeniden açılışta korunur. İptal,
@@ -15,7 +15,7 @@ açık olduğu ve şifre/kişisel bilgi yazılmaması gerektiği belirtilir. Yal
 başlık, açıklama, otomatik uygulama sürümü ve işletim sistemi JSON olarak
 `https://bug-report.kralsefo123.workers.dev` adresine gönderilir. Günlükler,
 oyuncu kimlikleri, token ve API anahtarları eklenmez. Worker adresi tek yerde,
-`rocket_league_rpc/reports.py` içinde tanımlıdır. Bu özellik doğrudan GitHub’a
+`rocket_league_rpc/reports.py` içinde tanımlıdır. v0.2.3 istekleri uygulama adı/sürümüyle tanıtır; Worker’ın varsayılan Python istemcisine verdiği 403 hatası giderildi. Bu özellik doğrudan GitHub’a
 istek atmaz; mevcut GitHub güncelleyicisi bağımsız çalışmaya devam eder.
 
 Alanlar arayüzde ve Python tarafında doğrulanır. Gönderim ayrı köprü thread’inde
@@ -43,11 +43,11 @@ python -m venv .venv
 Hazır derleme varsa `rl-presence.exe` dosyasını çalıştırabilirsiniz. `config.json` ve `logs/`, kaynak kullanımında `run.py` yanında, exe kullanımında exe yanında bulunur. Alternatif ayar dosyası: `--config C:\klasor\config.json`. Arayüzde Kaydet ile ayarlar hemen uygulanır; JSON dosyasını dışarıdan düzenlediyseniz RPC’yi yeniden başlatın.
 
 
-## Yeni masaüstü arayüzü (v0.2.2)
+## Yeni masaüstü arayüzü (v0.2.3)
 
 Eski RPC’yi kapatıp yeni EXE’yi açın. Mevcut config.json dosyanızı yeni EXE’nin yanında tutarak oyuncu/harita/rank ayarlarınızı koruyabilirsiniz. Application ID bu sürümde sabittir; eski client_id yok sayılır ve kaldırılır. Windows 10/11, .NET Framework 4.8 ve Microsoft Edge WebView2 Runtime gerekir. Python, yazı tipleri ve verilen SVG görselleri EXE’ye dahildir; arayüz internet gerektirmez.
 
-**Görünüm** verilen HTML düzenini kullanır. **Genel** sekmesinde rank/küme, ana menü, menü, sıra, mağaza, serbest/özel antrenman ve garaj seçilir. Seçimler kaydedilir; gerçek maç verileri bunların önüne geçer. **Resmî Stats API rank ve ayrıntılı menü durumlarını vermez.** Rank elle belirlenir, tüm modlarda aynı seçim gösterilir.
+**Görünüm** verilen HTML düzenini kullanır. **Genel** sekmesinde rank/küme, ana menü, menü, sıra, mağaza, serbest/özel antrenman ve garaj seçilir. Seçimler kaydedilir; gerçek maç verileri bunların önüne geçer. **Resmî Stats API rank ve ayrıntılı menü durumlarını vermez.** Ranked 3v3, 2v2, 1v1, Heatseeker, Rumble, Hoops, Snow Day ve Dropshot için ayrı rank/küme kaydedilir. Discord yalnızca oynanan ranked modun rankını gösterir; casual/eğitim/menüde rank gösterilmez. Eski tek rank seçimi sekiz moda bir kez taşınır, ardından ayrı düzenlenir.
 
 Kaydet değişiklikleri uygulamayı yeniden başlatmadan uygular; İptal kaydedilmemiş değişiklikleri geri alır. Örnek önizlemeler Discord’a gönderilmez. Canlı maç kartına veya hata simgesine tıklayınca tüm oyuncuların puan/gol/kurtarış değerleri, ham maç alanları, son olay, bağlantı hatası ve son gönderilen/bekleyen RPC açılır. Genel sekmesinde günlük klasörünü açabilir veya logs/diagnostics.json raporu kaydedebilirsiniz.
 
@@ -64,31 +64,74 @@ Son kullanıcılar yeni Discord uygulaması oluşturmaz. Bu derleme mevcut **802
 3. Rich Presence / Art Assets bölümüne aşağıdaki anahtarlarla görseller yükleyin. Anahtarlar küçük harflerle **birebir aynı** olmalıdır. Liste `maps.py` tarafından kullanılan bütün farklı anahtarları ve genel/takım simgelerini kapsar. Kullanma hakkınız olan görseller seçin; varyantlar temel harita görselini paylaşır.
 4. Aynı Windows oturumunda Discord masaüstü uygulamasını açın. Aktivite görünmüyorsa Discord'un aktivite paylaşımı gizlilik ayarını kontrol edin.
 
-| Birebir görsel anahtarı | Görsel |
+| Exact key / Birebir anahtar | Artwork / Görsel |
 |---|---|
-| `rl_logo` | Genel Rocket League görseli |
-| `blue` | Mavi takım simgesi |
-| `orange` | Turuncu takım simgesi |
-| `dfh_stadium` | DFH Stadium |
+| `aquadome` | Aquadome |
+| `arctagon` | Arctagon |
 | `beckwith_park` | Beckwith Park |
+| `blue` | Blue team icon / Mavi takım |
+| `boostfield_mall` | Boostfield Mall |
+| `calavera` | Calavera |
+| `carbon` | Carbon |
+| `champions_field` | Champions Field |
+| `core_707` | Core 707 |
+| `deadeye_canyon` | Deadeye Canyon |
+| `deadeye_canyon_oasis` | Deadeye Canyon (Oasis) |
+| `dfh_stadium` | DFH Stadium |
+| `drift_woods` | Drift Woods |
+| `dunk_house` | Dunk House |
+| `estadio_vida` | Estadio Vida |
+| `farmstead` | Farmstead |
+| `forbidden_temple` | Forbidden Temple |
+| `futura_garden` | Futura Garden |
+| `mannfield` | Mannfield |
+| `midnight_metro` | Midnight Metro |
+| `neo_tokyo` | Neo Tokyo |
+| `neon_fields` | Neon Fields |
+| `orange` | Orange team icon / Turuncu takım |
+| `parc_de_paris` | Parc de Paris |
+| `quadron` | Quadron |
+| `rivals_arena` | Rivals Arena |
+| `rl_logo` | Rocket League logo |
+| `rocket_labs` | Rocket Labs layouts / Rocket Labs ortak görseli |
+| `salty_shores` | Salty Shores |
+| `sovereign_heights` | Sovereign Heights |
+| `starbase_arc` | Starbase ARC |
+| `starbase_arc_aftermath` | Starbase ARC (Aftermath) |
+| `sunset_dunes` | Sunset Dunes |
+| `the_block` | The Block |
+| `throwback_stadium` | Throwback Stadium |
+| `united_futura` | United Futura |
+| `urban_central` | Urban Central |
 | `utopia_coliseum` | Utopia Coliseum |
 | `wasteland` | Wasteland |
-| `neo_tokyo` | Neo Tokyo |
-| `urban_central` | Urban Central |
-| `aquadome` | Aquadome |
-| `mannfield` | Mannfield |
-| `forbidden_temple` | Forbidden Temple |
-| `farmstead` | Farmstead |
+
+Yeni eklenecek anahtarlar ve kapsam: [ART_ASSETS.md](ART_ASSETS.md).
 
 Bu dağıtım sabit Application ID kullanır; harita görselleri Discord uygulamasına portal üzerinden yüklenir. Eksik görsel yüklemeleri maç yazısını engellemez; ilgili resim görünmeyebilir.
 
-## İlk çalıştırma ve Stats API
+## İlk çalıştırma ve otomatik Stats API kurulumu
 
-Varsayılan config.json oluşturulur ve pencere açılır. **Genel** sekmesinde rank/küme ve maç dışında durum seçin, **Kaydet**’e basın. **Görünüm**’de oyun içi adınızı/platformunuzu kaydedin. Eski PrimaryId varsa hesap değiştirirken temizleyin.
+Eski RPC’yi kapatın, ZIP’i yazılabilir bir klasöre çıkarın ve `rl-presence.exe`
+çalıştırın. Mevcut `config.json` dosyanızı yeni EXE’nin yanına taşıyabilirsiniz.
+Her normal açılışta Steam’in bütün kütüphaneleri ve Epic manifestleri otomatik
+taranır; bulunan **bütün oyun kurulumlarında** Stats API hazırlanır. Butona
+basmak gerekmez. Oyun çalışınca RocketLeague.exe yolu aktif Steam/Epic kopyasını
+seçer. Genel sekmesi bulunan yolları ve aktif kurulumu gösterir. “Kurulumları
+yeniden denetle” yalnızca tekrar deneme içindir.
 
-**Genel → Stats API’yi yapılandır** düğmesine basın. Steam kayıt defteri/libraryfolders.vdf ve Epic .item manifestleri (Sugar dahil) taranır. Bulunamazsa TAGame klasörünü içeren kurulum yolunu girip kaydedin, düğmeye tekrar basın. `--console` kullanımında bir kez yol soran eski kurulum akışı korunur.
+Oyun zaten açıksa INI değişikliği için oyunu tamamen kapatıp yeniden açın;
+üstteki uyarı bunu belirtir. Uygulama oyunu kendiliğinden kapatmaz. Eksik kurulum
+ve yazma izni sorunları da görünür. İzin hatasında uygulamayı yönetici olarak
+çalıştırıp yeniden denetleyin. Hiçbir kurulum bulunamazsa TAGame içeren klasörü
+Genel’de yazıp Kaydet’e basın; sonraki otomatik denetim bunu alır.
+İki launcher kurulumu desteklenir; aynı yerel portları kullandıkları için iki
+Rocket League kopyasını eşzamanlı açmayın. `--skip-install` otomatik denetimi
+kapatır. Konsol sürümünde bir kez yol soran seçenek korunur.
 
-Varsa `<kurulum>\TAGame\Config\TAStatsAPI.ini`, yoksa `DefaultStatsAPI.ini` kullanılır. Dosya tamamen yoksa oluşturulur:
+Genel’de her ranked modun rank/kümesini ve maç dışı durumunu seçip Kaydet’e
+basın. Görünüm’de oyun içi ad/platform ayarı yerel P/G/S eşleşmesini sağlar.
+INI seçiminde önce TAStatsAPI.ini, yoksa DefaultStatsAPI.ini kullanılır:
 
 ```ini
 [TAGame.MatchStatsExporter_TA]
@@ -182,8 +225,10 @@ Kimlik ve uzatma davranışı gerçek paketlerle doğrulanmalıdır. ReplayCreat
 
 Sahte sunucuda `--encoded-data`, gerçek TCP’de gözlenen zarf biçimini canlandırır. Katlicia/LOLCustomRPC yalnızca arayüz/iş parçacığı ve Kaydet/İptal mimarisi için incelendi; League veri mantığı kullanılmadı.
 
-## GitHub güncellemeleri (v0.2.2)
+## GitHub güncellemeleri (v0.2.3)
 
 Her açılışta [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases) kontrol edilir. Yeni kararlı sürümde uygulama içi bildirim gelir; EXE indirilir, SHA-256 doğrulanır, gizli bir Windows yardımcısı uygulama kapandıktan sonra EXE’yi değiştirip yeniden açar. config.json ve günlükler korunur. Yeni pencere ve motor sağlıklı açıldığını onaylamazsa eski EXE geri yüklenir. Başarısız aynı sürüm tekrar otomatik denenmez; Güncellemeleri kontrol et ile elle denenebilir. Kaynak/Python kullanımında sürüm notları görünür fakat Python dosyası değiştirilmez.
 
 Depo herkese açık ve Releases erişilebilir olmalıdır. Release’te `rl-presence.exe` ve GitHub SHA-256 digest’i veya `SHA256SUMS.txt` bulunmalıdır. Yayımlama akışı: [RELEASING.md](RELEASING.md). 2026-10-05 kontrolünde verilen depo Releases API’si 404 dönüyordu; internet/depo hataları RPC’yi durdurmaz. Bu teslim GitHub’a yayımlama yapmaz.
+
+Ranked Heatseeker PlaylistId 63 mapping reference: [author-maintained playlist enum](https://github.com/GrantJL/rl-lobby-ranks/blob/master/lobby-ranks/types.h). This is a lookup fact, not a runtime data source.
