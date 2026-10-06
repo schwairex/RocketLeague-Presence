@@ -6,7 +6,7 @@ import pytest
 REPO = 'https://github.com/schwairex/RocketLeague-Presence'
 
 
-def release(version='0.2.5', blob=b'MZ' + b'x' * 80):
+def release(version='0.2.6', blob=b'MZ' + b'x' * 80):
     return {'tag_name': 'v' + version, 'name': 'RL Presence ' + version,
         'body': 'Yeni özellikler\n<script>bad()</script>', 'draft': False, 'prerelease': False,
         'published_at': '2026-10-05T12:00:00Z', 'html_url': REPO + '/releases/tag/v' + version,
@@ -83,7 +83,7 @@ def test_source_run_shows_release_without_replacing_python(tmp_path):
     manager = UpdateManager(tmp_path, client=Client(), frozen=False)
     manager.check(background=False)
     assert manager.snapshot()['status'] == 'available'
-    assert manager.snapshot()['latest_version'] == '0.2.5'
+    assert manager.snapshot()['latest_version'] == '0.2.6'
 
 
 def test_relaunch_keeps_resolved_configuration_path(tmp_path):
@@ -97,7 +97,7 @@ def test_checksum_file_fallback(tmp_path):
     from rocket_league_rpc.updates import GitHubReleases, parse_releases
     blob = b'MZ' + b'x' * 80
     data = release(blob=blob); data['assets'][0].pop('digest')
-    url = REPO + '/releases/download/v0.2.5/SHA256SUMS.txt'
+    url = REPO + '/releases/download/v0.2.6/SHA256SUMS.txt'
     data['assets'].append({'name':'SHA256SUMS.txt','browser_download_url':url})
     client = GitHubReleases()
     client._read = lambda *args: (hashlib.sha256(blob).hexdigest()+'  rl-presence.exe\n').encode()
@@ -143,11 +143,11 @@ def test_failed_release_does_not_auto_restart_loop(tmp_path,monkeypatch):
     import json
     monkeypatch.setattr(updates.time,'sleep',lambda seconds: None)
     folder=tmp_path/'.updates';folder.mkdir()
-    (folder/'failed-release.json').write_text(json.dumps({'version':'0.2.5'}))
+    (folder/'failed-release.json').write_text(json.dumps({'version':'0.2.6'}))
     called=[]
     class Client:
         def fetch(self): return parse_releases([release()])
-        def stage(self,*args): return folder/'rl-presence-0.2.5.exe'
+        def stage(self,*args): return folder/'rl-presence-0.2.6.exe'
     for _ in range(2):
         manager=UpdateManager(tmp_path,client=Client(),frozen=True,on_ready=called.append)
         manager.check(background=False)

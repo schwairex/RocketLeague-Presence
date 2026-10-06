@@ -44,11 +44,11 @@ def test_game_timer_only_in_timestamp_and_goal_replay_text_omitted():
         blue_score=1, time_remaining=153, clock_end=1153,
         local_player_score=48, local_player_goals=0, local_player_saves=0)
     payload = build_presence(state, Config(), 1000)
-    assert payload['state'] == 'DFH Stadium | P:48 G:0 S:0'
+    assert payload['state'] == 'DFH Stadium • ⚽0 🧤0 ⭐48'
     assert payload['end'] - 1000 == 153
     assert build_presence(state, Config(), 1001) == payload
     replay = build_presence(replace(state, phase=Phase.GOAL_REPLAY), Config(), 1001)
-    assert replay['state'] == payload['state'] and 'end' not in replay
+    assert replay['state'] == payload['state'] + ' • ⏸ 2:33' and 'end' not in replay
 
 
 async def test_immediate_phase_changes_and_rolling_budget_coalesce():

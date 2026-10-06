@@ -1,3 +1,21 @@
+# v0.2.5 — RL Presence
+
+## İyileştirme
+- Discord kartı: `Ranked 2v2 • 🔵 5 - 2 🟠`, `Harita • ⚽gol 🧤kurtarış ⭐puan`.
+- Casual gerçek mod adını kullanır; casual/eğitim kartlarında küçük görsel ve tooltip gönderilmez.
+- Ranked kartında yalnızca oynanan mod için seçilmiş rank ikonu ve rank/küme tooltip'i bulunur.
+- Mevcut README tasarımı ve dosya düzeni korunarak yeni davranış iki dilde belgelendi.
+
+## Düzeltme
+- Gol tekrarı/kickoff/duraklatmada eski Discord bitiş damgası kaldırılır; kalan süre sabit `⏸ M:SS` olarak görünür.
+- RoundStarted ile kalan süreye yeniden eşitlenen canlı sayaç devam eder.
+- Replay veya countdown sırasında duraklatma doğru evreye döner; uzatma bekleme süresini saymaz.
+- UTF-8 emojili RPC paketleri ve eski rank/zaman damgasının temizlenmesi doğrulandı.
+
+English: compact emoji score/stat lines, ranked-only small artwork, map-only
+training, frozen static time during goal/kickoff/pause and synchronized resume.
+Discord has no native pause field; rapid updates still obey the rolling budget.
+
 # v0.2.4 — RL Presence
 
 ## Yeni

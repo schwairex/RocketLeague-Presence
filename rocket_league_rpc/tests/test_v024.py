@@ -31,12 +31,12 @@ def test_all_rank_asset_keys_and_ssl_without_division():
 
 
 @pytest.mark.parametrize('phase,playlist,show_rank,tier', [(Phase.TRAINING, 11, True, 'Diamond I'), (Phase.PLAYING, 2, True, 'Diamond I'), (Phase.PLAYING, 11, False, 'Diamond I'), (Phase.PLAYING, 11, True, 'Unranked')])
-def test_rank_fallback_preserves_team_icon(phase, playlist, show_rank, tier):
+def test_rank_fallback_omits_small_artwork(phase, playlist, show_rank, tier):
     cfg = Config(show_rank=show_rank)
     cfg.mode_ranks['doubles'] = {'tier': tier, 'division': 1}
     payload = build_presence(MatchState(phase=phase, playlist_id=playlist, local_team=1), cfg)
-    assert payload['small_image'] == 'orange'
-    assert payload['small_text'] == 'Team Orange'
+    assert 'small_image' not in payload
+    assert 'small_text' not in payload
 
 
 @pytest.mark.parametrize('point,expected', [((-499,-199),13),((100,-199),12),((699,-199),14),((-499,200),10),((699,200),11),((-499,499),16),((100,499),15),((699,499),17),((100,0),1),((-501,0),1)])

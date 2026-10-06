@@ -9,7 +9,7 @@ from rocket_league_rpc.presence import build_presence
 from rocket_league_rpc.state import MatchState, Phase, reduce_event
 
 
-def test_goal_clock_survives_replay_and_countdown_then_resyncs():
+def test_goal_clock_freezes_through_replay_and_countdown_then_resyncs():
     cfg = Config()
     state = MatchState(phase=Phase.PLAYING, arena='Stadium_P', playlist_id=2,
                        time_remaining=153, clock_end=1153)
@@ -18,21 +18,22 @@ def test_goal_clock_survives_replay_and_countdown_then_resyncs():
         state = reduce_event(state, {'Event':event,'Data':{}}, cfg, now)
         assert state.clock_end is None  # real game clock remains stopped
         payload = build_presence(state,cfg,now)
-        assert payload['end'] == 1153
+        assert 'end' not in payload and '⏸ 2:33' in payload['state']
         assert 'Kickoff' not in payload['state'] and 'Goal replay' not in payload['state']
     state = reduce_event(state, {'Event':'UpdateState','Data':{'Game':{
         'TimeSeconds':153,'bReplay':False,'Teams':[{'TeamNum':0,'Score':2},{'TeamNum':1,'Score':1}]}}}, cfg,1009)
-    assert 'Blue 2 - 1 Orange' in build_presence(state,cfg,1009)['details']
-    assert build_presence(state,cfg,1009)['end'] == 1153
+    assert '🔵 2 - 1 🟠' in build_presence(state,cfg,1009)['details']
+    assert 'end' not in build_presence(state,cfg,1009)
     state = reduce_event(state, {'Event':'RoundStarted','Data':{}},cfg,1010)
     assert build_presence(state,cfg,1010)['end'] == 1163
-    assert state.goal_clock_end is None
+    assert state.clock_stopped_at is None
 
 
-def test_replay_flag_without_goal_event_preserves_clock():
+def test_replay_flag_without_goal_event_freezes_clock():
     state = MatchState(phase=Phase.PLAYING,arena='Park_P',playlist_id=2,clock_end=1153,time_remaining=153)
     state = reduce_event(state,{'Event':'UpdateState','Data':{'Game':{'bReplay':True}}},Config(),1000)
-    assert build_presence(state,Config(),1000)['end']==1153
+    assert 'end' not in build_presence(state,Config(),1000)
+    assert '⏸ 2:33' in build_presence(state,Config(),1000)['state']
     paused = reduce_event(state,{'Event':'MatchPaused','Data':{}},Config(),1001)
     assert 'end' not in build_presence(paused,Config(),1001)
     assert 'end' not in build_presence(state,Config(show_time=False),1000)

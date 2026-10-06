@@ -1,4 +1,4 @@
-# Discord Art Assets — v0.2.4
+# Discord Art Assets — v0.2.5
 
 TR: Sabit Discord uygulaması **802869954805760020** için Rich Presence → Art Assets
 alanına aşağıdaki küçük harfli anahtarlarla görsel yükleyin. Son kullanıcıların
@@ -192,7 +192,7 @@ These supply name facts only; runtime data comes solely from the official Stats 
 | `Woods_Night_P` | Drift Woods (Night) | `drift_woods` |
 | `Woods_P` | Drift Woods | `drift_woods` |
 
-## v0.2.4 rank icons / Rank ikonları
+## v0.2.5 rank icons / Rank ikonları
 
 **TR:** Bu oturumda yalnızca anahtarlar ve yükleme listesi hazırlandı; görseller
 Discord hesabınıza yüklenmedi. Sabit uygulamanız **802869954805760020** için
@@ -206,8 +206,12 @@ Harita `large_image`, harita adı `large_text` olarak kalır. Rank, `details` ve
 **EN:** Only keys/upload instructions are delivered; no Portal uploads were made.
 Upload artwork under these exact keys for the fixed application above. Divisions
 share the tier icon and appear in the tooltip. Only the current ranked playlist's
-manual selection is used. Casual, training, hidden rank and Unranked keep the
-existing team icon (or rl_logo). `unranked` is reserved and optional.
+manual selection is used. Casual, training, hidden rank and Unranked omit
+small_image/small_text; map artwork remains. `unranked`, `blue` and `orange`
+remain reserved for compatibility; v0.2.5 does not use them as fallback icons.
+
+**TR:** Casual/eğitim ve rank kapalı/Unranked durumlarında küçük ikon ve tooltip
+gönderilmez. Yeni asset anahtarı gerekmez; mevcut harita/rank anahtarları korunur.
 
 | Rank | Exact asset key / Birebir anahtar |
 |---|---|

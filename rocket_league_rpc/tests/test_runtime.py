@@ -133,7 +133,7 @@ async def test_app_process_and_connection_gating_and_new_match_priority():
     await app.on_connection(True)
     await app.on_event(update())
     assert app.state.phase==Phase.PLAYING
-    assert 'Blue 2 - 1 Orange' in app.current_payload()['details']
+    assert '🔵 2 - 1 🟠' in app.current_payload()['details']
     await app.on_connection(False)
     assert app.current_payload()['state']=='In menus / Queueing'
     await app.set_running(False)

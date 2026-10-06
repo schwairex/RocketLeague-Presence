@@ -12,7 +12,7 @@ def test_stopped_clock_never_sends_ticking_timestamps(phase):
     p = build_presence(s, Config(), now=1000)
     assert 'start' not in p and 'end' not in p
     if phase in ['COUNTDOWN','GOAL_REPLAY','PAUSED']:
-        assert '1:02' not in p['state']
+        assert '⏸ 1:02' in p['state']
 
 
 def test_running_overtime_results_expiry_and_privacy_toggles():
@@ -23,7 +23,7 @@ def test_running_overtime_results_expiry_and_privacy_toggles():
                    blue_score=3, orange_score=2, local_team=0,
                    time_remaining=62, clock_end=1062)
     p = build_presence(s, Config(), now=1000)
-    assert p['details'] == 'Ranked 2v2 | Blue 3 - 2 Orange'
+    assert p['details'] == 'Ranked 2v2 • 🔵 3 - 2 🟠'
     assert p['state'] == 'DFH Stadium' and p['end'] == 1062
     p = build_presence(s, Config(show_score=False, show_map=False, show_mode=False), 1000)
     assert p['details'] == 'Rocket League' and 'DFH' not in str(p)

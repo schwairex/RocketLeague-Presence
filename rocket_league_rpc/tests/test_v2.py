@@ -31,7 +31,7 @@ def test_presence_includes_rank_division_and_local_player_stats():
                  local_player_score=420,local_player_goals=2,local_player_saves=3)
     p=build_presence(s,cfg,1000)
     assert p['small_image'] == 'diamond_2' and p['small_text'] == 'Diamond II Div III'
-    assert '420' in p['state'] and 'G:2' in p['state'] and 'S:3' in p['state']
+    assert '⭐420' in p['state'] and '⚽2' in p['state'] and '🧤3' in p['state']
     assert p['end']==1222 and p['large_image']=='dfh_stadium'
     p=build_presence(s,replace(cfg,show_time=False),1000)
     assert 'end' not in p and '3:42' not in p['state']

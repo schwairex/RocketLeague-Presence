@@ -43,19 +43,26 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
         # Do not flash a fake 0-0 kickoff card when entering free play.
         return menu_presence(config)
     map_name, asset = lookup_map(state.arena)
-    score = f'Blue {state.blue_score} - {state.orange_score} Orange'
+    score = f'🔵 {state.blue_score} - {state.orange_score} 🟠'
     if config.show_perspective and state.local_team in (0, 1):
         ours, theirs = (state.blue_score, state.orange_score) if state.local_team == 0 else (state.orange_score, state.blue_score)
-        score = f'You {ours} - {theirs} Opp'
-    details = ' | '.join(filter(None, [lookup_mode(state.playlist_id) if config.show_mode else '', score if config.show_score else ''])) or 'Rocket League'
+        own_icon, opponent_icon = ('🔵', '🟠') if state.local_team == 0 else ('🟠', '🔵')
+        score = f'{own_icon} You {ours} - {theirs} Opp {opponent_icon}'
+    details = ' • '.join(filter(None, [lookup_mode(state.playlist_id) if config.show_mode else '', score if config.show_score else ''])) or 'Rocket League'
     if state.phase == Phase.TRAINING:
         details = 'Training'
     clock = ''  # running time is rendered by Discord's anchored timestamp
-    label = {Phase.PAUSED:'Paused', Phase.ENDED:'Match finished'}.get(state.phase, '')
+    label = 'Paused' if state.phase == Phase.PAUSED and not config.show_time else ''
     if state.phase == Phase.OVERTIME:
         clock = 'Overtime'
-    elif state.is_overtime and label:
-        clock = 'Overtime'  # clock is static during pauses/replays even in OT
+    elif state.phase in (Phase.COUNTDOWN, Phase.GOAL_REPLAY, Phase.PAUSED):
+        if state.is_overtime:
+            stopped_at = state.clock_stopped_at if state.clock_stopped_at is not None else state.overtime_started_at
+            elapsed = max(0, int(stopped_at-state.overtime_started_at)) if stopped_at is not None and state.overtime_started_at is not None else 0
+            clock = f'Overtime ⏸ {elapsed//60}:{elapsed%60:02}'
+        elif state.time_remaining is not None:
+            remaining = max(0, state.time_remaining)
+            clock = f'⏸ {remaining//60}:{remaining%60:02}'
     if state.phase == Phase.ENDED:
         result = ''
         if state.winner_team in (0, 1):
@@ -66,14 +73,12 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
         clock = ''
     stats = ''
     if config.show_player_stats and state.phase != Phase.TRAINING:
-        stats = ' '.join(f'{key}:{value}' for key,value in (
-            ('P',state.local_player_score), ('G',state.local_player_goals), ('S',state.local_player_saves)) if value is not None)
-    status = ' | '.join(filter(None, [map_name if config.show_map else '', label, clock, stats])) or 'Playing Rocket League'
+        stats = ' '.join(f'{key}{value}' for key,value in (
+            ('⚽',state.local_player_goals), ('🧤',state.local_player_saves), ('⭐',state.local_player_score)) if value is not None)
+    status = ' • '.join(filter(None, [map_name if config.show_map else '', stats, label, clock])) or 'Playing Rocket League'
     payload = {'name':'Rocket League', 'details':details, 'state':status,
                'large_image':asset if config.show_map else 'rl_logo',
-               'large_text':map_name if config.show_map else 'Rocket League',
-               'small_image': 'blue' if state.local_team == 0 else 'orange' if state.local_team == 1 else 'rl_logo',
-               'small_text':'Team Blue' if state.local_team == 0 else 'Team Orange' if state.local_team == 1 else 'Blue vs Orange'}
+               'large_text':map_name if config.show_map else 'Rocket League'}
     rank = rank_label(config, state.playlist_id) if state.phase != Phase.TRAINING else ''
     if rank:
         key = RANK_KEY_BY_PLAYLIST[state.playlist_id]
@@ -83,8 +88,4 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
         payload['end'] = int(state.clock_end)
     elif config.show_time and state.phase == Phase.OVERTIME:
         payload['start'] = int(overtime_clock_start(state, now))
-    elif config.show_time and not state.is_overtime and state.phase in (Phase.GOAL_REPLAY, Phase.COUNTDOWN) and state.goal_clock_end is not None:
-        # Keeping the previous end avoids Discord's fallback 0:00 elapsed timer.
-        # Native green time still advances during the break; kickoff re-syncs it.
-        payload['end'] = int(state.goal_clock_end)
     return {k: limit_text(v) if isinstance(v, str) else v for k,v in payload.items()}

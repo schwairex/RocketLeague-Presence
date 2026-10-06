@@ -50,9 +50,8 @@ class MatchState:
     local_player_name: str = ''
     local_primary_id: str = ''
     clock_end: float | None = None
-    # Presentation anchor only: Discord has no native paused timestamp.
-    # Preserve the existing green countdown across a goal, then re-sync kickoff.
-    goal_clock_end: float | None = None
+    clock_stopped_at: float | None = None
+    resume_phase: Phase | None = None
     overtime_started_at: float | None = None
     last_round_started_at: float | None = None
     last_round_time_remaining: int | None = None
@@ -131,29 +130,45 @@ def overtime_clock_start(state: MatchState, now: float, round_started: bool = Fa
     use the first observed overtime packet; real elapsed overtime is then unknown.
     Change ONLY this function when real packets establish a better policy.
     """
+    anchor = state.overtime_started_at
     if not state.overtime_round_confirmed:
         if round_started:
             return now
         # bOvertime may arrive one tick AFTER the zero-clock kickoff.
         if state.last_round_time_remaining == 0 and state.last_round_started_at is not None:
-            return state.last_round_started_at
-    if state.overtime_started_at is not None:
-        return state.overtime_started_at
+            anchor = state.last_round_started_at
+    if anchor is not None:
+        stopped = max(0, now-max(state.clock_stopped_at, anchor)) if state.clock_stopped_at is not None else 0
+        return anchor + stopped
     return now
+
+
+def stop_clock(state: MatchState, phase: Phase, now: float) -> MatchState:
+    return replace(state, phase=phase, clock_end=None,
+                   clock_stopped_at=state.clock_stopped_at if state.clock_stopped_at is not None else now)
 
 
 def sync_clock(state: MatchState, now: float, force: bool = False, round_started: bool = False) -> MatchState:
     if state.phase not in RUNNING:
+        if state.is_overtime and state.overtime_started_at is None:
+            frozen_at = state.clock_stopped_at if state.clock_stopped_at is not None else now
+            state = replace(state, overtime_started_at=overtime_clock_start(state, frozen_at))
         return replace(state, clock_end=None)
     if state.is_overtime:
         return replace(state, phase=Phase.OVERTIME, clock_end=None,
                        overtime_started_at=overtime_clock_start(state, now, round_started),
+                       clock_stopped_at=None, resume_phase=None,
                        overtime_round_confirmed=state.overtime_round_confirmed or round_started or (
                            state.last_round_time_remaining == 0 and state.last_round_started_at is not None))
     end = state.clock_end
     if state.time_remaining is not None and (force or end is None or abs((end-now)-state.time_remaining) > 2):
         end = now + state.time_remaining
-    return replace(state, phase=Phase.PLAYING, clock_end=end)
+    round_anchor = state.last_round_started_at
+    # Keep a zero-clock kickoff valid if bOvertime arrives only after unpause.
+    if not round_started and state.last_round_time_remaining == 0 and round_anchor is not None and state.clock_stopped_at is not None:
+        round_anchor += max(0, now-max(state.clock_stopped_at, round_anchor))
+    return replace(state, phase=Phase.PLAYING, clock_end=end, clock_stopped_at=None,
+                   resume_phase=None, last_round_started_at=round_anchor)
 
 
 def detect_local(players: list, game: dict, config: Config) -> tuple[int | None, str, str]:
@@ -208,7 +223,7 @@ def reduce_event(state: MatchState, message, config: Config, now: float | None =
     if event in ('MatchCreated','MatchInitialized'):
         if state.phase == Phase.MENU or state.phase == Phase.ENDED or (guid and guid != state.match_guid):
             state = MatchState(match_guid=guid)
-        return replace(state, phase=Phase.COUNTDOWN, clock_end=None)
+        return stop_clock(state, Phase.COUNTDOWN, now)
     if event == 'UpdateState':
         fresh = state.phase == Phase.MENU or (guid and guid != state.match_guid)
         if fresh:
@@ -231,12 +246,15 @@ def reduce_event(state: MatchState, message, config: Config, now: float | None =
         overtime = game.get('bOvertime') if type(game.get('bOvertime')) is bool else state.is_overtime
         replay = game.get('bReplay') if type(game.get('bReplay')) is bool else state.is_replay
         phase = state.phase
-        goal_end = state.goal_clock_end
         if replay and phase in RUNNING:
-            goal_end = state.clock_end if not state.is_overtime else None
+            state = stop_clock(state, Phase.GOAL_REPLAY, now)
             phase = Phase.GOAL_REPLAY
         elif not replay and phase == Phase.GOAL_REPLAY:
             phase = Phase.COUNTDOWN  # skipped replay: wait for RoundStarted
+        elif phase == Phase.PAUSED and state.resume_phase in RUNNING and replay:
+            state = replace(state, resume_phase=Phase.GOAL_REPLAY)
+        elif phase == Phase.PAUSED and state.resume_phase == Phase.GOAL_REPLAY and not replay:
+            state = replace(state, resume_phase=Phase.COUNTDOWN)
         winner = state.winner_team
         if game.get('bHasWinner') is True:
             winner_name = string(game.get('Winner')).casefold()
@@ -254,7 +272,6 @@ def reduce_event(state: MatchState, message, config: Config, now: float | None =
         local = next((p for p in player_stats if (local_id and p.primary_id.casefold() == local_id.casefold())
                      or (not local_id and local_name and p.name.casefold() == local_name.casefold() and p.team == local_team)), None)
         state = replace(state, phase=phase, arena=string(game.get('Arena'), state.arena),
-                        goal_clock_end=goal_end if phase in (Phase.GOAL_REPLAY, Phase.COUNTDOWN) else None,
                         playlist_id=playlist, players=player_stats,
                         winner_name=string(game.get('Winner'), state.winner_name),
                         local_player_score=local.score if local else None,
@@ -278,21 +295,33 @@ def reduce_event(state: MatchState, message, config: Config, now: float | None =
         return sync_clock(state, now)
     if event in ('MatchEnded','PodiumStart'):
         winner = team(data.get('WinnerTeamNum'))
-        return replace(state, phase=Phase.ENDED, clock_end=None, goal_clock_end=None,
+        return replace(state, phase=Phase.ENDED, clock_end=None, clock_stopped_at=None, resume_phase=None,
                        winner_team=winner if winner is not None else state.winner_team,
                        ended_at=state.ended_at if state.ended_at is not None else now)
     if state.phase == Phase.ENDED:
         return state  # late replay/round events must not erase the result
     if event in ('GoalScored','GoalReplayStart'):
-        return replace(state, phase=Phase.GOAL_REPLAY, clock_end=None, is_replay=True,
-                       goal_clock_end=state.goal_clock_end or (state.clock_end if not state.is_overtime else None))
+        if state.phase == Phase.PAUSED:
+            return replace(state, resume_phase=Phase.GOAL_REPLAY, is_replay=True)
+        return replace(stop_clock(state, Phase.GOAL_REPLAY, now), is_replay=True)
     if event in ('GoalReplayEnd','CountdownBegin'):
-        return replace(state, phase=Phase.COUNTDOWN, clock_end=None, is_replay=False)
+        if state.phase == Phase.PAUSED:
+            return replace(state, resume_phase=Phase.COUNTDOWN, is_replay=False)
+        return replace(stop_clock(state, Phase.COUNTDOWN, now), is_replay=False)
     if event == 'MatchPaused':
-        return replace(state, phase=Phase.PAUSED, clock_end=None, goal_clock_end=None)
+        if state.phase == Phase.PAUSED:
+            return state
+        return replace(stop_clock(state, Phase.PAUSED, now), resume_phase=state.phase)
     if event in ('RoundStarted','MatchUnpaused'):
-        state = replace(state, phase=Phase.OVERTIME if state.is_overtime else Phase.PLAYING,
-                        is_replay=False, goal_clock_end=None,
+        running_phase = Phase.OVERTIME if state.is_overtime else Phase.PLAYING
+        if event == 'MatchUnpaused' and state.phase != Phase.PAUSED:
+            return state
+        phase = (state.resume_phase or running_phase) if event == 'MatchUnpaused' else running_phase
+        if event == 'RoundStarted' and state.phase == Phase.PAUSED:
+            return replace(state, resume_phase=running_phase, is_replay=False,
+                           last_round_started_at=now, last_round_time_remaining=state.time_remaining)
+        state = replace(state, phase=phase, resume_phase=None,
+                        is_replay=phase == Phase.GOAL_REPLAY,
                         last_round_started_at=now if event == 'RoundStarted' else state.last_round_started_at,
                         last_round_time_remaining=state.time_remaining if event == 'RoundStarted' else state.last_round_time_remaining)
         return sync_clock(state, now, force=True, round_started=event == 'RoundStarted')
