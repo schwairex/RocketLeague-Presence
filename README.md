@@ -155,8 +155,8 @@ Generated `dist/`, `build/`, `logs/`, `.venv/` and personal `config.json` are ig
 
 | Developer | Role |
 | --- | --- |
-| **[schwairex](https://github.com/schwairex)** | Founder · App Developer |
-| **Nyris** | Co-Developer · QA |
+| **[Schwairex](https://github.com/schwairex)** | Founder · App Developer |
+| **[Nyris](https://github.com/tolgayorkurt)** | Co-Developer · QA |
 
 Rocket League data comes from the [official Stats API](https://www.rocketleague.com/developer/stats-api). Playlist/map lookups are best effort; the full guide documents clock and identity limitations. Third-party notices: [fonts](docs/licenses/fonts.txt) · [icons](docs/licenses/icons.txt).
 
