@@ -109,15 +109,23 @@
   }
   function renderDiagnostics(){
     if(!snapshot)return;
+    text('diagnostic-account',accountMessage(snapshot.identity));
     text('diagnostic-status',t('{status} · Son olay: {event}',{status:statusMessage(snapshot),event:snapshot.stats.last_event||t('Henüz yok')})+(snapshot.stats.error?' · '+snapshot.stats.error:''));
     const container=$('player-stats');container.replaceChildren();
     const table=document.createElement('table');const head=document.createElement('tr');
     for(const title of [t('Oyuncu'),t('Takım'),t('Puan'),t('Gol'),t('Kurtarış')]){const th=document.createElement('th');th.textContent=title;head.append(th);}table.append(head);
     for(const p of snapshot.match.players){const row=document.createElement('tr');for(const value of [p.name,p.team===0?t('Mavi'):p.team===1?t('Turuncu'):'—',p.score,p.goals,p.saves]){const td=document.createElement('td');td.textContent=value??'—';row.append(td);}table.append(row);}container.append(table);
-    text('diagnostic-json',JSON.stringify({stats:snapshot.stats,match:snapshot.match,discord:snapshot.discord},null,2));
+    text('diagnostic-json',JSON.stringify({identity:snapshot.identity,stats:snapshot.stats,match:snapshot.match,discord:snapshot.discord},null,2));
+  }
+  function accountMessage(identity={}){
+    const sources={epic_launch:'Epic başlatma parametreleri',steam_active:'Steam hesabı',steam_recent:'Son Steam hesabı',learned_cache:'Doğrulanmış hesap önbelleği',manual_override:'Elle kimlik seçimi',target_vote:'Görüntülenen araba oylaması'};
+    const statuses={automatic:'otomatik',manual:'elle seçildi',low_confidence:'düşük güven',not_identified:'algılanamadı'};
+    return t('Hesap: {name} · {status}',{name:identity.name||'—',status:t(statuses[identity.status]||statuses.not_identified)})+
+      (identity.source?' ('+t(sources[identity.source]||identity.source)+(identity.validated?' · '+t('maç doğrulaması'):'')+')':'');
   }
   function render(s){
     snapshot=s;
+    text('account-status',accountMessage(s.identity));
     pill('discord',s.discord.connected,'Discord: '+(s.discord.connected?t('bağlı'):s.discord.error||t('bağlantı bekleniyor')));
     pill('game',s.game_running,s.game_running?t('Rocket League çalışıyor'):t('Rocket League kapalı'));
     pill('stats',s.stats.connected&&s.stats.status==='live',statusMessage(s)+(s.stats.error?' · '+s.stats.error:''));
@@ -134,7 +142,7 @@
     $('footer-dot').style.background=s.stats.connected?'#3DDC97':s.stats.error?'#C53F51':'#FFC24D';
     text('footer-status-text',s.stats.connected?t('Stats API bağlı')+` · ${s.config.stats_host}:${port} · ${t('{rate} paket/sn',{rate:s.stats.packets_per_second})}`:t('Stats API bağlı değil'));
     renderInstallation(s.installation);
-    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.6');
+    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.7');
     renderUpdates(s.updates);
     if(!$('diagnostics').hidden&&$('diagnostics').open)renderDiagnostics();
     preview();

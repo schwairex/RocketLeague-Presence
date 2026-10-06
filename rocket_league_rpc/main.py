@@ -13,15 +13,16 @@ import os
 import time
 
 from . import __version__
-from .config import Config, app_directory, load_config, save_config, validate_config
+from .config import Config, app_directory, application_executable, load_config, save_config, validate_config
 from .game_watcher import rocket_league_running, watch_game, running_game_info
 from .installer import setup_install, InstallationSetup
+from .identity import discover_identity_candidates, IdentityCandidate
 from .presence import build_presence
 from .rpc import DiscordClient, PresencePublisher, UNSET
 from .maps import lookup_map
 from .modes import lookup_mode
 from .runtime import AlreadyRunning, SingleInstance, configure_logging, supervise, wait_or_stop
-from .state import MatchState, Phase, reduce_event, normalize_event
+from .state import MatchState, Phase, reduce_event, normalize_event, set_identity_hints
 from .stats_client import StatsClient
 
 log = logging.getLogger(__name__)
@@ -30,13 +31,16 @@ log = logging.getLogger(__name__)
 class Application:
     def __init__(self, config: Config, config_path: Path | None = None,
                  discord_factory=None, wall_clock=time.time, monotonic_clock=time.monotonic,
-                 mock_game: bool = False, raw_packets: bool = False, auto_setup: bool = False):
+                 mock_game: bool = False, raw_packets: bool = False, auto_setup: bool = False,
+                 identity_discovery=None):
         self.config = config
         self.config_path = config_path
         self.wall_clock = wall_clock
         self.running = False
         self.connected = False
         self.state = MatchState()
+        self.identity_discovery = identity_discovery or discover_identity_candidates
+        self.identity_candidates = ()
         self.stop = asyncio.Event()
         self.stats_task = None
         self.mock_game = mock_game
@@ -65,6 +69,10 @@ class Application:
         status = ('game_off' if not self.running else 'disconnected' if not self.connected else
                   'awaiting_data' if self.last_event is None else 'menu' if self.state.phase == Phase.MENU else 'live')
         return {'config':{**asdict(self.config), 'client_id':self.config.client_id}, 'game_running':self.running, 'match':match,
+                'identity':{'name':self.state.local_player_name,'source':self.state.identity_source,
+                            'confidence':self.state.identity_confidence,'validated':self.state.identity_validated,
+                            'status':('not_identified' if not self.state.identity_source else 'low_confidence' if self.state.identity_confidence == 'low'
+                                      else 'manual' if self.state.identity_source == 'manual_override' else 'automatic')},
                 'installation':copy.deepcopy(self.install_setup.result),
                 'stats':{'connected':self.connected, 'status':status, 'last_event':self.last_event,
                          'last_packet_at':self.last_packet_at, 'error':self.stats_error,
@@ -80,6 +88,8 @@ class Application:
             raise ValueError('Settings must be an object')
         async with self.settings_lock:
             candidate = validate_config({**asdict(self.config), **changes})
+            if 'player_primary_id' in changes and candidate.player_primary_id != self.config.player_primary_id:
+                candidate.learned_primary_id = ''  # a user edit is an explicit override
             if self.config_path and not await asyncio.to_thread(save_config,candidate,self.config_path):
                 raise OSError('Ayarlar kaydedilemedi. Yazılabilir bir klasör kullanın.')
             old = self.config
@@ -87,7 +97,7 @@ class Application:
             self.publisher.interval = candidate.update_interval
             if any(getattr(old,k) != getattr(candidate,k) for k in ('stats_host','stats_port','stats_web_port','stats_transport')):
                 self.connected = False
-                self.state = MatchState()
+                self.state = MatchState(identity_hints=self.identity_candidates)
                 self.last_update = None
                 self.last_event = None
                 if self.stats_task and not self.stats_task.done():
@@ -95,10 +105,11 @@ class Application:
             elif self.last_update is not None:
                 # Re-evaluate identity only; an old packet must never restart a
                 # clock or change a paused/replay phase during settings save.
-                matched = reduce_event(self.state,self.last_update,candidate,self.wall_clock())
+                matched = reduce_event(self.state,self.last_update,candidate,self.wall_clock(),count_identity_vote=False)
                 self.state = replace(self.state, **{key:getattr(matched,key) for key in (
                     'local_team','local_player_name','local_primary_id','local_player_score',
-                    'local_player_goals','local_player_saves')})
+                    'local_player_goals','local_player_saves','identity_source','identity_confidence','identity_validated',
+                    'identity_votes','identity_last_target','identity_consecutive','identity_spectator_seen','identity_warnings')})
             self.refresh(priority=True)
             log.info('Settings saved and applied.')
             return self.snapshot()
@@ -115,13 +126,26 @@ class Application:
     def refresh(self, priority: bool = False):
         self.publisher.offer(self.current_payload(), priority)
 
+    async def refresh_identity(self, reset=False):
+        try:
+            candidates = await asyncio.to_thread(self.identity_discovery)
+            self.identity_candidates = tuple(c for c in candidates if isinstance(c,IdentityCandidate)) if isinstance(candidates,(tuple,list)) else ()
+        except Exception as exc:
+            self.identity_candidates = ()
+            log.debug('Local identity discovery unavailable: %s',type(exc).__name__)
+        self.state = set_identity_hints(self.state,self.identity_candidates,reset)
+
     async def set_running(self, running: bool):
+        started = running and not self.running
         if self.running != running:
             log.info('Rocket League %s', 'running' if running else 'not running')
         self.running = running
+        if started:
+            await self.refresh_identity(reset=True)
         if not running:
             self.install_setup.pending.clear()
             self.connected = False
+            self.identity_candidates = ()
             self.state = MatchState()
             self.last_update = None
             self.last_event = None
@@ -135,7 +159,7 @@ class Application:
         previous = self.connected
         self.connected = connected and self.running
         if not self.connected:
-            self.state = MatchState()
+            self.state = MatchState(identity_hints=self.identity_candidates)
             self.last_update = None
         if self.connected:
             self.last_event = None
@@ -159,21 +183,27 @@ class Application:
             elif message['Event'] == 'MatchDestroyed':
                 self.last_update = None
         old = self.state
-        self.state = reduce_event(old, message, self.config, self.wall_clock())
+        if isinstance(message,dict) and isinstance(message.get('Data'),dict):
+            event, data = message.get('Event'),message['Data']
+            guid = data.get('MatchGuid') if isinstance(data.get('MatchGuid'),str) else ''
+            if ((event in ('MatchCreated','MatchInitialized') and (old.phase in (Phase.MENU,Phase.ENDED) or (guid and guid != old.match_guid)))
+                or (event == 'UpdateState' and (old.phase == Phase.MENU or (guid and guid != old.match_guid)))):
+                await self.refresh_identity(reset=True)
+        self.state = reduce_event(self.state, message, self.config, self.wall_clock())
         priority = (old.phase != self.state.phase or old.match_guid != self.state.match_guid
                     or old.playlist_id != self.state.playlist_id or old.clock_end != self.state.clock_end
                     or (old.blue_score,old.orange_score) != (self.state.blue_score,self.state.orange_score)
                     or (old.local_player_goals,old.local_player_saves,old.local_player_score) != (
                         self.state.local_player_goals,self.state.local_player_saves,self.state.local_player_score))
         self.refresh(priority=priority)
-        if (self.config.auto_learn_primary_id and self.config.player_name
-            and not self.config.player_primary_id and self.state.local_primary_id
-            and self.state.local_player_name.casefold() == self.config.player_name.casefold()):
+        if (self.config.auto_learn_primary_id and self.state.identity_validated and self.state.local_primary_id
+            and self.config.player_primary_id != self.state.local_primary_id):
             async with self.settings_lock:
                 self.config.player_primary_id = self.state.local_primary_id
+                self.config.learned_primary_id = self.state.local_primary_id
                 if self.config_path:
                     await asyncio.to_thread(save_config, self.config, self.config_path)
-            log.info('Learned PrimaryId for configured player name.')
+            log.info('Learned match-validated account identifier (redacted).')
 
     async def stats_loop(self):
         delay = 3.0
@@ -258,6 +288,8 @@ class Application:
 def cli(argv=None) -> int:
     parser = argparse.ArgumentParser(description='Rocket League Discord Rich Presence (official Stats API, read-only)')
     parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument('--identity-probe',action='store_true',help='Read-only local identity probe; redacted JSON and exit')
+    parser.add_argument('--probe-log',type=Path,help='Existing raw packet log for --identity-probe (never modified)')
     parser.add_argument('--config', type=Path, help='Alternate configuration JSON (default beside launcher/exe)')
     parser.add_argument('--debug', action='store_true', help='DEBUG logs including every raw Stats event name')
     parser.add_argument('--raw-packets', action='store_true', help='Also rotate full JSON in logs/raw_packets.log')
@@ -266,6 +298,11 @@ def cli(argv=None) -> int:
     parser.add_argument('--console', action='store_true', help='Run without the desktop interface (Ctrl+C to quit)')
     parser.add_argument('--update-ready-file',type=Path,help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    if args.identity_probe:
+        import json
+        from .identity_probe import run_probe
+        print(json.dumps(run_probe(packet_log=args.probe_log),ensure_ascii=False,indent=2))
+        return 0
     base = app_directory()
     config_path = args.config.resolve() if args.config else base/'config.json'
     configure_logging(base/'logs', debug=args.debug or args.raw_packets, raw=args.raw_packets)
@@ -297,7 +334,7 @@ def cli(argv=None) -> int:
                 from .updates import UpdateManager, launch_handoff, relaunch_args, acknowledge_startup
                 app = Application(config, config_path, mock_game=args.mock_game, raw_packets=args.raw_packets)
                 def ready(staged):
-                    launch_handoff(Path(sys.executable), staged, relaunch_args(sys.argv[1:],config_path))
+                    launch_handoff(application_executable(), staged, relaunch_args(sys.argv[1:],config_path))
                     loop.call_soon_threadsafe(app.stop.set)
                 loop = asyncio.get_running_loop()
                 updates = UpdateManager(base, on_ready=ready)

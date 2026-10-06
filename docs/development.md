@@ -60,3 +60,7 @@ the game or Discord running.
 [Release publishing](releasing.md) ·
 [Art asset keys](art-assets.md) ·
 [Validation record](qa/verification.md)
+
+## v0.2.7 additions
+
+`identity.py` owns pure normalization/providers/resolution; `identity_probe.py` is read-only development diagnostics. Existing state/runtime/GUI ownership is unchanged. `packaging/windows_launcher.cs` embeds the PyInstaller one-file core; build.ps1 compiles it with the .NET 4.x compiler already required by pywebview. The user receives one EXE. The verified core is cached by SHA-256 under LocalAppData/RL Presence/runtime; config/logs/updates stay beside the user-facing EXE. No arbitrary cache tree cleanup runs.

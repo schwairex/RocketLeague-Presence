@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "language": "tr",
   "install_path": "",
   "player_name": "",
@@ -57,5 +57,7 @@
   "stats_transport": "tcp",
   "spectating": false,
   "auto_learn_primary_id": true,
-  "install_prompted": false
+  "install_prompted": false,
+  "identity_mode": "auto",
+  "learned_primary_id": ""
 }

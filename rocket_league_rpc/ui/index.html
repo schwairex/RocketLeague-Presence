@@ -266,16 +266,7 @@ RL Presence
 </div>
 <div>
 <h2 class="sec"><i></i>Oyuncu</h2>
-<div style="display:flex;gap:12px;align-items:flex-end">
-<div style="flex:1">
-<label for="pn" style="display:block;font-size:12px;color:#98A3C7;margin-bottom:6px">Oyun içi adın</label>
-<input data-field="player_name" id="pn" placeholder="Oyun içi adın" style="width:100%;box-sizing:border-box;height:44px;border-radius:8px;border:1px solid #2A3560;background:#11182E;color:#EEF2FF;padding:0 14px;font:400 14px 'DM Sans',sans-serif" type="text" value=""/>
-</div>
-<div style="width:170px">
-<label for="pl" style="display:block;font-size:12px;color:#98A3C7;margin-bottom:6px">Platform</label>
-<select data-field="player_platform" id="pl" style="width:100%;box-sizing:border-box;height:44px;border-radius:8px;border:1px solid #2A3560;background:#11182E;color:#EEF2FF;padding:0 12px;font:400 14px 'DM Sans',sans-serif"><option value="auto">Otomatik</option><option value="steam">Steam</option><option value="epic">Epic Games</option></select>
-</div>
-</div>
+<p class="hint">Hesabın yerel Steam/Epic bilgileriyle otomatik algılanır ve maçtaki oyuncularla doğrulanır.</p>
 </div>
 <!-- Log -->
 <div style="flex:1;min-height:0;display:flex;flex-direction:column">
@@ -334,9 +325,15 @@ RL Presence
 <label>Rocket League kurulum yolu<input data-field="install_path" placeholder="D:\SteamLibrary\steamapps\common\rocketleague"/></label>
 <div id="installations" aria-live="polite"></div><button class="btn secondary" id="setup-api">Kurulumları yeniden denetle</button>
 <p class="hint" id="install-result">Yolu kaydet, ardından yapılandır. INI değişirse oyunu tamamen yeniden başlat.</p>
-<label>PrimaryId (isteğe bağlı)<input data-field="player_primary_id" placeholder="Platform|Uid|Splitscreen"/></label>
+<p class="hint" id="account-status" role="status" aria-live="polite"></p>
+<details id="identity-advanced"><summary>Gelişmiş / Elle kimlik seçimi</summary>
+<p class="hint">Normal kullanımda alanları doldurman gerekmez. Elle girilen kimlik yalnızca mevcut maçta doğrulanırsa kullanılır; eski kimlik otomatik algılamayı engellemez.</p>
+<label>Kimlik algılama<select data-field="identity_mode"><option value="auto">Otomatik</option><option value="manual">Yalnızca elle seçilen kimlik</option></select></label>
+<div class="form-grid"><label for="pn">Oyun içi adın<input data-field="player_name" id="pn" placeholder="Oyun içi adın"/></label>
+<label for="pl">Platform tercihi<select data-field="player_platform" id="pl"><option value="auto">Otomatik</option><option value="steam">Steam</option><option value="epic">Epic Games</option></select></label></div>
+<label>PrimaryId (isteğe bağlı)<input data-field="player_primary_id" placeholder="Platform|Uid|Splitscreen"/></label></details>
 <div class="row"><span class="lbl">İzleyici modu</span><button aria-label="İzleyici modu" aria-pressed="false" class="swb" data-setting="spectating"><span class="tr off"><span class="kn"></span></span></button></div>
-<p class="hint">Oyun içi adını değiştirirken eski PrimaryId’yi temizle. Target, görüntülenen arabadır; hesap kimliği değildir.</p>
+<p class="hint">Target yalnızca görüntülenen arabadır. Düşük güvenli tahmin izleyici modunda kullanılmaz.</p>
 <details><summary>Gelişmiş bağlantı ayarları</summary><label>Sunucu<input data-field="stats_host"/></label><div class="form-grid"><label>TCP port<input data-field="stats_port" max="65535" min="1" type="number"/></label><label>WebSocket port<input data-field="stats_web_port" max="65535" min="1" type="number"/></label></div>
 <label>Taşıma<select data-field="stats_transport"><option value="tcp">TCP</option><option value="websocket">WebSocket</option></select></label>
 <label>Normal güncellemeleri birleştirme aralığı (sn)<input data-field="update_interval" max="3600" min="1" type="number"/></label></details></section>
@@ -548,7 +545,7 @@ unicode: "ec38"
 </div>
 
 <div hidden="" id="toast" role="status"></div>
-<dialog id="diagnostics"><div class="dialog-header"><h2 class="sec"><i></i>Canlı veriler ve bağlantı</h2><button class="btn secondary" id="close-diagnostics">Kapat</button></div><p id="diagnostic-status"></p><div id="player-stats"></div><pre id="diagnostic-json"></pre></dialog><div style="height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-top:1px solid #1B2547;background:#080C19">
+<dialog id="diagnostics"><div class="dialog-header"><h2 class="sec"><i></i>Canlı veriler ve bağlantı</h2><button class="btn secondary" id="close-diagnostics">Kapat</button></div><p id="diagnostic-status"></p><p id="diagnostic-account"></p><div id="player-stats"></div><pre id="diagnostic-json"></pre></dialog><div style="height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-top:1px solid #1B2547;background:#080C19">
 <div id="footer-status" role="status" style="font-size:12px;color:#98A3C7"><span id="footer-dot" class="dot" style="background:#FFC24D"></span><span id="footer-status-text">Stats API bağlı değil</span></div>
 <div style="display:flex;gap:12px">
 <button class="btn" id="cancel" style="background:none;border:1px solid #2A3560;color:#C9D1EE">İptal</button>

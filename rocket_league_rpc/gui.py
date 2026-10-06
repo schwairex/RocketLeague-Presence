@@ -227,7 +227,8 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
         options['discord_factory'] = SmokeDiscord
     host = EngineHost(config,config_path,mock_game=mock_game,raw_packets=raw_packets,**options)
     host.start()
-    updates = UpdateManager(Path(sys.executable).parent if getattr(sys,'frozen',False) else config_path.parent)
+    from .config import application_executable
+    updates = UpdateManager(application_executable().parent if getattr(sys,'frozen',False) else config_path.parent)
     bridge = GuiBridge(host,log_dir,handler,updates)
     report_requests=[]
     if smoke_path:
@@ -249,7 +250,7 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
             background_color='#0A0F1F',text_select=True)
         bridge._window = window
         def apply_update(staged):
-            launch_handoff(Path(sys.executable),staged,relaunch_args(sys.argv[1:],config_path))
+            launch_handoff(application_executable(),staged,relaunch_args(sys.argv[1:],config_path))
             host.close()
             window.destroy()
         updates.on_ready = apply_update
@@ -323,7 +324,14 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
                     time.sleep(.8)
                     dom = window.evaluate_js("JSON.stringify({language:document.documentElement.lang,reportApi:typeof window.pywebview.api.submit_report==='function',reportTabAfterAbout:Array.from(document.querySelectorAll('[data-tab]')).map(e=>e.dataset.tab).join(',').includes('about,report'),title:document.title,ready:!!window.rpcUI,body:document.body.innerText,frame:[innerWidth,innerHeight],identityReadonly:document.getElementById('application-id').readOnly,identity:document.getElementById('application-id').value,remote:Array.from(document.querySelectorAll('script[src],link[href]')).map(e=>e.src||e.href)})")
                     form=window.evaluate_js("JSON.stringify({feedback:document.getElementById('report-feedback').textContent,title:document.getElementById('report-title').value,description:document.getElementById('report-description').value,rankCards:document.querySelectorAll('.rank-card').length,developers:document.getElementById('about').textContent})")
+                    # Account fields are optional and remain in General's Advanced section.
+                    window.evaluate_js("document.querySelector('[data-tab=general]').click();document.getElementById('identity-advanced').open=true;")
+                    identity_ui = json.loads(window.evaluate_js("JSON.stringify({advancedFields:Array.from(document.querySelectorAll('#identity-advanced [data-field]')).map(e=>e.dataset.field),appearanceFields:document.querySelectorAll('#appearance [data-field=player_name],#appearance [data-field=player_platform]').length,account:document.getElementById('account-status').textContent,defaultMode:document.querySelector('[data-field=identity_mode]').value,generalWidth:[document.getElementById('general').clientWidth,document.getElementById('general').scrollWidth]})"))
+                    window.evaluate_js("document.getElementById('ui-language').value='tr';document.getElementById('ui-language').dispatchEvent(new Event('input'));document.getElementById('diagnostics-button').click();")
+                    identity_ui['turkish_account'] = window.evaluate_js("document.getElementById('diagnostic-account').textContent")
+                    window.evaluate_js("document.getElementById('close-diagnostics').click();document.getElementById('ui-language').value='en';document.getElementById('ui-language').dispatchEvent(new Event('input'));")
                     Path(smoke_path).write_text(json.dumps({'dom':json.loads(dom),'bridge':bridge.get_snapshot(),
+                        'identity_ui':identity_ui,
                         'resize':{'hit_tests':hits,'layouts':resize_checks,'maximized':json.loads(maximized),'maximized_tabs':maximized_checks,'minimum':json.loads(minimum)},
                         'report':{'loading':loading,'form':json.loads(form),'requests':report_requests}},ensure_ascii=False,indent=2),encoding='utf-8')
                     window.evaluate_js('window.rpcUI.stop()')

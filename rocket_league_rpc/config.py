@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 import shutil
 import sys
+import os
 import time
 from .modes import RANKED_MODES
 
@@ -22,17 +23,34 @@ ACTIVITIES = {'auto': 'In menus / Queueing', 'main_menu': 'Main menu', 'menu': '
               'custom_training': 'Custom training', 'garage': 'Garage'}
 
 
+def application_executable() -> Path:
+    """The outer Windows launcher owns updates/settings; never update its cache."""
+    executable = Path(sys.executable).resolve()
+    if getattr(sys,'frozen',False):
+        try:
+            outer = Path(os.environ.get('RL_PRESENCE_LAUNCHER_PATH','')).resolve()
+            if outer.is_file() and outer.suffix.casefold() == '.exe':
+                with outer.open('rb') as stream:
+                    if stream.read(2) == b'MZ':
+                        return outer
+        except (OSError,ValueError):
+            pass
+    return executable
+
+
 def app_directory() -> Path:
-    return Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
+    return application_executable().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 
 
 @dataclass
 class Config:
-    schema_version: int = 3
+    schema_version: int = 4
+    identity_mode: str = 'auto'
     language: str = 'tr'
     install_path: str = ''
     player_name: str = ''
     player_primary_id: str = ''
+    learned_primary_id: str = ''  # origin marker, not an additional user input
     stats_host: str = '127.0.0.1'
     stats_port: int = 49123
     stats_web_port: int = 49124
@@ -116,7 +134,7 @@ def validate_config(data: dict) -> Config:
     language = data.get('language')
     if isinstance(language, str) and language.casefold() in ('tr', 'en'):
         cfg.language = language.casefold()
-    for key in ('install_path', 'player_name', 'player_primary_id', 'stats_host'):
+    for key in ('install_path', 'player_name', 'player_primary_id', 'learned_primary_id', 'stats_host'):
         value = data.get(key)
         if isinstance(value, str):
             try:
@@ -135,7 +153,7 @@ def validate_config(data: dict) -> Config:
         cfg.update_interval = float(min(3600, max(1, value)))
     elif type(value) is float and math.isfinite(value):
         cfg.update_interval = min(3600.0, max(1.0, float(value)))
-    if data.get('schema_version') != 3 and cfg.update_interval == 15:
+    if data.get('schema_version') not in (3,4) and cfg.update_interval == 15:
         cfg.update_interval = 1.0  # migrate the old mandatory 15-second floor
     level = data.get('log_level')
     if isinstance(level, str) and level.upper() in ('DEBUG','INFO','WARNING','ERROR','CRITICAL'):
@@ -166,6 +184,8 @@ def validate_config(data: dict) -> Config:
         cfg.manual_activity = data['manual_activity']
     if data.get('player_platform') in ('auto', 'steam', 'epic'):
         cfg.player_platform = data['player_platform']
+    if data.get('identity_mode') in ('auto','manual'):
+        cfg.identity_mode = data['identity_mode']
     return cfg
 
 

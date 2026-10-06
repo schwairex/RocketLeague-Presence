@@ -14,7 +14,7 @@ def test_current_mode_rank_is_artwork_and_tooltip_only(key, mode):
     payload = build_presence(state, cfg)
     assert payload['small_image'] == 'diamond_1'
     assert payload['small_text'] == 'Diamond I Div IV'
-    assert 'Diamond' not in payload['details'] + payload['state']
+    assert 'Diamond' not in payload['details'] + payload.get('state','')
     assert payload['large_image'] == 'dfh_stadium'
     assert payload['large_text'] == 'DFH Stadium'
 
@@ -53,6 +53,7 @@ def test_maximized_window_and_dpi_scaled_border():
 
 def test_download_verifying_then_handoff(tmp_path, monkeypatch):
     from rocket_league_rpc.updates import UpdateManager, parse_releases
+    monkeypatch.setattr('rocket_league_rpc.updates.__version__','0.2.6')
     from .test_updates import release
     states = []
     class Client:

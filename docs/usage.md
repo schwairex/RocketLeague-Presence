@@ -19,7 +19,7 @@ python -m venv .venv
 Or run the built `rl-presence.exe` in a writable folder. The default `config.json` and `logs/` live beside `run.py` for source runs, or beside the executable for packaged runs. `--config path\config.json` selects another config file; logs still live beside the launcher.
 
 
-## Desktop window (v0.2.6)
+## Desktop window (v0.2.7)
 
 Close the old RPC before launching this version. Keep your existing config.json beside the new EXE to preserve player/rank preferences. Application ID is now fixed; legacy client_id is ignored and removed. Windows 10/11, .NET Framework 4.8 and Microsoft Edge WebView2 Runtime are required. The EXE includes Python and the UI fonts/SVGs; the interface loads offline.
 
@@ -117,7 +117,7 @@ Missing uploaded assets do not affect the match text but the images may not appe
 
 ## First run and enabling the Stats API
 
-The desktop window creates defaults on first run. In **Genel**, select each ranked mode’s rank/division and your activity outside a match, then click **Kaydet**. In **Görünüm**, enter your game name/platform and save to enable personal points/goals/saves. Explicit PrimaryId takes priority; clear an old ID when changing accounts.
+The desktop window creates defaults on first run. In **Genel**, select each ranked mode’s rank/division and your activity outside a match, then click **Kaydet**. Personal stats use automatic local identity discovery and current-match validation. Optional overrides are in General → Advanced / Manual override. Account changes need no field clearing.
 
 On every normal GUI launch, the app automatically scans **all Steam libraries and Epic manifests**, includes a saved custom path, and configures **every discovered installation**. No setup-button click is required. When RocketLeague.exe runs, its executable path selects the active installation even when both launchers are installed. General lists the detected paths and active game. A startup banner explains missing installs, write permissions or a required game restart. “Check installations again” is a retry action, not a prerequisite.
 
@@ -145,8 +145,10 @@ Copy `config.example.json` if desired; first run also generates defaults. Restar
 | Key | Default / meaning |
 |---|---|
 | `language` | `tr`; interface language `tr` / `en` |
-| `schema_version` | `3`; managed for migrations; there is no client_id preference |
+| `schema_version` | `4`; managed for migrations; there is no client_id preference |
 | `install_path` | `""`; discovery or one-time prompt |
+| `identity_mode` | `auto` / `manual`; automatic by default, optional manual overrides in Advanced |
+| `learned_primary_id` | internal origin marker; fresh providers precede automatically learned cache |
 | `player_name` | `""`; case-insensitive explicit local player name |
 | `player_primary_id` | `""`; `Platform\|Uid\|Splitscreen`, preferred over name |
 | `stats_host` | `127.0.0.1`; local Stats API host |
@@ -164,10 +166,10 @@ Copy `config.example.json` if desired; first run also generates defaults. Restar
 | `manual_activity` | `auto`; main_menu/menu/queue/shop/training/custom_training/garage |
 | `player_platform` | `auto`; steam/epic filters name matching |
 | `spectating` | `false`; set true when watching a live match to suppress Target inference |
-| `auto_learn_primary_id` | `true`; persist ID learned **only from an explicit configured name** |
+| `auto_learn_primary_id` | `true`; atomically persist only current-match-validated identity |
 | `install_prompted` | `false`; remembers whether the manual path prompt was shown |
 
-Explicit ID/name detection takes priority and never falls through to a viewed opponent when the configured player is missing. With no configured identity, `Game.Target` is used only when `bHasTarget` is true and spectator-only fields are not observed. **Target is the currently viewed car, not a local-user identifier.** Spectator detection is best effort; set `spectating: true` or configure your identity for reliable wording. When unknown the app uses Blue/Orange scores and a neutral winner. PlayerJoined lacks team data, so detection waits for UpdateState. PlayerLeft clears a departed player's identity until another snapshot supplies it.
+Account detection is automatic and match-validated. Optional manual identity, local platform candidates and conservative low-confidence Target voting are tried in that order. Stale IDs never block automatic candidates. [Providers, privacy, probe evidence and manual checks](identity.md).
 
 ## Match clocks and rate limiting
 
@@ -177,7 +179,7 @@ RoundStarted re-syncs the end timestamp; drift over two seconds triggers a clock
 
 **Overtime direction is unverified.** The app uses an elapsed start anchor rather than deriving it from TimeSeconds. The first observed overtime kickoff establishes it; on a mid-overtime reconnect the first observed packet is a provisional anchor, so elapsed time can be incomplete. A stopped overtime clock removes its elapsed timestamp; resuming excludes the stopped duration. DEBUG logs include raw overtime TimeSeconds samples. `state.overtime_clock_start()` is the single policy function to change after real packets establish the direction.
 
-The fixed 15-second wait is removed. The publisher obeys [Discord’s limit](https://docs.discord.com/developers/developer-tools/game-sdk) of at most 5 activity writes in any rolling 20 seconds. Phase/team-score/clock and local Goals/Saves/Score changes publish immediately when budget permits. Other normal changes coalesce for at least 4 seconds. Latest payload wins and unchanged payloads are skipped. Failed writes and clears consume budget; reconnecting does not reset it. An anchored end timestamp lets Discord count down every second without repeated packets, including when a packet is delayed. Ranked/casual state is exactly `⚽goals  🧤saves  ⭐points`, without map names or white/static clocks. Arena artwork and its map-name tooltip remain. Training uses only Training/map. Missing stat fields/identity show — rather than invented zero or opponent values. Set player name/platform in Appearance. Goal replay, kickoff waits and pauses remove ticking timestamps; kickoff restores the anchor. Rapid phases can still be coalesced when the Discord budget is exhausted. Exit clears if eligible; otherwise IPC closure removes the activity.
+The fixed 15-second wait is removed. The publisher obeys [Discord’s limit](https://docs.discord.com/developers/developer-tools/game-sdk) of at most 5 activity writes in any rolling 20 seconds. Phase/team-score/clock and local Goals/Saves/Score changes publish immediately when budget permits. Other normal changes coalesce for at least 4 seconds. Latest payload wins and unchanged payloads are skipped. Failed writes and clears consume budget; reconnecting does not reset it. An anchored end timestamp lets Discord count down every second without repeated packets, including when a packet is delayed. Ranked/casual state is exactly `⚽goals  🧤saves  ⭐points`, without map names or white/static clocks. Arena artwork and its map-name tooltip remain. Training uses only Training/map. Unidentified personal stats are omitted; partial missing fields of a resolved player show — rather than invented values. Goal replay, kickoff waits and pauses remove ticking timestamps; kickoff restores the anchor. Rapid phases can still be coalesced when the Discord budget is exhausted. Exit clears if eligible; otherwise IPC closure removes the activity.
 
 
 ## Debugging and test match
@@ -227,7 +229,7 @@ The current [Its-Haze/league-rpc](https://github.com/Its-Haze/league-rpc) was re
 
 The mock also supports `--encoded-data` to replay the observed real TCP envelope. Katlicia/LOLCustomRPC was consulted only for GUI/worker-thread and save/cancel architecture; no League data logic is used.
 
-## GitHub updates (v0.2.6)
+## GitHub updates (v0.2.7)
 
 Each launch checks [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases). A newer stable release triggers an in-app notification, verified SHA-256 download and a hidden Windows helper that waits for exit, replaces the EXE and relaunches it. Config/logs remain intact. The new window/engine must acknowledge healthy startup or the helper restores the previous EXE. A failed release is blocked from automatic retries until a different version; the check button permits explicit retry. Source/Python runs display releases but never replace Python.
 
@@ -251,3 +253,7 @@ Resize the window from any edge/corner, from 900×640 upward; initial size is
 release-note rows and an initially collapsed Previous releases section. About's
 General shortcut changes tabs. Save/Cancel are only present on editable tabs.
 
+
+## Automatic account detection / Otomatik hesap (v0.2.7)
+
+See [identity.md](identity.md) for source priority, local privacy, observed Steam data, unverified Epic/live cases and five manual acceptance checks. `identity_mode` defaults to `auto`; optional `manual` mode is in General → Advanced.

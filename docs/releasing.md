@@ -43,3 +43,7 @@ v0.2.4: Publish notes with `## Yeni`, `## İyileştirme`, `## Düzeltme`
 (English: `## New`, `## Improvement`, `## Fix`) headings or `- Yeni: ...`
 prefixes for accurate row tags. Notes are safely rendered as text, not HTML.
 Upload the additional rank keys in art-assets.md before advertising rank artwork.
+
+## v0.2.7 legacy update compatibility
+
+Publish the final **build.ps1 output rl-presence.exe**, not build/core/rl-presence-core.exe. The outer .NET launcher starts a checksum-verified embedded Python core in a fresh process environment, including when an old v0.2.4 helper carries stale _PYI variables. Future helpers reset both install and rollback environments and wait for the user-facing launcher to exit. Settings/logs stay next to the outer EXE; the cache contains only runtime files. Upload this EXE and its SHA256SUMS.txt to a new stable v0.2.7 Release so existing installations can discover it. This delivery does not publish to GitHub.

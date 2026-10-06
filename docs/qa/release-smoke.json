@@ -1,5 +1,5 @@
 {
-  "version": "0.2.6",
+  "version": "0.2.7",
   "gui_subsystem": 2,
   "native_viewport": [
     1120,
@@ -8,6 +8,22 @@
   "embedded_icon": true,
   "identity_readonly": true,
   "identity_tamper_ignored": true,
+  "automatic_identity_ui": {
+    "advancedFields": [
+      "identity_mode",
+      "player_name",
+      "player_platform",
+      "player_primary_id"
+    ],
+    "appearanceFields": 0,
+    "account": "Account: \u2014 \u00b7 not identified",
+    "defaultMode": "auto",
+    "generalWidth": [
+      1103,
+      1103
+    ],
+    "turkish_account": "Hesap: \u2014 \u00b7 alg\u0131lanamad\u0131"
+  },
   "config_migration": true,
   "offline_resources": true,
   "native_bridge": true,
@@ -279,16 +295,31 @@
   ],
   "updater_native_scenarios": [
     {
-      "scenario": "success",
-      "verified": true,
+      "scenario": "legacy_v024",
+      "real_frozen_parent": true,
+      "old_mei_removed": true,
+      "gui_version": "0.2.7",
       "config_preserved": true,
-      "report": "Update installed and restarted."
+      "startup_health": true,
+      "result": "Update installed and restarted."
+    },
+    {
+      "scenario": "new_wrapper",
+      "real_frozen_parent": true,
+      "old_mei_removed": true,
+      "gui_version": "0.2.7",
+      "config_preserved": true,
+      "startup_health": true,
+      "result": "Update installed and restarted."
     },
     {
       "scenario": "rollback",
-      "verified": true,
+      "real_frozen_parent": true,
+      "old_mei_removed": true,
+      "gui_version": "0.2.7",
       "config_preserved": true,
-      "report": "Update failed: New application exited: 17. Previous application preserved."
+      "startup_health": true,
+      "result": "Update failed: New application exited: 17. Previous application preserved."
     }
   ],
   "fresh_config_rank_defaults": true,

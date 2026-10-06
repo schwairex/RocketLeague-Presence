@@ -1,6 +1,6 @@
 [project]
 name = "rocket-league-rpc"
-version = "0.2.6"
+version = "0.2.7"
 description = "Read-only Rocket League Stats API Discord Rich Presence companion"
 requires-python = ">=3.11"
 

@@ -53,7 +53,7 @@ Uygulama Steam kütüphanelerini ve Epic manifestlerini tarar, bulduğu kuruluml
 
 ### 3. Kendine göre ayarla
 
-**Görünüm** bölümüne Rocket League oyuncu adını ve platformunu gir. **Genel** bölümünden dilini seç, her ranked mod için rankını ve kümeni ayarla. Kaydet, bir maça gir ve RL Presence'ı açık tut.
+Hesabın yerel Steam/Epic bilgileriyle otomatik algılanır ve maçta doğrulanır. **Genel** bölümünden dilini seç, her ranked mod için rankını ve kümeni ayarla. İsteğe bağlı kimlik seçimi Gelişmiş / Elle kimlik seçimi altındadır. Kaydet, bir maça gir ve RL Presence'ı açık tut.
 
 > **Ranklar elle seçilir.** Resmî API rank, küme veya ayrıntılı menü/mağaza/sıra bilgisi sağlamaz. Bu aktiviteleri Genel'den seçebilirsin; canlı maç verileri önceliklidir.
 
@@ -76,9 +76,13 @@ Ranked 2v2 • 🔵 5 - 2 🟠
 ⚽1  🧤2  ⭐593
 ```
 
-⚽ gol · 🧤 kurtarış · ⭐ puan. Ranked ve casual kartlarında ikinci satır yalnızca kendi istatistiklerindir; harita adı büyük görselin tooltip’inde kalır. Casual gerçek mod adını kullanır, küçük ikon göstermez. Eğitimde **Training** ve harita adı bulunur; istatistik/küçük ikon yoktur. Canlı sayaç oyun sırasında korunur, oyun saati durunca kaldırılır ve kickoff ile devam eder; metne beyaz/sabit süre eklenmez. Kişisel istatistik değişiklikleri Discord’un gönderim bütçesi izin verdiğinde hemen iletilir. Değer **—** ise Görünüm’de oyun içi adını/platformunu doğru ayarla; eksik sayılar tahmin edilmez. [Sayaç ve gönderim sınırları →](docs/usage.tr.md#saat-maç-sonucu-ve-güncelleme-sınırı)
+⚽ gol · 🧤 kurtarış · ⭐ puan. Ranked ve casual kartlarında ikinci satır yalnızca kendi istatistiklerindir; harita adı büyük görselin tooltip’inde kalır. Casual gerçek mod adını kullanır, küçük ikon göstermez. Eğitimde **Training** ve harita adı bulunur; istatistik/küçük ikon yoktur. Canlı sayaç oyun sırasında korunur, oyun saati durunca kaldırılır ve kickoff ile devam eder; metne beyaz/sabit süre eklenmez. Kişisel istatistik değişiklikleri Discord’un gönderim bütçesi izin verdiğinde hemen iletilir. Kimlik algılanamadıysa kişisel satır gönderilmez; kısmen eksik alanlar **—** olarak kalır. [Otomatik hesap ve gizlilik →](docs/identity.md) [Sayaç ve gönderim sınırları →](docs/usage.tr.md#saat-maç-sonucu-ve-güncelleme-sınırı)
 
 ## Kullanımı kolay bir masaüstü arayüzü
+
+### v0.2.7 — Otomatik hesap ve güvenli güncelleme
+
+Yerel Steam/Epic bilgileri oyuncunu mevcut maçta doğrular; isim girmen gerekmez. Eski EXE güncellemeleri bağımsız Windows başlatıcısıyla açılır, ayarlar EXE yanında kalır. [Kimlik/gizlilik](docs/identity.md) · [Sürüm yayımlama](docs/releasing.md).
 
 <details>
 <summary><strong>Güncellemeler ve Hakkında ekranlarını gör</strong></summary>
@@ -104,11 +108,18 @@ Görseller v0.2.4 arayüzünü örnek durum verileriyle gösterir; gerçek sür�
 | Gördüğün durum | Kontrol et |
 | --- | --- |
 | **Maç boyunca “In menus / Queueing” yazıyor** | Genel'den kurulum/API durumuna bak. INI değişikliğinden sonra Rocket League'i yeniden başlat. |
-| **Kendi istatistiklerin görünmüyor** | Oyuncu adını/platformunu ayarla. Hesap değiştiriyorsan eski PrimaryId'yi temizle. |
+| **Kendi istatistiklerin görünmüyor** | Genel’de hesap/kaynak durumunu ve teşhisi kontrol et. Hesap değiştirirken alan temizlemek gerekmez. [Kimlik rehberi](docs/identity.md). |
 | **Discord'da aktivite görünmüyor** | Masaüstü Discord'u aynı Windows oturumunda açık tut ve aktivite paylaşımını kontrol et. |
 | **Harita veya rank ikonu eksik** | İlgili görselin Discord uygulamasının geliştiricisi tarafından yüklenmesi gerekir. |
 
 Başka bir sorun için uygulamadaki **Sorun Bildir** sekmesini kullan. Rapor herkese açıktır: şifre veya kişisel bilgi yazma. [Hata ayıklama ve ayrıntılı kurulum →](docs/usage.tr.md#hata-ayıklama-ve-test)
+
+<details>
+<summary><strong>Hangi hesap bilgileri okunuyor?</strong></summary>
+
+Yalnızca yerel, gizli olmayan başlatma kimliği, Steam kayıtları ve loginusers.vdf okunup mevcut maçta doğrulanır. Gizli başlatma parametreleri kaynakta atılır. Hesap verisi bir hizmete gönderilmez; sorun raporu yalnızca başlık, açıklama, sürüm ve işletim sistemi içerir. Prob ID’leri gizler; tam ID yalnızca DEBUG günlüklerinde yer alır. [Gizlilik ve doğrulama sınırları](docs/identity.md).
+
+</details>
 
 ## Kaynaktan çalıştır
 
@@ -137,6 +148,7 @@ RocketLeague-Presence/
 ├── docs/                   # Kullanım, geliştirme, sürüm ve asset rehberleri
 │   ├── licenses/           # Üçüncü taraf font ve ikon bildirimleri
 │   └── qa/                 # Doğrulama kayıtları ve eski ekran görüntüleri
+├── packaging/              # Windows başlatıcı kaynak kodu
 ├── rocket_league_rpc/      # Python uygulama modülleri
 │   ├── ui/                 # EXE'ye eklenen HTML, JS, çeviri ve ikonlar
 │   └── tests/              # Birim ve sahte sunucu entegrasyon testleri
@@ -160,7 +172,7 @@ RocketLeague-Presence/
 | Sürüm yayımlama ve otomatik güncelleme | [Release rehberi](docs/releasing.md) |
 | Logo ve README'yi GitHub'a yükleme | [Yükleme rehberi](docs/github-upload.tr.md) |
 | Discord harita ve rank görselleri | [Asset listesi](docs/art-assets.md) · [Rank anahtarları](docs/rank-asset-keys.txt) |
-| Değişiklikler ve doğrulama | [Değişiklikler](CHANGELOG.md) · [v0.2.6 doğrulaması](docs/qa/verification.md) |
+| Değişiklikler ve doğrulama | [Değişiklikler](CHANGELOG.md) · [v0.2.7 doğrulaması](docs/qa/verification.md) |
 
 ## RL Presence'ın arkasındaki ekip
 

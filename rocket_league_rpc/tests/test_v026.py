@@ -38,7 +38,7 @@ def test_no_white_clock_map_or_phase_label_in_stopped_match_text(phase, overtime
     assert first['state'] == '⚽1  🧤2  ⭐593'
     assert build_presence(state, Config(), 1020) == first
     assert 'start' not in first and 'end' not in first
-    assert 'Mannfield' not in first['details'] + first['state']
+    assert 'Mannfield' not in first['details'] + first.get('state','')
 
 
 def test_training_keeps_map_line_only_and_no_small_artwork_or_timer():
@@ -57,7 +57,7 @@ def test_zero_and_missing_stats_are_distinguished_without_guessing_an_opponent()
     zero = replace(match(), local_player_goals=0,local_player_saves=0,local_player_score=0)
     assert build_presence(zero, Config(), 1000)['state'] == '⚽0  🧤0  ⭐0'
     unknown = replace(zero,local_player_goals=None,local_player_saves=None,local_player_score=None)
-    assert build_presence(unknown, Config(), 1000)['state'] == '⚽—  🧤—  ⭐—'
+    assert 'state' not in build_presence(unknown, Config(), 1000)
     partial = replace(zero,local_player_goals=None)
     assert build_presence(partial, Config(), 1000)['state'] == '⚽—  🧤0  ⭐0'
 
@@ -79,7 +79,7 @@ def snapshot(score=593,goals=1,saves=2,players=True):
 
 def test_unmatched_identity_never_borrows_opponent_stats():
     state = reduce_event(MatchState(),snapshot(),Config(player_name='Missing'),1000)
-    assert build_presence(state,Config(),1000)['state'] == '⚽—  🧤—  ⭐—'
+    assert 'state' not in build_presence(state,Config(),1000)
 
 
 @pytest.mark.parametrize('field,value', [('score',594),('goals',2),('saves',3)])
@@ -96,7 +96,7 @@ async def test_personal_stat_change_publishes_without_four_second_coalescing(fie
     await app.on_event(snapshot(**{field:value}))
     assert await app.publisher.pump()
     assert client.operations[-1][2] == app.current_payload()
-    assert 'Mannfield' not in client.operations[-1][2]['state']
+    assert 'Mannfield' not in client.operations[-1][2].get('state','')
     await app.publisher.shutdown()
 
 

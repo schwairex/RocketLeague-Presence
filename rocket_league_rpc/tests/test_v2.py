@@ -34,7 +34,7 @@ def test_presence_includes_rank_division_and_local_player_stats():
     assert '⭐420' in p['state'] and '⚽2' in p['state'] and '🧤3' in p['state']
     assert p['end']==1222 and p['large_image']=='dfh_stadium'
     p=build_presence(s,replace(cfg,show_time=False),1000)
-    assert 'end' not in p and '3:42' not in p['state']
+    assert 'end' not in p and '3:42' not in p.get('state','')
     p=build_presence(s,replace(cfg,show_player_stats=False,show_rank=False),1000)
     assert 'Diamond' not in str(p) and '420' not in str(p)
 
@@ -48,7 +48,7 @@ def test_manual_activity_is_visible_but_never_overrides_live_match(activity,labe
     cfg=Config(manual_activity=activity)
     assert label in build_presence(MatchState(),cfg,1000)['state']
     live=MatchState(phase=Phase.PLAYING,arena='Stadium_P',playlist_id=11)
-    assert label not in build_presence(live,cfg,1000)['state']
+    assert label not in build_presence(live,cfg,1000).get('state','')
 
 
 def test_rank_validation_and_new_config_fields_survive_save_load(tmp_path):

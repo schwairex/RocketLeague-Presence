@@ -75,8 +75,9 @@ def test_update_manager_offline_does_not_call_relaunch(tmp_path):
     assert manager.snapshot()['status'] == 'error' and not called
 
 
-def test_source_run_shows_release_without_replacing_python(tmp_path):
+def test_source_run_shows_release_without_replacing_python(tmp_path,monkeypatch):
     from rocket_league_rpc.updates import UpdateManager, parse_releases
+    monkeypatch.setattr('rocket_league_rpc.updates.__version__','0.2.6')
     class Client:
         def fetch(self): return parse_releases([release()])
         def stage(self, *args): raise AssertionError('source run must not update Python')
@@ -108,6 +109,7 @@ def test_checksum_file_fallback(tmp_path):
 def test_frozen_update_notifies_stages_then_hands_off(tmp_path,monkeypatch):
     from rocket_league_rpc.updates import UpdateManager, parse_releases
     import rocket_league_rpc.updates as updates
+    monkeypatch.setattr(updates,'__version__','0.2.6')
     monkeypatch.setattr(updates.time,'sleep',lambda seconds: None)
     staged = tmp_path/'staged.exe'
     called=[]
@@ -125,6 +127,7 @@ def test_frozen_update_notifies_stages_then_hands_off(tmp_path,monkeypatch):
 def test_frozen_download_failure_keeps_rpc_and_config(tmp_path,monkeypatch):
     from rocket_league_rpc.updates import UpdateManager, parse_releases
     import rocket_league_rpc.updates as updates
+    monkeypatch.setattr(updates,'__version__','0.2.6')
     monkeypatch.setattr(updates.time,'sleep',lambda seconds: None)
     config = tmp_path/'config.json'; config.write_text('{"player_name":"PlayerA"}')
     called=[]
@@ -140,6 +143,7 @@ def test_frozen_download_failure_keeps_rpc_and_config(tmp_path,monkeypatch):
 def test_failed_release_does_not_auto_restart_loop(tmp_path,monkeypatch):
     from rocket_league_rpc.updates import UpdateManager, parse_releases
     import rocket_league_rpc.updates as updates
+    monkeypatch.setattr(updates,'__version__','0.2.6')
     import json
     monkeypatch.setattr(updates.time,'sleep',lambda seconds: None)
     folder=tmp_path/'.updates';folder.mkdir()

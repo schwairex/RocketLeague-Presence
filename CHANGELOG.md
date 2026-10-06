@@ -1,3 +1,16 @@
+# v0.2.7 — RL Presence
+
+## Yeni
+- Otomatik olarak Steam/Epic playerID doğrulaması eklendi. Ayrıca isteğe bağlı kimlik doğrulama alanı da Gelişmiş seçeneği altına alındı.
+- Salt okunur, kimlikleri gizleyen `--identity-probe` komutu eklendi.
+
+## Düzeltme
+- Eski EXE güncellemesinin silinmiş PyInstaller geçici çalışma alanını devralması giderildi.
+- Güncelleme ve geri alma temiz süreç ortamıyla başlıyor. EXE/ayar yolları kullanıcı klasöründe kalıyor.
+- Eski PrimaryId algılamayı engellemiyor ve hesap değişimi eski istatistikleri temizliyor..
+- Algılanamayan kişisel istatistik satırı RPC tarafına gönderilmiyor. Target tahmini yalnızca düşük güvenle ve korumalı oylamayla kullanılıyor.
+English: local automatic identity candidates, per-match validation, optional Advanced override, guarded Target voting, omission of unresolved personal stats, independent frozen restart and legacy-update-compatible Windows bootstrap. Steam registry/loginusers mapping verified locally; live match/Epic/admin/offline behavior remains UNVERIFIED until real acceptance checks.
+
 # v0.2.6 — RL Presence
 
 ## İyileştirme
@@ -37,34 +50,31 @@ Discord has no native pause field; rapid updates still obey the rolling budget.
 # v0.2.4 — RL Presence
 
 ## Yeni
-- Oynanan ranked moda ait rank, küçük Discord ikonu ve rank/küme tooltip’iyle gösterilir.
+- Oynanan ranked moda ait rank, küçük Discord ikonu ve rank/küme tooltip’iyle gösteriliyor.
 
 ## İyileştirme
 - Rank metni details/state satırlarından çıkarıldı; harita büyük görseli ve tooltip’i korundu.
-- Güncellemeler: durum kartında butonlar/son kontrol, etiketli sürüm kartları ve kapalı önceki sürümler listesi.
-- Bulundu → İndiriliyor → Doğrulanıyor → Yeniden başlat ilerlemesi kartın içinde gösterilir.
-- Hakkında: yatay hero/bağlantılar, eşit özellik kartları, Genel kısayolu ve geliştirici avatarları.
-- Bilgi sekmelerinde yalnızca canlı bağlantı durumu; Kaydet/İptal sadece ayar sekmelerinde.
+- Bulundu → İndiriliyor → Doğrulanıyor → Yeniden başlat ilerlemesi artık kartın içinde gösteriliyor.
+- "Hakkında" ve "Güncellemeler" sayfalarının arayüzleri güncellendi. 
+- Bilgi sekmelerinde yalnızca canlı bağlantı durumu görünüyor. Kaydet/İptal ise ayar sekmesinde gösteriliyor.
 
 ## Düzeltme
 - Çerçevesiz Windows penceresinde kenar/köşe boyutlandırması geri getirildi.
 - Minimum 900×640, başlangıç 1120×760; beş sekmede esnek/kaydırılabilir içerik.
-- Yeni metinlerin Türkçe/İngilizce desteği, okunabilir kontrast ve klavye focus durumu.
+- Yeni metinlerin Türkçe/İngilizce desteği, okunabilir kontrast ve klavye focus durumu düzenlendi.
 
 English: rank artwork/tooltips replace inline text, reference-based Updates/About
 layouts, actual verification progress, native frameless sizing and responsive tabs.
-Rank artwork must be uploaded separately using docs/art-assets.md / docs/rank-asset-keys.txt.
+Rank artwork must be uploaded separately using ART_ASSETS.md / RANK_ASSET_KEYS.txt.
 
 # v0.2.3 — RL Presence
 
-- Sekiz ranked mod için ayrı manuel rank/küme; eski tercihler korunur.
-- Casual 1v1/2v2/3v3/4v4 ve Ranked 1v1/2v2/3v3 mod adları.
-- Parc de Paris dahil genişletilmiş harita/varyant tablosu; docs/art-assets.md tam anahtar listesi.
-- Açılışta bütün Steam/Epic kurulumlarında otomatik, yedekli Stats API hazırlığı;
-  çalışan oyunun yolu otomatik seçilir, izin/yeniden başlatma sorunları görünür.
+- Sekiz ranked mod için ayrı manuel rank/küme terchileri eklendi.
+- Casual ve Ranked mod adları düzenlendi.
+- Genişletilmiş harita/varyant tablosu ve Discord RCP için 'ART_ASSETS' eklendi.
+- Açılışta bütün Steam/Epic kurulumlarında otomatik Stats API seçilme ayarı eklendi.
 - pywebview açılışındaki “unhashable type: dict” callback hatası giderildi.
-- Worker’a tanımlayıcı User-Agent ile rapor gönderimi; ağ/HTTP hataları çökmez.
-- Hakkında: schwairex — Founder / App Developer; Nyris — Co-Developer / QA.
+- Worker’a tanımlayıcı User-Agent ile rapor gönderimi düzenlendi.
 
 English: per-playlist manual ranks, sized mode names, expanded arena catalog,
 automatic multi-install setup/active executable selection, startup callback and
@@ -73,13 +83,10 @@ game when an INI is edited while it is running. Arena tables remain best effort.
 
 # v0.2.2 — RL Presence
 
-- Gol sonrası Kickoff countdown etiketi kaldırıldı; Discord sayacı silinmez,
-  son zaman damgası korunur ve kickoff’ta kalan süreye tekrar eşitlenir.
-- Discord kartı ve profil etkinliği için `name: Rocket League` gönderilir.
+- Gol sonrası Kickoff countdown etiketi kaldırıldı; Discord sayacı artık silinmiyor, son zaman damgası korunuyor ve kickoff’ta kalan süreye tekrar eşitleniyor.
+- Uygulamanın, Discord kartı ve profil etkinliğinde 'RocketLeageRPC' olarak görünme hatası düzeltildi.
 - Türkçe/İngilizce arayüz ve Genel sekmesinde kalıcı dil tercihi eklendi.
-- Hakkında’nın hemen sağına Sorun Bildir sekmesi eklendi: çift katmanlı alan
-  doğrulaması, Worker’a JSON POST, otomatik sürüm/OS, yüklenme ve hata mesajları.
-- Rapor için yeni bağımlılık/gizli bilgi yok; yalnızca Worker kullanılır.
+- Sorun Bildir sekmesi eklendi.
 
 English: retained goal-break countdown anchor and kickoff resync, Rocket League
 activity name, persisted Turkish/English UI, public issue-report form through
@@ -89,16 +96,11 @@ and is corrected on kickoff. This platform limitation remains explicit.
 
 # v0.2.1 — RL Presence
 
-- Discord Application ID sabitlendi; arayüz salt okunur, eski config ID'si yok sayılır.
-- Sabit 15 saniyelik bekleme kaldırıldı. Discord sayacı oyun zamanına eşitlenir;
-  güncellemeler kayan 20 saniyede en fazla 5 gönderim sınırına uyar.
 - Eğitim açılışında mod verisi gelmeden yanlış 0–0 geri sayım kartı gönderilmez.
 - Eğitimde P/G/S kaldırıldı. Maç kartında yinelenen süre ve Goal replay metni kaldırıldı.
-- Mevcut mavi/turuncu logo EXE/pencere/görev çubuğu simgesine uygulandı.
-- Dağıtılan çalıştırılabilir dosyanın adı `rl-presence.exe` oldu.
-- Güncellemeler ve Hakkında sekmeleri mevcut tema içinde yenilendi.
-- Her açılışta GitHub Release kontrolü, bildirim, SHA-256 doğrulamalı indirme,
-  otomatik değiştirme/yeniden açma, sağlıklı açılış kontrolü ve geri alma eklendi.
+- Uygulama logosu güncellendi.
+- Uygulamadaki "Güncellemeler" ve "Hakkında" sekmeleri mevcut tema içinde yenilendi.
+- Her açılışta GitHub Release kontrolü, bildirim, SHA-256 doğrulamalı indirme, otomatik değiştirme/yeniden açma, sağlıklı açılış kontrolü ve geri alma eklendi.
 - Başarısız aynı sürümün yeniden başlatma döngüsüne girmesi önlendi.
 - Eski ayarlar korunur; özel config yolu yeniden açılışta mutlak yol olarak taşınır.
 

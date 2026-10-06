@@ -8,6 +8,7 @@ import json
 import time
 
 from .config import Config
+from .identity import IdentityCandidate, normalize_primary_id, normalize_name, resolve_candidates
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +63,15 @@ class MatchState:
     local_player_score: int | None = None
     local_player_goals: int | None = None
     local_player_saves: int | None = None
+    identity_hints: tuple[IdentityCandidate, ...] = ()
+    identity_source: str = ''
+    identity_confidence: str = ''
+    identity_validated: bool = False
+    identity_votes: tuple[str, ...] = ()
+    identity_last_target: str = ''
+    identity_consecutive: int = 0
+    identity_spectator_seen: bool = False
+    identity_warnings: tuple[str, ...] = ()
 
 
 HANDLED_EVENTS = frozenset({
@@ -171,33 +181,91 @@ def sync_clock(state: MatchState, now: float, force: bool = False, round_started
                    resume_phase=None, last_round_started_at=round_anchor)
 
 
-def detect_local(players: list, game: dict, config: Config) -> tuple[int | None, str, str]:
-    candidates = [p for p in players if isinstance(p, dict)]
-    primary = config.player_primary_id.casefold()
-    name = config.player_name.casefold()
-    selected = None
-    if primary:
-        selected = next((p for p in candidates if string(p.get('PrimaryId')).casefold() == primary), None)
-    if selected is None and name:
-        selected = next((p for p in candidates if string(p.get('Name')).casefold() == name and (
-            config.player_platform == 'auto' or string(p.get('PrimaryId')).split('|')[0].casefold() == config.player_platform)), None)
-    if selected is None and (primary or name):
-        return None, '', ''  # configured identity must not be replaced by a viewed opponent
+def clear_identity(state: MatchState) -> MatchState:
+    return replace(state,local_team=None,local_player_name='',local_primary_id='',
+                   local_player_score=None,local_player_goals=None,local_player_saves=None,
+                   identity_source='',identity_confidence='',identity_validated=False)
+
+
+def set_identity_hints(state: MatchState, candidates, reset: bool = False) -> MatchState:
+    """Single injection point; discovery has no ownership of clocks or match phases."""
+    hints = tuple(c for c in candidates if isinstance(c,IdentityCandidate)) if isinstance(candidates,(list,tuple)) else ()
+    if hints == state.identity_hints and not reset:
+        return state
+    return replace(clear_identity(state),identity_hints=hints,identity_votes=(),
+                   identity_last_target='',identity_consecutive=0)
+
+
+def _warn_identity(state, key, message):
+    if key not in state.identity_warnings:
+        log.warning('%s',message)  # never include account identifiers in WARNING/INFO
+        state = replace(state,identity_warnings=state.identity_warnings+(key,))
+    return state
+
+
+def detect_local(state: MatchState, players: list, game: dict, config: Config, count_vote=True):
+    players = [p for p in players if isinstance(p,dict)]
     spectator_fields = {'Boost','Speed','bHasCar','bBoosting','bOnGround','bOnWall','bSupersonic'}
-    spectating = config.spectating or any(spectator_fields.intersection(p) for p in candidates)
-    if selected is None and game.get('bHasTarget') is True and not spectating:
+    spectator_seen = state.identity_spectator_seen or config.spectating or any(spectator_fields.intersection(p) for p in players)
+    state = replace(state,identity_spectator_seen=spectator_seen)
+    cached = (config.identity_mode == 'auto' and bool(config.learned_primary_id)
+              and normalize_primary_id(config.player_primary_id) == normalize_primary_id(config.learned_primary_id))
+    if cached and players and not any(normalize_primary_id(p.get('PrimaryId')) == normalize_primary_id(config.player_primary_id) for p in players):
+        state = _warn_identity(state,'learned_cache','Identity learned_cache is absent in this match; checking current local sources.')
+    manual = IdentityCandidate('' if cached else config.player_primary_id,config.player_name,'manual_override','high')
+    resolution = resolve_candidates((manual,),players) if manual.primary_id_key or manual.name_hint else None
+    if resolution is None and (manual.primary_id_key or manual.name_hint) and players:
+        state = _warn_identity(state,'manual_override','Identity manual_override is absent or ambiguous in this match; checking other local sources.')
+    if resolution is not None:
+        # A learned ID matching a currently validated provider remains automatic.
+        if config.identity_mode == 'auto':
+            automatic = resolve_candidates(state.identity_hints,players)
+            if automatic and automatic.player is resolution.player:
+                resolution = automatic
+    elif config.identity_mode == 'auto':
+        for candidate in state.identity_hints:
+            if candidate.primary_id_key and not any(normalize_primary_id(p.get('PrimaryId')) == normalize_primary_id(candidate.primary_id_key) for p in players) and players:
+                state = _warn_identity(state,candidate.source,'Identity '+candidate.source+' is absent in this match; checking other local sources.')
+        resolution = resolve_candidates(state.identity_hints,players)
+        if resolution is None and cached:
+            resolution = resolve_candidates((IdentityCandidate(config.player_primary_id,'','learned_cache','medium'),),players)
+    selected = resolution.player if resolution else None
+    source, confidence = (resolution.source,resolution.confidence) if resolution else ('','')
+    validated = resolution is not None
+    if selected and config.player_platform != 'auto':
+        primary = normalize_primary_id(selected.get('PrimaryId'))
+        if primary and primary[0] != config.player_platform:
+            state = _warn_identity(state,'platform','Ignoring platform preference: the unique match-validated identity uses another platform.')
+    # Target is only the viewed car. Vote conservatively, revoke on a view change,
+    # and retain spectator evidence until the match is destroyed.
+    target_player = None
+    key = ''
+    if not selected and config.identity_mode == 'auto' and not config.spectating and not spectator_seen and game.get('bHasTarget') is True:
         target = obj(game.get('Target'))
-        target_name = string(target.get('Name'))
-        target_team = team(target.get('TeamNum'))
-        if target_name and target_team is not None:
-            selected = next((p for p in candidates if string(p.get('Name')).casefold() == target_name.casefold()
-                             and team(p.get('TeamNum')) == target_team), target)
+        target_name, target_team = normalize_name(target.get('Name')),team(target.get('TeamNum'))
+        matches = [p for p in players if target_name and normalize_name(p.get('Name')) == target_name and team(p.get('TeamNum')) == target_team
+                   and ('Shortcut' not in target or 'Shortcut' not in p or target['Shortcut'] == p['Shortcut'])]
+        if len(matches) == 1:
+            target_player = matches[0]
+            primary = normalize_primary_id(target_player.get('PrimaryId'))
+            key = repr(primary) if primary else repr((target_name,target_team))
+    votes = (state.identity_votes+(key,))[-10:] if count_vote else state.identity_votes
+    consecutive = (state.identity_consecutive+1 if key and key == state.identity_last_target else 1 if key else 0) if count_vote else state.identity_consecutive if key == state.identity_last_target else 0
+    if target_player and consecutive >= 5 and votes.count(key)/len(votes) >= .8:
+        selected,source,confidence = target_player,'target_vote','low'
+    previous_source = state.identity_source
+    state = replace(state,identity_votes=votes,identity_last_target=key if count_vote else state.identity_last_target,identity_consecutive=consecutive,
+                    identity_source=source,identity_confidence=confidence,identity_validated=validated)
     if selected is None:
-        return None, '', ''
-    return team(selected.get('TeamNum')), string(selected.get('Name')), string(selected.get('PrimaryId'))
+        return clear_identity(state),None,'',''
+    primary_id = string(selected.get('PrimaryId'))
+    if source != previous_source or primary_id != state.local_primary_id:
+        log.info('Account identified: source=%s confidence=%s (identifier redacted)',source,confidence)
+        log.debug('Account PrimaryId=%r',primary_id)
+    return state,team(selected.get('TeamNum')),string(selected.get('Name')),primary_id
 
 
-def reduce_event(state: MatchState, message, config: Config, now: float | None = None) -> MatchState:
+def reduce_event(state: MatchState, message, config: Config, now: float | None = None, *, count_identity_vote=True) -> MatchState:
     now = time.time() if now is None else now
     message = normalize_event(message)
     if not isinstance(message, dict) or not isinstance(message.get('Event'), str):
@@ -212,9 +280,9 @@ def reduce_event(state: MatchState, message, config: Config, now: float | None =
         return state
     data = message['Data']
     if event == 'MatchDestroyed':
-        return MatchState()
+        return MatchState(identity_hints=state.identity_hints)
     if event == 'ReplayCreated':
-        return MatchState(phase=Phase.REPLAY_VIEWER, is_replay=True,
+        return MatchState(phase=Phase.REPLAY_VIEWER, is_replay=True, identity_hints=state.identity_hints,
                           match_guid=string(data.get('MatchGuid')))
     # Loaded history can emit normal match events; it remains history until leave.
     if state.phase == Phase.REPLAY_VIEWER:
@@ -222,17 +290,17 @@ def reduce_event(state: MatchState, message, config: Config, now: float | None =
     guid = string(data.get('MatchGuid'))
     if event in ('MatchCreated','MatchInitialized'):
         if state.phase == Phase.MENU or state.phase == Phase.ENDED or (guid and guid != state.match_guid):
-            state = MatchState(match_guid=guid)
+            state = MatchState(match_guid=guid,identity_hints=state.identity_hints)
         return stop_clock(state, Phase.COUNTDOWN, now)
     if event == 'UpdateState':
         fresh = state.phase == Phase.MENU or (guid and guid != state.match_guid)
         if fresh:
-            state = MatchState(phase=Phase.PLAYING, match_guid=guid)
+            state = MatchState(phase=Phase.PLAYING, match_guid=guid,identity_hints=state.identity_hints)
         elif guid and not state.match_guid:
             state = replace(state, match_guid=guid)
         game = obj(data.get('Game'))
         players = sequence(data.get('Players', []))
-        local_team, local_name, local_id = detect_local(players, game, config)
+        state, local_team, local_name, local_id = detect_local(state,players,game,config,count_identity_vote)
         blue, orange = state.blue_score, state.orange_score
         for entry in sequence(game.get('Teams', [])):
             entry = obj(entry)
@@ -329,8 +397,7 @@ def reduce_event(state: MatchState, message, config: Config, now: float | None =
         left_id = string(data.get('PrimaryId')).casefold()
         left_name = string(data.get('PlayerName')).casefold()
         if (left_id and left_id == state.local_primary_id.casefold()) or (left_name and left_name == state.local_player_name.casefold()):
-            return replace(state, local_team=None, local_player_name='', local_primary_id='',
-                           local_player_score=None,local_player_goals=None,local_player_saves=None)
+            return clear_identity(state)
     if event == 'PlayerJoined':
         log.debug('PlayerJoined name=%r id=%r; team comes from UpdateState', data.get('PlayerName'), data.get('PrimaryId'))
     return state

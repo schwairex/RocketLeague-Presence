@@ -34,7 +34,7 @@ RL Presence is a Windows companion that reads Rocket League's **official local S
 | --- | --- |
 | **Live match context** — mode, arena, Blue/Orange score and result. | **Automatic setup** — discovers Steam and Epic installations and enables the Stats API. |
 | **A synchronized clock** — live countdown during play, hidden while the game clock is stopped. | **Two languages** — switch between Türkçe and English in General. |
-| **Your own stats** — points, goals and saves after identifying your player. | **Verified updates** — startup release checks, SHA-256 verification and recovery on failed startup. |
+| **Your own stats** — points, goals and saves with automatic match-validated account detection. | **Verified updates** — startup release checks, SHA-256 verification and recovery on failed startup. |
 | **Rank artwork** — a separate manual rank/division for each supported ranked mode. | **Built-in issue reports** — a localized form, without sending logs or account identifiers. |
 
 ## Getting started
@@ -53,7 +53,7 @@ The app scans Steam libraries and Epic manifests, configures the discovered inst
 
 ### 3. Make it yours
 
-In **Appearance**, enter your Rocket League player name/platform to show your own stats. In **General**, choose your language and select a rank/division for each ranked mode. Save, start a match and keep RL Presence running.
+Your account is detected automatically from local Steam/Epic hints and validated in the match. In **General**, choose your language and select a rank/division for each ranked mode. Optional overrides are under Advanced / Manual override. Save, start a match and keep RL Presence running.
 
 > **Ranks are selected manually.** The official API does not provide rank, division or detailed menu/shop/queue state. You can choose those activities in General; live match data takes priority.
 
@@ -76,7 +76,11 @@ Ranked 2v2 • 🔵 5 - 2 🟠
 ⚽1  🧤2  ⭐593
 ```
 
-⚽ goals · 🧤 saves · ⭐ points. Ranked and casual put only your stats on the second line; the map name stays in the large artwork tooltip. Casual uses its actual playlist name, without a small icon. Training shows **Training** and the map, without stats or small artwork. The native live timer stays during play, disappears while the game clock is stopped, and resumes at kickoff; no white/static time is added to the text. Personal stat changes publish as soon as Discord’s rolling budget permits. If a value is **—**, set your exact player name/platform in Appearance; unknown values are never guessed. [Clock and update limits →](docs/usage.md#match-clocks-and-rate-limiting)
+⚽ goals · 🧤 saves · ⭐ points. Ranked and casual put only your stats on the second line; the map name stays in the large artwork tooltip. Casual uses its actual playlist name, without a small icon. Training shows **Training** and the map, without stats or small artwork. The native live timer stays during play, disappears while the game clock is stopped, and resumes at kickoff; no white/static time is added to the text. Personal stat changes publish as soon as Discord’s rolling budget permits. Unidentified personal stats are omitted; partial missing fields remain **—** and are never guessed. [Automatic identity and privacy →](docs/identity.md) [Clock and update limits →](docs/usage.md#match-clocks-and-rate-limiting)
+
+### v0.2.7 — Automatic accounts and safe updates
+
+Local Steam/Epic hints now identify your player against each current match, without required name fields. Legacy EXE updates restart through an independent Windows launcher; settings stay beside your EXE. [Identity/privacy](docs/identity.md) · [Release publishing](docs/releasing.md).
 
 ## A desktop app that stays out of the way
 
@@ -104,11 +108,18 @@ Screenshots show the v0.2.4 interface with sample status data; release availabil
 | What you see | What to check |
 | --- | --- |
 | **“In menus / Queueing” throughout the match** | Open General and check installation/API status. Restart Rocket League after an INI change. |
-| **Your own stats are missing** | Set your player name/platform. Clear a saved PrimaryId when switching accounts. |
+| **Your own stats are missing** | Check General’s account/source status and diagnostics. Account changes need no field clearing. [Identity guide](docs/identity.md). |
 | **Discord does not show the activity** | Keep desktop Discord open on the same Windows session and check activity sharing. |
 | **A map or rank icon is missing** | The corresponding artwork must be uploaded by the Discord application's maintainer. |
 
 For another problem, open **Report an Issue** in the app. Reports are public: do not include passwords or personal information. [Debugging and detailed setup →](docs/usage.md#debugging-and-test-match)
+
+<details>
+<summary><strong>Which account data is read?</strong></summary>
+
+Detection reads local public launch identity fields, Steam registry and loginusers.vdf, then validates against this match. Secret-like launch arguments are discarded at the source. Account data is not sent to a service; issue reports contain only title, description, version and OS. Probe output redacts IDs; full identity IDs require DEBUG logs. [Privacy, observed sources and limitations](docs/identity.md).
+
+</details>
 
 ## Run from source
 
@@ -137,6 +148,7 @@ RocketLeague-Presence/
 ├── docs/                   # User guides, development, releases and asset keys
 │   ├── licenses/           # Third-party font and icon notices
 │   └── qa/                 # Verification records and historical captures
+├── packaging/              # Windows pre-interpreter launcher source
 ├── rocket_league_rpc/      # Python application modules
 │   ├── ui/                 # Packaged desktop HTML, JS, translations and icons
 │   └── tests/              # Unit and mock-server integration tests
@@ -160,7 +172,7 @@ Generated `dist/`, `build/`, `logs/`, `.venv/` and personal `config.json` are ig
 | Release publishing and automatic updates | [Release guide](docs/releasing.md) |
 | Uploading the README/logo to GitHub | [Türkçe yükleme rehberi](docs/github-upload.tr.md) |
 | Discord map and rank artwork | [Asset list](docs/art-assets.md) · [Rank keys](docs/rank-asset-keys.txt) |
-| Changes and validation | [Changelog](CHANGELOG.md) · [v0.2.6 verification](docs/qa/verification.md) |
+| Changes and validation | [Changelog](CHANGELOG.md) · [v0.2.7 verification](docs/qa/verification.md) |
 
 ## The people behind RL Presence
 

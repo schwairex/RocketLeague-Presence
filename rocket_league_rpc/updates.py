@@ -16,6 +16,7 @@ import subprocess
 import sys
 import threading
 import time
+from contextlib import contextmanager
 from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -183,6 +184,9 @@ function Get-UpdateHash([string]$path) {
     finally { $stream.Dispose(); $sha.Dispose() }
 }
 function Restart-App([bool]$updated = $false) {
+    # Both install and rollback must start as an independent frozen application.
+    Get-ChildItem Env: | Where-Object { $_.Name -like '_PYI_*' -or $_.Name -eq '_MEIPASS2' -or $_.Name -like 'RL_PRESENCE_LAUNCHER_*' } | ForEach-Object { Remove-Item -LiteralPath ('Env:' + $_.Name) }
+    $env:PYINSTALLER_RESET_ENVIRONMENT = '1'
     $options = @{FilePath=$current; WorkingDirectory=[IO.Path]::GetDirectoryName($current); WindowStyle='Hidden'; PassThru=$true}
     $arguments = if ($updated) { $data.updated_command_line } else { $data.command_line }
     if ($arguments) { $options.ArgumentList = $arguments }
@@ -266,15 +270,45 @@ def prepare_handoff(current: Path, staged: Path, pid: int, args: list[str], expe
     return script, manifest
 
 
+def independent_restart_env(environment=None):
+    env = dict(os.environ if environment is None else environment)
+    env = {key:value for key,value in env.items() if not key.upper().startswith(('_PYI_','RL_PRESENCE_LAUNCHER_')) and key.upper() != '_MEIPASS2'}
+    env['PYINSTALLER_RESET_ENVIRONMENT'] = '1'
+    return env
+
+
+@contextmanager
+def external_dll_search():
+    """PyInstaller changes the Windows DLL search path inherited by helpers."""
+    kernel = None
+    if os.name == 'nt' and getattr(sys,'frozen',False):
+        import ctypes
+        kernel = ctypes.WinDLL('kernel32',use_last_error=True)
+        kernel.SetDllDirectoryW.argtypes = [ctypes.c_wchar_p]
+        kernel.SetDllDirectoryW(None)
+    try:
+        yield
+    finally:
+        if kernel is not None:
+            kernel.SetDllDirectoryW(getattr(sys,'_MEIPASS',None))
+
+
 def launch_handoff(current: Path, staged: StagedUpdate, args: list[str]):
     if os.name != 'nt':
         raise OSError('Automatic EXE update requires Windows')
-    script, manifest = prepare_handoff(current, staged.path, os.getpid(), args, staged.sha256)
+    # The wrapper waits for the core and briefly holds the user-facing EXE.
+    try:
+        owner_pid = int(os.environ.get('RL_PRESENCE_LAUNCHER_PID',''))
+        if owner_pid <= 0: owner_pid = os.getpid()
+    except ValueError:
+        owner_pid = os.getpid()
+    script, manifest = prepare_handoff(current, staged.path, owner_pid, args, staged.sha256)
     system_root = Path(os.environ.get('SystemRoot', 'C:/Windows'))
     powershell = system_root / 'System32/WindowsPowerShell/v1.0/powershell.exe'
-    subprocess.Popen([str(powershell), '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-        '-File', str(script), '-Manifest', str(manifest)], creationflags=subprocess.CREATE_NO_WINDOW,
-        close_fds=True, cwd=str(current.parent))
+    with external_dll_search():
+        subprocess.Popen([str(powershell), '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+            '-File', str(script), '-Manifest', str(manifest)], creationflags=subprocess.CREATE_NO_WINDOW,
+            close_fds=True, cwd=str(current.parent),env=independent_restart_env())
 
 
 def relaunch_args(args: list[str], config_path: Path) -> list[str]:

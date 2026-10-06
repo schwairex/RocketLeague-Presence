@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-06",
+  "read_only": true,
+  "network_requests": 0,
+  "game": {
+    "running": false,
+    "cmdline_verified": false,
+    "epic_parameters": "UNVERIFIED"
+  },
+  "steam": {
+    "running": true,
+    "active_user_readable": true,
+    "loginusers_readable": true,
+    "user_blocks": 1,
+    "active_user_matches_loginusers": true,
+    "most_recent_present": false,
+    "ids": "REDACTED",
+    "persona": "REDACTED"
+  },
+  "live_update_state": {
+    "found": false,
+    "primary_id_format": "UNVERIFIED",
+    "game_name_vs_persona": "UNVERIFIED"
+  },
+  "elevated_process": "UNVERIFIED",
+  "steam_offline": "UNVERIFIED"
+}

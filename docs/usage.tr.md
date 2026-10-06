@@ -4,7 +4,7 @@
 
 Rocket League için Windows üzerinde Python 3.11+ ile çalışan Discord Rich Presence uygulaması. Veriler yalnızca [resmî yerel Stats API](https://www.rocketleague.com/developer/stats-api) üzerinden okunur. Oyun belleğine erişilmez; oyun komutu gönderilmez. [English guide](usage.md).
 
-## Dil seçimi ve Sorun Bildir (v0.2.6)
+## Dil seçimi ve Sorun Bildir (v0.2.7)
 
 **Genel → Arayüz dili** alanından Türkçe veya English seçin ve **Kaydet**’e basın.
 Seçim hemen önizlenir ve kaydedildikten sonra yeniden açılışta korunur. İptal,
@@ -46,7 +46,7 @@ python -m venv .venv
 Hazır derleme varsa `rl-presence.exe` dosyasını çalıştırabilirsiniz. `config.json` ve `logs/`, kaynak kullanımında `run.py` yanında, exe kullanımında exe yanında bulunur. Alternatif ayar dosyası: `--config C:\klasor\config.json`. Arayüzde Kaydet ile ayarlar hemen uygulanır; JSON dosyasını dışarıdan düzenlediyseniz RPC’yi yeniden başlatın.
 
 
-## Yeni masaüstü arayüzü (v0.2.6)
+## Yeni masaüstü arayüzü (v0.2.7)
 
 Eski RPC’yi kapatıp yeni EXE’yi açın. Mevcut config.json dosyanızı yeni EXE’nin yanında tutarak oyuncu/harita/rank ayarlarınızı koruyabilirsiniz. Application ID bu sürümde sabittir; eski client_id yok sayılır ve kaldırılır. Windows 10/11, .NET Framework 4.8 ve Microsoft Edge WebView2 Runtime gerekir. Python, yazı tipleri ve verilen SVG görselleri EXE’ye dahildir; arayüz internet gerektirmez.
 
@@ -133,7 +133,7 @@ Rocket League kopyasını eşzamanlı açmayın. `--skip-install` otomatik denet
 kapatır. Konsol sürümünde bir kez yol soran seçenek korunur.
 
 Genel’de her ranked modun rank/kümesini ve maç dışı durumunu seçip Kaydet’e
-basın. Görünüm’de oyun içi ad/platform ayarı yerel P/G/S eşleşmesini sağlar.
+basın. Hesap otomatik ve maçta doğrulanarak bulunur; isteğe bağlı kimlik ayarları Genel → Gelişmiş altındadır.
 INI seçiminde önce TAStatsAPI.ini, yoksa DefaultStatsAPI.ini kullanılır:
 
 ```ini
@@ -156,8 +156,10 @@ Application ID hazırdır. Bundan sonra oyun ve Discord herhangi bir sırada aç
 | Alan | Varsayılan / açıklama |
 |---|---|
 | `language` | `tr`; arayüz dili `tr` / `en` |
-| `schema_version` | `3`; eski ayar geçişi için yönetilir; client_id ayarı bulunmaz |
+| `schema_version` | `4`; eski ayar geçişi için yönetilir; client_id ayarı bulunmaz |
 | `install_path` | Boş; otomatik arama veya tek seferlik soru |
+| `identity_mode` | `auto` / `manual`; automatic by default, optional manual overrides in Advanced |
+| `learned_primary_id` | internal origin marker; fresh providers precede automatically learned cache |
 | `player_name` | Boş; kendi oyuncu adınız, harf duyarsız eşleşme |
 | `player_primary_id` | Boş; `Platform\|Uid\|Splitscreen`, addan öncelikli |
 | `stats_host` | `127.0.0.1` |
@@ -174,10 +176,10 @@ Application ID hazırdır. Bundan sonra oyun ve Discord herhangi bir sırada aç
 | `manual_activity` | `auto`; main_menu/menu/queue/shop/training/custom_training/garage |
 | `player_platform` | `auto`; steam/epic ad eşleştirmesini filtreler |
 | `spectating` | `false`; canlı maçı izliyorsanız true yapın |
-| `auto_learn_primary_id` | `true`; yalnızca ayarlanmış oyuncu adından öğrenilen ID kaydedilir |
+| `auto_learn_primary_id` | `true`; yalnızca maçta doğrulanan kimlik atomik olarak kaydedilir |
 | `install_prompted` | `false`; kurulum yolu sorusunun gösterilip gösterilmediği |
 
-Önce ayarlanmış ID, sonra ad eşleştirilir. Ayarlanmış oyuncu bulunamadığında rakibin görüntülenen arabasına geçilmez. Kimlik ayarlanmamışsa `bHasTarget` true olduğunda ve izleyiciye özel alanlar görülmediğinde `Game.Target` kullanılabilir. **Target yalnızca izlenen arabadır; sizin kimliğinizi kanıtlamaz.** İzleyici tespiti kesin değildir; güvenilir sonuç için kimliğinizi ayarlayın veya `spectating: true` kullanın. Bilinmeyen takımda Blue/Orange ve tarafsız kazanan yazısı gösterilir. PlayerJoined takım bilgisi içermez; UpdateState beklenir.
+Hesap otomatik algılanır ve maçta doğrulanır. İsteğe bağlı elle kimlik, yerel platform adayları ve düşük güvenli Target oylaması sırayla denenir. Eski ID otomatik eşleşmeyi engellemez. [Kaynaklar, gizlilik, prob ve manuel kontroller](identity.md).
 
 ## Saat, maç sonucu ve güncelleme sınırı
 
@@ -187,7 +189,7 @@ RoundStarted bitiş zamanını eşitler. Saat tahminden **2 saniyeden fazla** sa
 
 **Uzatmada TimeSeconds yönü doğrulanmamıştır.** Yerel geçen süre başlangıcı kullanılır. İlk gözlenen uzatma başlangıcı esas alınır; maçın ortasında yeniden bağlanılırsa ilk paket geçici başlangıç olur ve geçen süre eksik görünebilir. Uzatma durduğunda geçen süre damgası kaldırılır; devam edince durulan saniyeler hesaba katılmaz. DEBUG günlükleri gerçek TimeSeconds örneklerini içerir. Politikayı değiştirmek için tek yer `state.overtime_clock_start()` fonksiyonudur.
 
-Sabit 15 saniyelik bekleme yoktur. [Discord sınırı](https://docs.discord.com/developers/developer-tools/game-sdk) uyarınca kayan her 20 saniyede en fazla 5 aktivite yazılır. Başlangıç, takım skoru, saat, eğitim, tekrar ve bitiş geçişleri ile yerel oyuncunun gol/kurtarış/puan değişiklikleri bütçe izin veriyorsa hemen gönderilir. Diğer normal değişiklikler en az 4 saniye birleştirilir. Aynı içerik yeniden gönderilmez; son durum kazanır. Başarısız yazımlar/temizleme de bütçeyi tüketir, yeniden bağlanmak bütçeyi sıfırlamaz. Sayaç her saniye paket istemez: ilk eşitlenen bitiş zamanından Discord kendi geri sayar. Ranked/casual state satırı yalnızca `⚽gol  🧤kurtarış  ⭐puan` şeklindedir; harita adı/beyaz saat metni yoktur. Harita görseli ve ad tooltip’i korunur. Eğitimde yalnızca Training/harita görünür. Oyuncu veya alan bulunamazsa — gösterilir; yanlış oyuncudan değer alınmaz. Görünüm’de oyun içi adı/platformu ayarlayın. Gol/kickoff/duraklatmada hareketli damga kaldırılır; kickoff ile geri sayım devam eder. Bütçe dolarsa kısa durumlar birleştirilebilir. Kapanışta uygunsa temizleme yazılır; aksi halde IPC kapanır.
+Sabit 15 saniyelik bekleme yoktur. [Discord sınırı](https://docs.discord.com/developers/developer-tools/game-sdk) uyarınca kayan her 20 saniyede en fazla 5 aktivite yazılır. Başlangıç, takım skoru, saat, eğitim, tekrar ve bitiş geçişleri ile yerel oyuncunun gol/kurtarış/puan değişiklikleri bütçe izin veriyorsa hemen gönderilir. Diğer normal değişiklikler en az 4 saniye birleştirilir. Aynı içerik yeniden gönderilmez; son durum kazanır. Başarısız yazımlar/temizleme de bütçeyi tüketir, yeniden bağlanmak bütçeyi sıfırlamaz. Sayaç her saniye paket istemez: ilk eşitlenen bitiş zamanından Discord kendi geri sayar. Ranked/casual state satırı yalnızca `⚽gol  🧤kurtarış  ⭐puan` şeklindedir; harita adı/beyaz saat metni yoktur. Harita görseli ve ad tooltip’i korunur. Eğitimde yalnızca Training/harita görünür. Oyuncu algılanamadıysa kişisel satır gönderilmez; kısmi eksik alan — gösterilir. Yanlış oyuncudan değer alınmaz. Gol/kickoff/duraklatmada hareketli damga kaldırılır; kickoff ile geri sayım devam eder. Bütçe dolarsa kısa durumlar birleştirilebilir. Kapanışta uygunsa temizleme yazılır; aksi halde IPC kapanır.
 
 ## Hata ayıklama ve test
 
@@ -228,7 +230,7 @@ Kimlik ve uzatma davranışı gerçek paketlerle doğrulanmalıdır. ReplayCreat
 
 Sahte sunucuda `--encoded-data`, gerçek TCP’de gözlenen zarf biçimini canlandırır. Katlicia/LOLCustomRPC yalnızca arayüz/iş parçacığı ve Kaydet/İptal mimarisi için incelendi; League veri mantığı kullanılmadı.
 
-## GitHub güncellemeleri (v0.2.6)
+## GitHub güncellemeleri (v0.2.7)
 
 Her açılışta [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases) kontrol edilir. Yeni kararlı sürümde uygulama içi bildirim gelir; EXE indirilir, SHA-256 doğrulanır, gizli bir Windows yardımcısı uygulama kapandıktan sonra EXE’yi değiştirip yeniden açar. config.json ve günlükler korunur. Yeni pencere ve motor sağlıklı açıldığını onaylamazsa eski EXE geri yüklenir. Başarısız aynı sürüm tekrar otomatik denenmez; Güncellemeleri kontrol et ile elle denenebilir. Kaynak/Python kullanımında sürüm notları görünür fakat Python dosyası değiştirilmez.
 
@@ -253,3 +255,7 @@ başlangıç 1120×760. Beş sekmenin içeriği gerektiğinde kaydırılır. Gü
 etiketli sürüm kartları ve varsayılan kapalı Önceki sürümler bulunur. Hakkında'daki
 Genel ayarlara git düğmesi Genel'e geçer. Kaydet/İptal yalnızca ayar sekmelerindedir.
 
+
+## Automatic account detection / Otomatik hesap (v0.2.7)
+
+See [identity.md](identity.md) for source priority, local privacy, observed Steam data, unverified Epic/live cases and five manual acceptance checks. `identity_mode` defaults to `auto`; optional `manual` mode is in General → Advanced.

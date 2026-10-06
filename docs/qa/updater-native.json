@@ -1,0 +1,29 @@
+[
+  {
+    "scenario": "legacy_v024",
+    "real_frozen_parent": true,
+    "old_mei_removed": true,
+    "gui_version": "0.2.7",
+    "config_preserved": true,
+    "startup_health": true,
+    "result": "Update installed and restarted."
+  },
+  {
+    "scenario": "new_wrapper",
+    "real_frozen_parent": true,
+    "old_mei_removed": true,
+    "gui_version": "0.2.7",
+    "config_preserved": true,
+    "startup_health": true,
+    "result": "Update installed and restarted."
+  },
+  {
+    "scenario": "rollback",
+    "real_frozen_parent": true,
+    "old_mei_removed": true,
+    "gui_version": "0.2.7",
+    "config_preserved": true,
+    "startup_health": true,
+    "result": "Update failed: New application exited: 17. Previous application preserved."
+  }
+]

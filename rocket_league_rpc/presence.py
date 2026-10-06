@@ -57,7 +57,8 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
             result = ('Win' if state.winner_team == state.local_team else 'Loss') if state.local_team in (0, 1) else ('Blue wins' if state.winner_team == 0 else 'Orange wins')
         details = 'Match finished' + (f': {score}' if config.show_score else '') + (f' ({result})' if result else '')
     stats = ''
-    if config.show_player_stats and state.phase != Phase.TRAINING:
+    if config.show_player_stats and state.phase != Phase.TRAINING and any(value is not None for value in (
+            state.local_player_goals,state.local_player_saves,state.local_player_score)):
         # Missing identity/API fields are unknown, never guessed zero/opponent stats.
         stats = '  '.join(f'{key}{value if value is not None else "—"}' for key,value in (
             ('⚽',state.local_player_goals), ('🧤',state.local_player_saves), ('⭐',state.local_player_score)))
