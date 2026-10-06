@@ -20,7 +20,7 @@
   }
   let reportBusy=false,reportFeedback='';
   const clone=value=>JSON.parse(JSON.stringify(value));
-  const text=(id,value)=>{$(id).textContent=value??'—';};
+  const text=(id,value)=>{const el=$(id),next=String(value??'—');if(el.textContent!==next)el.textContent=next;};
   const pad=n=>String(n).padStart(2,'0');
   const clock=n=>n==null?'—':`${Math.floor(Math.max(0,n)/60)}:${pad(Math.max(0,n)%60)}`;
   const previewArt=$('preview-image').firstElementChild;
@@ -90,7 +90,7 @@
     else if(payload?.start)timer=t('{time} uzatma',{time:clock(Math.round(Date.now()/1000-payload.start))});
     text('preview-timer',timer);
     const team=$('preview-team');team.hidden=!payload?.small_image||payload.small_image==='rl_logo';
-    team.style.background=payload?.small_image==='orange'?'#FF8F2B':'#3D8BFF';
+    team.style.background=payload?.small_image==='orange'?'#FF8F2B':'#3D8BFF';team.title=payload?.small_text||'';team.setAttribute('aria-label',payload?.small_text||'');
     $('discord-preview').title=t('Kaydedildiğinde gönderilecek içerik. Örnek önizleme Discord’a gönderilmez.');
   }
   async function preview(){
@@ -131,36 +131,61 @@
     const log=$('log-lines');log.replaceChildren();
     for(const row of (s.logs||[]).slice(-35)){const line=document.createElement('div');const time=document.createElement('span');time.style.color='#5E6A92';time.textContent=`[${row.time}] `;const level=document.createElement('span');level.style.color=row.level==='INFO'?'#3DDC97':row.level==='MAÇ'?'#3D8BFF':'#FF8F2B';level.textContent=row.level+' ';line.append(time,level,document.createTextNode(`${row.logger?row.logger+': ':''}${row.message}`));log.append(line);}log.scrollTop=log.scrollHeight;
     const port=s.config.stats_transport==='websocket'?s.config.stats_web_port:s.config.stats_port;
-    text('footer-status',`Stats API · ${s.config.stats_host}:${port} · ${t('{rate} paket/sn',{rate:s.stats.packets_per_second})}${s.discord.next_send_in>0?' · RPC '+t('{seconds} sn',{seconds:Math.ceil(s.discord.next_send_in)}):''}`);
+    $('footer-dot').style.background=s.stats.connected?'#3DDC97':s.stats.error?'#C53F51':'#FFC24D';
+    text('footer-status-text',s.stats.connected?t('Stats API bağlı')+` · ${s.config.stats_host}:${port} · ${t('{rate} paket/sn',{rate:s.stats.packets_per_second})}`:t('Stats API bağlı değil'));
     renderInstallation(s.installation);
-    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.3');
+    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.4');
     renderUpdates(s.updates);
     if(!$('diagnostics').hidden&&$('diagnostics').open)renderDiagnostics();
     preview();
   }
   function updateMessage(u){
-    const messages={idle:'Açılışta otomatik kontrol edilir.',checking:'GitHub sürümleri kontrol ediliyor…',current:'En güncel sürümü kullanıyorsun.',empty:'GitHub üzerinde henüz yayımlanmış sürüm yok.',available:u.automatic?'Yeni sürüm hazır. Otomatik güncelleme başlıyor…':'Kaynak sürümünde EXE güncellemesi uygulanmaz.',downloading:'Yeni sürüm indiriliyor ve doğrulanıyor…',restarting:'Güncelleme hazır; uygulama yeniden açılıyor…',error:'GitHub sürümlerine ulaşılamadı. İnternet bağlantısını ve depoyu kontrol et.',blocked:'Bu sürüm önceki denemede açılamadı. Mevcut sürüm korundu. Tekrar kontrol ederek yeniden deneyebilirsin.'};
+    const messages={idle:'Açılışta otomatik kontrol edilir.',checking:'GitHub sürümleri kontrol ediliyor…',current:'En güncel sürümü kullanıyorsun.',empty:'GitHub üzerinde henüz yayımlanmış sürüm yok.',available:u.automatic?'Yeni sürüm hazır. Otomatik güncelleme başlıyor…':'Kaynak sürümünde EXE güncellemesi uygulanmaz.',downloading:'Yeni sürüm indiriliyor…',verifying:'İndirilen dosyanın SHA-256 özeti doğrulanıyor…',restarting:'Güncelleme hazır; uygulama yeniden açılıyor…',error:'GitHub sürümlerine ulaşılamadı. İnternet bağlantısını ve depoyu kontrol et.',blocked:'Bu sürüm önceki denemede açılamadı. Mevcut sürüm korundu. Tekrar kontrol ederek yeniden deneyebilirsin.'};
     return t(messages[u.status]||messages.idle);
   }
+  function releaseRows(notes){
+    let category='improvement';const rows=[];
+    for(let line of String(notes||'').split(/\r?\n/)){
+      line=line.trim();if(!line||/^[-*_]{3,}$/.test(line))continue;
+      const heading=/^#{1,6}\s+/.test(line);
+      line=line.replace(/^#{1,6}\s+|^(?:[-*•]|\d+[.)])\s+/,'').replace(/\*\*/g,'');
+      const normalized=line.replace(/İ/g,'I').toLowerCase();
+      const prefix=normalized.match(/^(?:\[)?(yeni|new|added|features?|iyileştirme(?:ler)?|improvements?|changed|düzeltme(?:ler)?|fix(?:ed|es)?)(?:\])?(?:\s*[:–—-]\s*|$)/);
+      if(prefix){const word=prefix[1].toLowerCase();category=/^(yeni|new|added|feature)/.test(word)?'new':/^(düzelt|fix)/.test(word)?'fix':'improvement';line=line.slice(prefix[0].length).trim();}
+      if(!line||heading&&/^(what.s new|yenilikler|changelog|release notes|sürüm notları)$/i.test(line))continue;
+      rows.push({kind:category,text:line});
+    }
+    return rows.length?rows:[{kind:'improvement',text:t('Bu sürüm için not yayımlanmamış.')}];
+  }
+  function releaseCard(release,u){
+    const article=document.createElement('article');article.className='release-entry';
+    const header=document.createElement('header');const name=document.createElement('strong');name.textContent='v'+release.version;header.append(name);
+    for(const [matches,label,style] of [[release.version===u.current_version,'Yüklü','installed'],[release.version===u.latest_version,'En güncel','latest']])if(matches){const badge=document.createElement('span');badge.className='release-badge '+style;badge.textContent=t(label);header.append(badge);}
+    const date=document.createElement('time');const parsed=new Date(release.published);date.textContent=release.published&&!Number.isNaN(parsed.valueOf())?parsed.toLocaleDateString(locale()):'';header.append(date);
+    const rows=document.createElement('ul');rows.className='release-rows';
+    for(const row of releaseRows(release.notes)){const item=document.createElement('li');item.className='release-row';const tag=document.createElement('span');tag.className='release-tag '+row.kind;tag.textContent=t({new:'Yeni',fix:'Düzeltme',improvement:'İyileştirme'}[row.kind]);const content=document.createElement('span');content.textContent=row.text;item.append(tag,content);rows.append(item);}
+    article.append(header,rows);return article;
+  }
+  let releaseRenderKey='';
   function renderUpdates(u){
     if(!u)return;
-    const titles={idle:t('Sürüm kontrolü hazırlanıyor'),checking:t('Yeni sürümler kontrol ediliyor'),current:t('Güncelsin'),available:t('Yeni sürüm hazır'),downloading:t('Güncelleme indiriliyor'),restarting:t('Yeniden başlatılıyor'),empty:t('İlk sürüm bekleniyor'),error:t('Güncelleme kontrolü tamamlanamadı'),blocked:t('Güncelleme ertelendi')};
-    const labels={idle:t('OTOMATİK KONTROL'),checking:t('GITHUB BAĞLANTISI'),current:t('EN GÜNCEL SÜRÜM'),available:'v'+u.latest_version,downloading:t('OTOMATİK GÜNCELLEME'),restarting:t('GÜNCELLEME HAZIR'),empty:'GITHUB RELEASES',error:t('TEKRAR DENEYEBİLİRSİN')};
-    text('update-title',titles[u.status]||titles.idle);text('update-status-label',labels[u.status]||labels.idle);text('update-message',updateMessage(u));
-    $('check-updates').disabled=['checking','available','downloading','restarting'].includes(u.status)&&u.automatic;
-    if(u.status==='checking')$('check-updates').disabled=true;
-    $('update-progress-wrap').hidden=!['downloading','restarting'].includes(u.status);
+    const titles={idle:'Sürüm kontrolü hazırlanıyor',checking:'Yeni sürümler kontrol ediliyor',current:'Güncelsin',available:'Yeni sürüm hazır',downloading:'Güncelleme indiriliyor',verifying:'Güncelleme doğrulanıyor',restarting:'Yeniden başlatılıyor',empty:'İlk sürüm bekleniyor',error:'Güncelleme kontrolü tamamlanamadı',blocked:'Güncelleme ertelendi'};
+    text('update-title',t(titles[u.status]||titles.idle));text('update-message',updateMessage(u));
+    $('check-updates').disabled=u.status==='checking'||u.automatic&&['available','downloading','verifying','restarting'].includes(u.status);
+    const stages=['available','downloading','verifying','restarting'];$('update-progress-wrap').hidden=!stages.includes(u.status);
+    text('update-stage',stages.map((key,i)=>(u.status===key?'● ':i<stages.indexOf(u.status)?'✓ ':'')+t(['Bulundu','İndiriliyor','Doğrulanıyor','Yeniden başlat'][i])).join(' → '));
     $('update-progress').value=u.progress||0;text('update-percent',(u.progress||0)+'%');
     text('update-checked',u.checked_at?t('Son kontrol: {time}',{time:new Date(u.checked_at*1000).toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})}):t('Açılışta otomatik kontrol'));
-    const list=$('release-notes');list.replaceChildren();
-    for(const release of u.releases||[]){
-      const article=document.createElement('article');article.className='release-entry';
-      const header=document.createElement('header');const name=document.createElement('span');name.textContent=release.name||'v'+release.version;
-      const date=document.createElement('time');date.textContent=release.published?new Date(release.published).toLocaleDateString(locale()):'';header.append(name,date);
-      const notes=document.createElement('pre');notes.textContent=release.notes||t('Bu sürüm için not yayımlanmamış.');article.append(header,notes);list.append(article);
+    const renderKey=JSON.stringify([u.releases,u.current_version,u.latest_version,language(),u.status==='error']);
+    if(renderKey!==releaseRenderKey){
+      releaseRenderKey=renderKey;const list=$('release-notes'),previous=$('previous-release-notes');list.replaceChildren();previous.replaceChildren();
+      const releases=u.releases||[];const primary=releases.find(r=>r.version===u.latest_version)||releases[0];
+      if(primary)list.append(releaseCard(primary,u));
+      for(const release of releases)if(release!==primary)previous.append(releaseCard(release,u));
+      if(!list.children.length){const p=document.createElement('p');p.className='empty-release';p.textContent=t(u.status==='error'?'GitHub bağlantısı kurulunca sürüm notları burada görünür.':'Yayımlanmış sürümler kontrol sonrası burada görünür.');list.append(p);}
+      if(!previous.children.length){const p=document.createElement('p');p.className='empty-release';p.textContent=t('Önceki sürüm bulunmuyor.');previous.append(p);}
     }
-    if(!list.children.length){const p=document.createElement('p');p.className='empty-release';p.textContent=u.status==='error'?t('GitHub bağlantısı kurulunca sürüm notları burada görünür.'):t('Yayımlanmış sürümler kontrol sonrası burada görünür.');list.append(p);}
-    if(['available','downloading','restarting'].includes(u.status)&&u.latest_version&&updateNotice!==u.latest_version){updateNotice=u.latest_version;toast(t('RL Presence v{version} hazır.',{version:u.latest_version})+' '+(u.automatic?t('Uygulama otomatik güncellenecek ve yeniden açılacak.'):t('Yeni sürümü GitHub sürümlerinden indirebilirsin.')));}
+    if(stages.includes(u.status)&&u.latest_version&&updateNotice!==u.latest_version){updateNotice=u.latest_version;toast(t('RL Presence v{version} hazır.',{version:u.latest_version})+' '+(u.automatic?t('Uygulama otomatik güncellenecek ve yeniden açılacak.'):t('Yeni sürümü GitHub sürümlerinden indirebilirsin.')));}
   }
   async function refresh(){
     if(busy)return;
@@ -182,11 +207,13 @@
   });
   function hydrateTogglesOnly(){}
   for(const button of document.querySelectorAll('[data-setting]'))button.addEventListener('click',()=>{if(!draft)return;draft[button.dataset.setting]=!draft[button.dataset.setting];hydrate();preview();});
-  for(const tab of document.querySelectorAll('[data-tab]'))tab.addEventListener('click',()=>{
-    for(const other of document.querySelectorAll('[data-tab]'))other.classList.toggle('act',other===tab);
-    for(const page of document.querySelectorAll('.tab-content'))page.hidden=page.id!==tab.dataset.tab;
-    $('save').hidden=tab.dataset.tab==='report';$('cancel').hidden=tab.dataset.tab==='report';
-  });
+  function selectTab(key){
+    for(const tab of document.querySelectorAll('[data-tab]')){const active=tab.dataset.tab===key;tab.classList.toggle('act',active);tab.setAttribute('aria-selected',String(active));}
+    for(const page of document.querySelectorAll('.tab-content'))page.hidden=page.id!==key;
+    const editable=['appearance','general'].includes(key);$('save').hidden=!editable;$('cancel').hidden=!editable;
+  }
+  for(const tab of document.querySelectorAll('[data-tab]'))tab.addEventListener('click',()=>selectTab(tab.dataset.tab));
+  $('go-general').addEventListener('click',()=>selectTab('general'));
   for(const button of document.querySelectorAll('[data-window]'))button.addEventListener('click',async()=>{try{await invoke('window_action',button.dataset.window);}catch(e){toast(e.message,true);}});
   $('preview-state').addEventListener('change',preview);
   $('cancel').addEventListener('click',()=>{if(!persisted)return;draft=clone(persisted);hydrate();preview();toast(t('Kaydedilmemiş değişiklikler geri alındı.'));});

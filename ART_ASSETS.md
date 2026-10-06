@@ -1,4 +1,4 @@
-# Discord Art Assets — v0.2.3
+# Discord Art Assets — v0.2.4
 
 TR: Sabit Discord uygulaması **802869954805760020** için Rich Presence → Art Assets
 alanına aşağıdaki küçük harfli anahtarlarla görsel yükleyin. Son kullanıcıların
@@ -191,3 +191,46 @@ These supply name facts only; runtime data comes solely from the official Stats 
 | `Woods_Forest_P` | Drift Woods (Forest) | `drift_woods` |
 | `Woods_Night_P` | Drift Woods (Night) | `drift_woods` |
 | `Woods_P` | Drift Woods | `drift_woods` |
+
+## v0.2.4 rank icons / Rank ikonları
+
+**TR:** Bu oturumda yalnızca anahtarlar ve yükleme listesi hazırlandı; görseller
+Discord hesabınıza yüklenmedi. Sabit uygulamanız **802869954805760020** için
+Developer Portal → Rich Presence → Art Assets bölümüne bu adlarla yükleyin.
+PNG adı değil, Portal’da verilen **asset key** önemlidir. Her ikon rankın I/II/III
+seviyesini temsil eder; Div I–IV aynı ikonu kullanır ve tooltip'te gösterilir.
+Örnek: `small_image: diamond_1`, `small_text: Diamond I Div IV`.
+Harita `large_image`, harita adı `large_text` olarak kalır. Rank, `details` ve
+`state` metninde gösterilmez. Son kullanıcı görsel yüklemez.
+
+**EN:** Only keys/upload instructions are delivered; no Portal uploads were made.
+Upload artwork under these exact keys for the fixed application above. Divisions
+share the tier icon and appear in the tooltip. Only the current ranked playlist's
+manual selection is used. Casual, training, hidden rank and Unranked keep the
+existing team icon (or rl_logo). `unranked` is reserved and optional.
+
+| Rank | Exact asset key / Birebir anahtar |
+|---|---|
+| Unranked | `unranked` |
+| Bronze I | `bronze_1` |
+| Bronze II | `bronze_2` |
+| Bronze III | `bronze_3` |
+| Silver I | `silver_1` |
+| Silver II | `silver_2` |
+| Silver III | `silver_3` |
+| Gold I | `gold_1` |
+| Gold II | `gold_2` |
+| Gold III | `gold_3` |
+| Platinum I | `platinum_1` |
+| Platinum II | `platinum_2` |
+| Platinum III | `platinum_3` |
+| Diamond I | `diamond_1` |
+| Diamond II | `diamond_2` |
+| Diamond III | `diamond_3` |
+| Champion I | `champion_1` |
+| Champion II | `champion_2` |
+| Champion III | `champion_3` |
+| Grand Champion I | `grand_champion_1` |
+| Grand Champion II | `grand_champion_2` |
+| Grand Champion III | `grand_champion_3` |
+| Supersonic Legend | `supersonic_legend` |

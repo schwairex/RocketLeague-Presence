@@ -17,7 +17,7 @@ python -m venv .venv
 Or run the built `rl-presence.exe` in a writable folder. The default `config.json` and `logs/` live beside `run.py` for source runs, or beside the executable for packaged runs. `--config path\config.json` selects another config file; logs still live beside the launcher.
 
 
-## Desktop window (v0.2.3)
+## Desktop window (v0.2.4)
 
 Close the old RPC before launching this version. Keep your existing config.json beside the new EXE to preserve player/rank preferences. Application ID is now fixed; legacy client_id is ignored and removed. Windows 10/11, .NET Framework 4.8 and Microsoft Edge WebView2 Runtime are required. The EXE includes Python and the UI fonts/SVGs; the interface loads offline.
 
@@ -225,10 +225,27 @@ The current [Its-Haze/league-rpc](https://github.com/Its-Haze/league-rpc) was re
 
 The mock also supports `--encoded-data` to replay the observed real TCP envelope. Katlicia/LOLCustomRPC was consulted only for GUI/worker-thread and save/cancel architecture; no League data logic is used.
 
-## GitHub updates (v0.2.3)
+## GitHub updates (v0.2.4)
 
 Each launch checks [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases). A newer stable release triggers an in-app notification, verified SHA-256 download and a hidden Windows helper that waits for exit, replaces the EXE and relaunches it. Config/logs remain intact. The new window/engine must acknowledge healthy startup or the helper restores the previous EXE. A failed release is blocked from automatic retries until a different version; the check button permits explicit retry. Source/Python runs display releases but never replace Python.
 
 The repository and Releases must be publicly accessible. Publish `rl-presence.exe` with GitHub’s SHA-256 asset digest or `SHA256SUMS.txt`. See [RELEASING.md](RELEASING.md). The supplied repository’s Releases API returned 404 when checked on 2026-10-05; network/repository errors do not stop RPC. This deliverable does not publish to GitHub.
 
 Ranked Heatseeker PlaylistId 63 mapping reference: [author-maintained playlist enum](https://github.com/GrantJL/rl-lobby-ranks/blob/master/lobby-ranks/types.h). This is a lookup fact, not a runtime data source.
+
+
+## v0.2.4 interface and rank artwork
+
+Selected ranked-mode rank is sent as a small icon (`diamond_1`, `champion_2`, etc.)
+and tooltip (`Diamond I Div IV`), never in details/state. Map artwork remains
+the large image with its name tooltip. Upload the keys in [ART_ASSETS.md](ART_ASSETS.md)
+or [RANK_ASSET_KEYS.txt](RANK_ASSET_KEYS.txt) once in the fixed application's Portal.
+Actual Portal uploads are not part of this package; without artwork a requested
+rank icon cannot render in Discord. Unranked/casual/training/disabled rank retain
+the team/logo icon.
+
+Resize the window from any edge/corner, from 900×640 upward; initial size is
+1120×760. All five tabs scroll independently when needed. Updates has safe typed
+release-note rows and an initially collapsed Previous releases section. About's
+General shortcut changes tabs. Save/Cancel are only present on editable tabs.
+

@@ -125,7 +125,8 @@ class GitHubReleases:
                 if count > expected_size or count > MAX_EXE:
                     raise ValueError('Unexpected update size')
                 target.write(chunk)
-                progress(round(count / expected_size * 100))
+                # 100 is reserved for stage(), after EOF and the size check.
+                progress(min(99, round(count / expected_size * 100)))
         if count != expected_size:
             raise ValueError('Incomplete update download')
 
@@ -151,6 +152,7 @@ class GitHubReleases:
             self._download(asset['browser_download_url'], partial, asset['size'], progress)
             if partial.stat().st_size != asset['size']:
                 raise ValueError('Incomplete update download')
+            progress(100)  # Download finished; checksum verification starts now.
             with partial.open('rb') as source:
                 actual = hashlib.file_digest(source, 'sha256').hexdigest()
             if actual.casefold() != checksum.casefold():
@@ -330,6 +332,13 @@ class UpdateManager:
     def snapshot_unlocked(self):
         return dict(self._state)
 
+    def _download_progress(self, percent):
+        if percent >= 100:
+            self._set(status='verifying', progress=100,
+                      message='İndirilen dosyanın SHA-256 özeti doğrulanıyor…')
+        else:
+            self._set(progress=max(0, percent))
+
     def _check(self, retry_failed=False):
         try:
             releases = self.client.fetch()
@@ -348,9 +357,9 @@ class UpdateManager:
                     ('Otomatik güncelleme başlıyor…' if self.frozen else 'Kaynak sürümünde EXE güncellemesi uygulanmaz.'))
                 if self.frozen:
                     time.sleep(2)  # allow the visible startup notification to render
-                    self._set(status='downloading', message='Yeni sürüm indiriliyor ve doğrulanıyor…')
+                    self._set(status='downloading', message='Yeni sürüm indiriliyor…')
                     staged = self.client.stage(latest, self.app_dir / '.updates',
-                        lambda p: self._set(progress=p))
+                        self._download_progress)
                     self._set(status='restarting', progress=100, message='Güncelleme hazır; uygulama yeniden açılıyor…')
                     if self.on_ready:
                         self.on_ready(staged)

@@ -3,6 +3,7 @@ import time
 
 from .config import Config, ACTIVITIES
 from .maps import lookup_map
+from .ranks import RANK_ASSETS
 from .modes import lookup_mode, RANK_KEY_BY_PLAYLIST
 from .state import MatchState, Phase, overtime_clock_start
 
@@ -25,7 +26,7 @@ def rank_label(config: Config, playlist_id=None) -> str:
 
 def menu_presence(config: Config | None = None) -> dict:
     config = config or Config()
-    return {'name': 'Rocket League', 'details': limit_text(' | '.join(filter(None, ['Rocket League', rank_label(config)]))),
+    return {'name': 'Rocket League', 'details': 'Rocket League',
             'state': ACTIVITIES.get(config.manual_activity, ACTIVITIES['auto']),
             'large_image': 'rl_logo', 'large_text': 'Rocket League'}
 
@@ -67,13 +68,17 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     if config.show_player_stats and state.phase != Phase.TRAINING:
         stats = ' '.join(f'{key}:{value}' for key,value in (
             ('P',state.local_player_score), ('G',state.local_player_goals), ('S',state.local_player_saves)) if value is not None)
-    details = ' | '.join(filter(None, [details, rank_label(config,state.playlist_id)]))
     status = ' | '.join(filter(None, [map_name if config.show_map else '', label, clock, stats])) or 'Playing Rocket League'
     payload = {'name':'Rocket League', 'details':details, 'state':status,
                'large_image':asset if config.show_map else 'rl_logo',
                'large_text':map_name if config.show_map else 'Rocket League',
                'small_image': 'blue' if state.local_team == 0 else 'orange' if state.local_team == 1 else 'rl_logo',
                'small_text':'Team Blue' if state.local_team == 0 else 'Team Orange' if state.local_team == 1 else 'Blue vs Orange'}
+    rank = rank_label(config, state.playlist_id) if state.phase != Phase.TRAINING else ''
+    if rank:
+        key = RANK_KEY_BY_PLAYLIST[state.playlist_id]
+        tier = config.mode_ranks.get(key, {'tier':config.rank_tier})['tier']
+        payload.update(small_image=RANK_ASSETS[tier], small_text=rank)
     if config.show_time and state.phase == Phase.PLAYING and state.clock_end is not None and state.clock_end > now:
         payload['end'] = int(state.clock_end)
     elif config.show_time and state.phase == Phase.OVERTIME:

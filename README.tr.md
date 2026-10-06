@@ -2,7 +2,7 @@
 
 Rocket League için Windows üzerinde Python 3.11+ ile çalışan Discord Rich Presence uygulaması. Veriler yalnızca [resmî yerel Stats API](https://www.rocketleague.com/developer/stats-api) üzerinden okunur. Oyun belleğine erişilmez; oyun komutu gönderilmez. [English guide](README.md).
 
-## Dil seçimi ve Sorun Bildir (v0.2.3)
+## Dil seçimi ve Sorun Bildir (v0.2.4)
 
 **Genel → Arayüz dili** alanından Türkçe veya English seçin ve **Kaydet**’e basın.
 Seçim hemen önizlenir ve kaydedildikten sonra yeniden açılışta korunur. İptal,
@@ -43,7 +43,7 @@ python -m venv .venv
 Hazır derleme varsa `rl-presence.exe` dosyasını çalıştırabilirsiniz. `config.json` ve `logs/`, kaynak kullanımında `run.py` yanında, exe kullanımında exe yanında bulunur. Alternatif ayar dosyası: `--config C:\klasor\config.json`. Arayüzde Kaydet ile ayarlar hemen uygulanır; JSON dosyasını dışarıdan düzenlediyseniz RPC’yi yeniden başlatın.
 
 
-## Yeni masaüstü arayüzü (v0.2.3)
+## Yeni masaüstü arayüzü (v0.2.4)
 
 Eski RPC’yi kapatıp yeni EXE’yi açın. Mevcut config.json dosyanızı yeni EXE’nin yanında tutarak oyuncu/harita/rank ayarlarınızı koruyabilirsiniz. Application ID bu sürümde sabittir; eski client_id yok sayılır ve kaldırılır. Windows 10/11, .NET Framework 4.8 ve Microsoft Edge WebView2 Runtime gerekir. Python, yazı tipleri ve verilen SVG görselleri EXE’ye dahildir; arayüz internet gerektirmez.
 
@@ -225,10 +225,27 @@ Kimlik ve uzatma davranışı gerçek paketlerle doğrulanmalıdır. ReplayCreat
 
 Sahte sunucuda `--encoded-data`, gerçek TCP’de gözlenen zarf biçimini canlandırır. Katlicia/LOLCustomRPC yalnızca arayüz/iş parçacığı ve Kaydet/İptal mimarisi için incelendi; League veri mantığı kullanılmadı.
 
-## GitHub güncellemeleri (v0.2.3)
+## GitHub güncellemeleri (v0.2.4)
 
 Her açılışta [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases) kontrol edilir. Yeni kararlı sürümde uygulama içi bildirim gelir; EXE indirilir, SHA-256 doğrulanır, gizli bir Windows yardımcısı uygulama kapandıktan sonra EXE’yi değiştirip yeniden açar. config.json ve günlükler korunur. Yeni pencere ve motor sağlıklı açıldığını onaylamazsa eski EXE geri yüklenir. Başarısız aynı sürüm tekrar otomatik denenmez; Güncellemeleri kontrol et ile elle denenebilir. Kaynak/Python kullanımında sürüm notları görünür fakat Python dosyası değiştirilmez.
 
 Depo herkese açık ve Releases erişilebilir olmalıdır. Release’te `rl-presence.exe` ve GitHub SHA-256 digest’i veya `SHA256SUMS.txt` bulunmalıdır. Yayımlama akışı: [RELEASING.md](RELEASING.md). 2026-10-05 kontrolünde verilen depo Releases API’si 404 dönüyordu; internet/depo hataları RPC’yi durdurmaz. Bu teslim GitHub’a yayımlama yapmaz.
 
 Ranked Heatseeker PlaylistId 63 mapping reference: [author-maintained playlist enum](https://github.com/GrantJL/rl-lobby-ranks/blob/master/lobby-ranks/types.h). This is a lookup fact, not a runtime data source.
+
+
+## v0.2.4 arayüz ve rank ikonları
+
+Oynanan ranked modun manuel rankı artık küçük ikon (`diamond_1`, `champion_2` vb.)
+ve tooltip (`Diamond I Div IV`) olarak gönderilir; details/state satırlarından
+çıkarılmıştır. Harita büyük görseli ve harita adı tooltip’i korunur. Sabit Discord
+uygulamanıza [ART_ASSETS.md](ART_ASSETS.md) / [RANK_ASSET_KEYS.txt](RANK_ASSET_KEYS.txt)
+listesindeki anahtarlarla ikonları bir kez yükleyin. Bu paket Portal'a görsel
+yüklemez; yüklenmeyen rank anahtarının ikonu Discord’da görünemez. Unranked,
+casual/eğitim ve rank kapalı durumlarında takım/logo ikonu kullanılır.
+
+Pencere bütün kenar/köşelerden boyutlandırılabilir: en küçük 900×640,
+başlangıç 1120×760. Beş sekmenin içeriği gerektiğinde kaydırılır. Güncellemeler'de
+etiketli sürüm kartları ve varsayılan kapalı Önceki sürümler bulunur. Hakkında'daki
+Genel ayarlara git düğmesi Genel'e geçer. Kaydet/İptal yalnızca ayar sekmelerindedir.
+

@@ -26,7 +26,7 @@ def test_per_mode_rank_validation_migration_and_presence(tmp_path):
     cfg=load_config(path)
     for playlist,rank in [(11,'Champion I Div IV'),(10,'Diamond II Div III'),(13,'Diamond II Div III')]:
         state=MatchState(phase=Phase.PLAYING,arena='Stadium_P',playlist_id=playlist)
-        assert rank in build_presence(state,cfg,1000)['details']
+        assert rank == build_presence(state,cfg,1000)['small_text']
     assert 'Diamond' not in build_presence(MatchState(phase=Phase.PLAYING,arena='Park_P',playlist_id=2),cfg,1000)['details']
 
 
@@ -147,7 +147,7 @@ def test_all_rank_modes_are_independent_and_invalid_config_never_crashes():
     from rocket_league_rpc.state import MatchState,Phase
     cfg=validate_config({'mode_ranks':{key:{'tier':'Gold I','division':index%4+1} for index,key in enumerate(RANKED_MODES)}})
     for key,(playlist,_) in RANKED_MODES.items():
-        assert ['I','II','III','IV'][cfg.mode_ranks[key]['division']-1] in build_presence(MatchState(phase=Phase.PLAYING,playlist_id=playlist),cfg)['details']
+        assert ['I','II','III','IV'][cfg.mode_ranks[key]['division']-1] in build_presence(MatchState(phase=Phase.PLAYING,playlist_id=playlist),cfg)['small_text']
     for bad in (None,[],{'hoops':[]},{'hoops':{'tier':{},'division':None}}):
         assert len(validate_config({'mode_ranks':bad}).mode_ranks)==8
 

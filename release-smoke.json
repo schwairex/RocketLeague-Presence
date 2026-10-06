@@ -1,5 +1,5 @@
 {
-  "version": "0.2.3",
+  "version": "0.2.4",
   "gui_subsystem": 2,
   "native_viewport": [
     1120,
@@ -20,6 +20,263 @@
   "report_after_about": true,
   "healthy_startup_ack": true,
   "real_discord_pipe_used": false,
+  "native_resize_hit_tests": [
+    13,
+    12,
+    14,
+    10,
+    11,
+    16,
+    15,
+    17
+  ],
+  "minimum_window": [
+    900,
+    640
+  ],
+  "maximized_window": [
+    2560,
+    1392
+  ],
+  "responsive_tabs": [
+    {
+      "tab": "appearance",
+      "frame": [
+        900,
+        640
+      ],
+      "width": [
+        883,
+        883
+      ],
+      "save": true,
+      "visiblePages": 1
+    },
+    {
+      "tab": "general",
+      "frame": [
+        900,
+        640
+      ],
+      "width": [
+        883,
+        883
+      ],
+      "save": true,
+      "visiblePages": 1
+    },
+    {
+      "tab": "updates",
+      "frame": [
+        900,
+        640
+      ],
+      "width": [
+        883,
+        883
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "about",
+      "frame": [
+        900,
+        640
+      ],
+      "width": [
+        883,
+        883
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "report",
+      "frame": [
+        900,
+        640
+      ],
+      "width": [
+        883,
+        883
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "appearance",
+      "frame": [
+        1120,
+        760
+      ],
+      "width": [
+        1118,
+        1118
+      ],
+      "save": true,
+      "visiblePages": 1
+    },
+    {
+      "tab": "general",
+      "frame": [
+        1120,
+        760
+      ],
+      "width": [
+        1103,
+        1103
+      ],
+      "save": true,
+      "visiblePages": 1
+    },
+    {
+      "tab": "updates",
+      "frame": [
+        1120,
+        760
+      ],
+      "width": [
+        1118,
+        1118
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "about",
+      "frame": [
+        1120,
+        760
+      ],
+      "width": [
+        1103,
+        1103
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "report",
+      "frame": [
+        1120,
+        760
+      ],
+      "width": [
+        1103,
+        1103
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "appearance",
+      "frame": [
+        1400,
+        900
+      ],
+      "width": [
+        1256,
+        1256
+      ],
+      "save": true,
+      "visiblePages": 1
+    },
+    {
+      "tab": "general",
+      "frame": [
+        1400,
+        900
+      ],
+      "width": [
+        1383,
+        1383
+      ],
+      "save": true,
+      "visiblePages": 1
+    },
+    {
+      "tab": "updates",
+      "frame": [
+        1400,
+        900
+      ],
+      "width": [
+        1398,
+        1398
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "about",
+      "frame": [
+        1400,
+        900
+      ],
+      "width": [
+        1398,
+        1398
+      ],
+      "save": false,
+      "visiblePages": 1
+    },
+    {
+      "tab": "report",
+      "frame": [
+        1400,
+        900
+      ],
+      "width": [
+        1398,
+        1398
+      ],
+      "save": false,
+      "visiblePages": 1
+    }
+  ],
+  "maximized_tabs": [
+    {
+      "tab": "appearance",
+      "width": [
+        1256,
+        1256
+      ],
+      "save": true
+    },
+    {
+      "tab": "general",
+      "width": [
+        2558,
+        2558
+      ],
+      "save": true
+    },
+    {
+      "tab": "updates",
+      "width": [
+        2558,
+        2558
+      ],
+      "save": false
+    },
+    {
+      "tab": "about",
+      "width": [
+        2558,
+        2558
+      ],
+      "save": false
+    },
+    {
+      "tab": "report",
+      "width": [
+        2558,
+        2558
+      ],
+      "save": false
+    }
+  ],
   "updater_native_scenarios": [
     {
       "scenario": "success",

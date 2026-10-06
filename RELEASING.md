@@ -36,3 +36,8 @@ checks each launch, validates the downloaded digest, waits for the app to exit,
 replaces/restarts it, and requires startup acknowledgement within 45 seconds.
 It rolls back on failed startup and avoids retry loops. Source runs never update
 the Python interpreter. Repository errors leave RPC running.
+
+v0.2.4: Publish notes with `## Yeni`, `## İyileştirme`, `## Düzeltme`
+(English: `## New`, `## Improvement`, `## Fix`) headings or `- Yeni: ...`
+prefixes for accurate row tags. Notes are safely rendered as text, not HTML.
+Upload the additional rank keys in ART_ASSETS.md before advertising rank artwork.

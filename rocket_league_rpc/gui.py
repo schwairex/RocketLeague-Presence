@@ -245,7 +245,7 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
         updates.check=lambda:{'status':'checking'}
     try:
         window = webview.create_window('RL Presence',html=ui_document(),js_api=bridge,
-            width=1120,height=760,min_size=(940,680),frameless=True,easy_drag=False,
+            width=1120,height=760,min_size=(900,640),resizable=True,frameless=True,easy_drag=False,
             background_color='#0A0F1F',text_select=True)
         bridge._window = window
         def apply_update(staged):
@@ -259,6 +259,8 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
         window.events.loaded += healthy_startup
         window.events.closed += host.close
         def fit_initial_window():
+            from .window_chrome import enable_native_resize
+            bridge._resize_adapter = enable_native_resize(window)
             # WinForms changes ClientSize when removing its native frame;
             # apply the requested design dimensions after it is frameless.
             window.resize(1120,760)
@@ -269,13 +271,51 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
             def smoke():
                 time.sleep(2)
                 try:
+                    resize_checks = []
+                    if bridge._resize_adapter:
+                        from ctypes import wintypes
+                        adapter = bridge._resize_adapter
+                        adapter.user.SendMessageW.argtypes = [wintypes.HWND,wintypes.UINT,ctypes.c_size_t,ctypes.c_ssize_t]
+                        adapter.user.SendMessageW.restype = ctypes.c_ssize_t
+                        rect = wintypes.RECT()
+                        adapter.user.GetWindowRect(adapter.hwnd,ctypes.byref(rect))
+                        center_x, center_y = (rect.left+rect.right)//2, (rect.top+rect.bottom)//2
+                        hits = []
+                        for x,y in [(rect.left+1,rect.top+1),(center_x,rect.top+1),(rect.right-2,rect.top+1),
+                                    (rect.left+1,center_y),(rect.right-2,center_y),
+                                    (rect.left+1,rect.bottom-2),(center_x,rect.bottom-2),(rect.right-2,rect.bottom-2)]:
+                            hits.append(adapter.user.SendMessageW(adapter.hwnd,0x0084,0,((y&0xffff)<<16)|(x&0xffff)))
+                    else:
+                        hits = []
+                    for width,height in [(900,640),(1120,760),(1400,900)]:
+                        window.resize(width,height)
+                        deadline = time.monotonic()+2
+                        while json.loads(window.evaluate_js('JSON.stringify([innerWidth,innerHeight])')) != [width,height] and time.monotonic()<deadline:
+                            time.sleep(.02)
+                        for tab in ('appearance','general','updates','about','report'):
+                            window.evaluate_js(f"document.querySelector('[data-tab={tab}]').click()")
+                            check = window.evaluate_js("JSON.stringify((()=>{const p=Array.from(document.querySelectorAll('.tab-content')).find(p=>!p.hidden);return {tab:p.id,frame:[innerWidth,innerHeight],width:[p.clientWidth,p.scrollWidth],save:!document.getElementById('save').hidden,visiblePages:Array.from(document.querySelectorAll('.tab-content')).filter(p=>getComputedStyle(p).display!=='none').length}})())")
+                            resize_checks.append(json.loads(check))
+                    window.maximize()
+                    maximized = window.evaluate_js('JSON.stringify([innerWidth,innerHeight])')
+                    maximized_checks = []
+                    for tab in ('appearance','general','updates','about','report'):
+                        window.evaluate_js(f"document.querySelector('[data-tab={tab}]').click()")
+                        check = window.evaluate_js("JSON.stringify((()=>{const p=document.getElementById('"+tab+"');return {tab:p.id,width:[p.clientWidth,p.scrollWidth],save:!document.getElementById('save').hidden}})())")
+                        maximized_checks.append(json.loads(check))
+                    window.restore()
+                    window.resize(800,500)
+                    minimum = window.evaluate_js('JSON.stringify([innerWidth,innerHeight])')
+                    window.resize(1120,760)
                     window.evaluate_js("document.querySelector('[data-tab=report]').click();document.getElementById('report-title').value='Native release verification';document.getElementById('report-description').value='Isolated mocked report from the packaged desktop application.';document.getElementById('report-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));")
                     time.sleep(.1)
                     loading=window.evaluate_js("document.getElementById('report-submit').disabled && !document.getElementById('report-spinner').hidden")
                     time.sleep(.8)
                     dom = window.evaluate_js("JSON.stringify({language:document.documentElement.lang,reportApi:typeof window.pywebview.api.submit_report==='function',reportTabAfterAbout:Array.from(document.querySelectorAll('[data-tab]')).map(e=>e.dataset.tab).join(',').includes('about,report'),title:document.title,ready:!!window.rpcUI,body:document.body.innerText,frame:[innerWidth,innerHeight],identityReadonly:document.getElementById('application-id').readOnly,identity:document.getElementById('application-id').value,remote:Array.from(document.querySelectorAll('script[src],link[href]')).map(e=>e.src||e.href)})")
                     form=window.evaluate_js("JSON.stringify({feedback:document.getElementById('report-feedback').textContent,title:document.getElementById('report-title').value,description:document.getElementById('report-description').value,rankCards:document.querySelectorAll('.rank-card').length,developers:document.getElementById('about').textContent})")
-                    Path(smoke_path).write_text(json.dumps({'dom':json.loads(dom),'bridge':bridge.get_snapshot(),'report':{'loading':loading,'form':json.loads(form),'requests':report_requests}},ensure_ascii=False,indent=2),encoding='utf-8')
+                    Path(smoke_path).write_text(json.dumps({'dom':json.loads(dom),'bridge':bridge.get_snapshot(),
+                        'resize':{'hit_tests':hits,'layouts':resize_checks,'maximized':json.loads(maximized),'maximized_tabs':maximized_checks,'minimum':json.loads(minimum)},
+                        'report':{'loading':loading,'form':json.loads(form),'requests':report_requests}},ensure_ascii=False,indent=2),encoding='utf-8')
                     window.evaluate_js('window.rpcUI.stop()')
                 finally:
                     window.destroy()

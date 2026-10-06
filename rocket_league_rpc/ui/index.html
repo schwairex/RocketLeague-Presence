@@ -6,7 +6,13 @@
 <meta content="[data-canvas-width]" name="hz:slide-selector"/><meta content="1120" name="hz:canvas-width"/><meta content="760" name="hz:canvas-height"/><style>
 body{background:#0A0F1F}#app-frame{width:100vw!important;height:100vh!important;border-radius:12px}#titlebar,#app-frame>div:nth-child(2),#app-frame>div:last-of-type{flex-shrink:0}#titlebar{flex:none}.pywebview-drag-region{height:100%;flex:1}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[role=button]:focus-visible{outline:2px solid #FF8F2B;outline-offset:3px}button:hover{filter:brightness(1.12)}button:disabled{opacity:.5;cursor:wait}.wc[data-window=close]:hover{background:#C53F51;color:white}[hidden]{display:none!important}#log-lines{overflow:auto!important}#live-panel{cursor:pointer}#live-label{max-width:170px;text-align:right}#live-map,#live-mode{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#preview-details,#preview-status{overflow-wrap:anywhere}#preview-timer:empty{display:none}.extra-page{flex:1;min-height:0;overflow:auto;padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:28px}.extra-page section{min-width:0}.extra-page label{display:block;font-size:12px;color:#98A3C7;margin:14px 0 10px}.extra-page input,.extra-page select{box-sizing:border-box;display:block;width:100%;height:44px;margin-top:6px;border-radius:8px;border:1px solid #2A3560;background:#11182E;color:#EEF2FF;padding:0 14px;font:400 14px 'DM Sans',sans-serif}.extra-page p{font-size:14px;line-height:1.65}.extra-page .hint{font-size:12px}.secondary{background:none;border:1px solid #2A3560;color:#C9D1EE;padding:0 16px;margin-top:8px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}summary{font-size:13px;color:#C9D1EE;cursor:pointer;margin-top:16px}#toast{position:fixed;bottom:84px;left:28px;right:28px;z-index:5;padding:12px 18px;border:1px solid #3D8BFF;background:#172040;border-radius:8px;font-size:13px;box-shadow:0 4px 24px #0008}dialog{width:min(900px,90vw);max-height:85vh;overflow:auto;background:#0A0F1F;color:#EEF2FF;border:1px solid #2A3560;border-radius:12px;padding:24px;font:14px 'DM Sans',sans-serif}dialog::backdrop{background:#0009}.dialog-header{display:flex;align-items:center;justify-content:space-between}pre{font:12px/1.6 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#98A3C7}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid #243052}th{color:#98A3C7}#footer-status{max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:1000px){#app-frame>div:nth-child(2){padding:0 18px!important}#app-frame>div:nth-child(2)>div:first-child{gap:12px!important}.tab{padding:0 8px}.pill{font-size:12px}#app-frame>div:nth-child(2)>div:last-child{gap:12px!important}#appearance{padding:20px!important;gap:20px!important}#appearance>div:last-child{width:370px!important}}</style><style>
 .fixed-tag{color:#98A3C7;font-size:10px;letter-spacing:.08em;border:1px solid #2A3560;padding:2px 6px;border-radius:4px;margin-left:8px}input[readonly]{color:#98A3C7;cursor:text;background:#10182D!important}
-#updates,#about{display:block;padding:26px 28px 20px!important;overflow:auto}#updates h1,#about h1{font:700 32px 'Barlow Condensed',sans-serif;margin:4px 0 6px;letter-spacing:.01em}#updates h2,#about h2{font:600 16px 'DM Sans',sans-serif;margin:0 0 6px}#updates p,#about p{line-height:1.55}.eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;color:#98A3C7}.subtext{font-size:13px;color:#98A3C7;margin:0}.release-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.release-chip{display:inline-flex;gap:7px;align-items:center;padding:7px 10px;border:1px solid #2A3560;border-radius:6px;font-size:11px;color:#98A3C7}.release-chip strong{color:#EEF2FF}.update-card{display:flex;align-items:flex-start;gap:16px;background:linear-gradient(115deg,#142443,#10182D);border:1px solid #2A456E;border-radius:12px;padding:20px!important;margin:0!important;min-height:112px;box-sizing:border-box}.update-symbol{display:flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:12px;background:#1A355B;color:#6FAAFF;font-size:29px}.update-copy{min-width:0;flex:1}.update-copy h2{margin:5px 0 7px!important;font-size:19px!important}.update-copy p{font-size:12px;color:#BCC7E6;margin:0;overflow-wrap:anywhere}.release-actions{display:flex;align-items:center;gap:10px;margin:16px 0}.release-actions .btn{font-size:12px;padding:0 15px;height:38px}.release-actions .hint{margin-left:auto;font-size:10px}.primary-action{border:1px solid #3D8BFF;background:#3D8BFF;color:#fff}.secondary-action{border:1px solid #2A3560;background:#10182D;color:#C9D1EE}.primary-action:hover{background:#2C78E9}.secondary-action:hover{background:#1A2543;border-color:#5370A0}.btn:disabled{opacity:.55;cursor:wait}.update-steps{display:flex;gap:12px;justify-content:space-between;margin:19px 0 24px;font-size:10px;color:#98A3C7}.update-steps b{color:#6FAAFF;border:1px solid #2A3560;border-radius:4px;padding:3px 5px;margin-right:5px;font-size:9px}.release-list-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}.release-list-heading h2{margin:0!important}.release-notes{border-top:1px solid #243052}.release-entry{padding:14px 0;border-bottom:1px solid #243052}.release-entry header{display:flex;justify-content:space-between;gap:12px;font-size:12px;font-weight:600}.release-entry time{font-size:10px;font-weight:400;color:#98A3C7}.release-entry pre{font-family:'DM Sans',sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:#BCC7E6;line-height:1.6;margin:9px 0 0}.empty-release{font-size:12px;color:#98A3C7;padding:16px 0}.download-track{display:flex;align-items:center;gap:10px;margin-top:13px;color:#C9D1EE;font-size:10px}.download-track progress{appearance:none;width:100%;height:5px;border:0;border-radius:8px;overflow:hidden}.download-track progress::-webkit-progress-bar{background:#243052}.download-track progress::-webkit-progress-value{background:#3D8BFF}.about-brand{display:flex;gap:18px;align-items:center;padding-bottom:16px;border-bottom:1px solid #243052}.about-logo svg{width:78px;height:78px}.about-brand h1{font-size:37px!important;letter-spacing:.05em!important}.brand-blue{color:#3D8BFF}.brand-orange{color:#FF8F2B}.about-brand .release-chip{margin-top:10px}.about-intro{font-size:13px;color:#C9D1EE;margin:16px 0}.about-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.about-features section{padding:15px!important;margin:0!important;border:1px solid #243052;border-radius:10px;background:#10182D}.about-features h2{font-size:12px!important;margin:10px 0 7px!important}.about-features p{font-size:11px;color:#98A3C7;margin:0}.feature-icon{color:#6FAAFF;font-size:23px;line-height:1}.feature-icon.orange{color:#FFAF66}.about-note{display:flex;flex-direction:column;gap:6px;margin:16px 0;padding:12px 16px;border-left:2px solid #FF8F2B;background:#181C2D;border-radius:0 8px 8px 0;font-size:11px;color:#BCC7E6;line-height:1.55}.about-note strong{color:#EEF2FF}.about-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid #243052;padding-top:17px}.about-bottom>div:first-child{display:flex;flex-direction:column;gap:5px}.about-bottom strong{font-size:13px}.about-bottom .hint{font-size:10px;max-width:300px}.about-links{display:flex;gap:8px}.about-links .btn{font-size:11px;height:36px;padding:0 12px}button:focus-visible,input:focus-visible{outline:2px solid #6FAAFF;outline-offset:3px}
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;color:#98A3C7}
+.subtext{font-size:13px;color:#98A3C7;margin:0}
+.release-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px}
+.release-chip{display:inline-flex;gap:7px;align-items:center;padding:4px 8px;border:1px solid #2A3560;border-radius:6px;font-size:11px;color:#98A3C7;white-space:nowrap}.release-chip strong{color:#EEF2FF;font-weight:500}
+.primary-action{border:1px solid #3D8BFF;background:#3D8BFF;color:#06122B}.secondary-action{border:1px solid #2A3560;background:#10182D;color:#C9D1EE}
+.primary-action:hover{background:#6FAAFF}.secondary-action:hover{background:#172040;border-color:#3D8BFF}
+.brand-blue{color:#3D8BFF}.brand-orange{color:#FF8F2B}
 </style>
 <style>
 #app-frame>div:nth-child(2)>div:first-child{gap:20px!important}
@@ -37,7 +43,46 @@ body{background:#0A0F1F}#app-frame{width:100vw!important;height:100vh!important;
 #installations{margin:12px 0}.install-card{border:1px solid #243052;background:#10182d;padding:10px 12px;border-radius:8px;margin:8px 0}.install-card header{display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:600;color:#c9d1ee}.install-card p{margin:5px 0 0;font:11px/1.5 Consolas,monospace;overflow-wrap:anywhere;color:#98a3c7}.install-card .install-state{font-size:10px;color:#3ddc97}.install-card .install-state.warning{color:#ffbc80}.rank-heading{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#c9d1ee;margin:18px 0 10px}.mode-ranks{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rank-card{border:1px solid #243052;border-radius:9px;background:#10182d;padding:10px;min-width:0}.rank-card h3{font-size:12px;color:#eef2ff;margin:0 0 8px}.rank-card label{font-size:10px;margin:8px 0 0}.rank-card select{height:33px;font-size:11px;padding:0 8px;margin-top:4px}.rank-card select:disabled{opacity:.45}.developer-list{min-width:245px}.developer-profile{display:flex;flex-direction:column;gap:4px;margin-top:7px}.developer-roles{font-size:11px;color:#98a3c7}.developer-roles>span{color:#3d8bff;margin:0 5px}
 </style><style>
 .rank-card{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);gap:8px}.rank-card h3{grid-column:1/-1;margin:0}.rank-card label{margin:0;min-width:0}.rank-card select{min-width:0}
-#about{padding-top:20px!important}.about-logo svg{width:64px;height:64px}.about-brand{gap:16px;padding-bottom:12px}.about-brand h1{font-size:32px!important}.about-brand .release-chip{margin-top:4px}.about-intro{margin:12px 0}.about-features section{padding:12px!important}.about-features h2{margin:8px 0 6px!important}.feature-icon{font-size:20px}.about-note{margin:12px 0;padding:10px 14px}.about-bottom{padding-top:12px}.developer-profile{gap:3px;margin-top:6px}
+
+</style><style>
+/* v0.2.4: reference layouts, existing palette and offline typefaces. */
+html,body{width:100%;height:100%;overflow:hidden}*{box-sizing:border-box}
+#app-frame .tab-content[hidden]{display:none!important}
+#app-frame{width:100%!important;height:100vh!important;max-width:none}
+.tab-content{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;width:100%}
+.page-inner{width:100%;max-width:1200px;margin:0 auto}
+#updates,#about{display:block;padding:22px 28px 24px!important}
+#updates h1,#about h1{font:700 32px/1.15 'Barlow Condensed',sans-serif;margin:6px 0;letter-spacing:.01em}
+#updates h2,#about h2{font:500 14px 'DM Sans',sans-serif;margin:0}
+.update-card{background:#10182D;border:1px solid #2A3560;border-radius:12px;overflow:hidden;margin:0 0 24px}
+.update-top{display:flex;align-items:center;gap:14px;padding:18px}
+.update-symbol{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:12px;background:#172040;color:#6FAAFF}.update-symbol svg{width:26px;height:26px}
+.update-copy{flex:1;min-width:0}.update-copy h2{font-size:19px!important;margin:0 0 5px!important}.update-copy p{font-size:13px!important;color:#C9D1EE;margin:0;line-height:1.5;overflow-wrap:anywhere}
+.update-top>.release-chip{align-self:flex-start}
+.release-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 18px;border-top:1px solid #243052}
+.release-actions .btn,.about-links .btn,#go-general{height:38px;font-size:13px;padding:0 14px;white-space:nowrap;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+.release-actions svg{width:16px;height:16px;flex:none}
+.last-checked{display:flex;align-items:center;gap:5px;margin-left:auto;font-size:12px;color:#98A3C7;white-space:nowrap}
+.update-progress-area{padding:0 18px 16px}.update-stage{font-size:12px;color:#C9D1EE}.download-track{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:12px;color:#C9D1EE}.download-track progress{appearance:none;width:100%;min-width:0;height:6px;border:0;border-radius:8px;overflow:hidden}.download-track progress::-webkit-progress-bar{background:#243052}.download-track progress::-webkit-progress-value{background:#3D8BFF}
+.release-list-heading{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;gap:12px}.text-link{background:none;border:0;color:#6FAAFF;font:12px 'DM Sans',sans-serif;padding:6px 0;cursor:pointer}.text-link:hover{text-decoration:underline}
+.release-notes{display:grid;gap:12px}.release-entry{border:1px solid #243052;border-radius:12px;overflow:hidden;background:#10182D;min-width:0}.release-entry header{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #243052;font-size:14px;flex-wrap:wrap}.release-entry time{margin-left:auto;color:#98A3C7;font-size:12px}.release-badge{font-size:11px;border-radius:6px;padding:2px 8px;background:#172040;color:#6FAAFF}.release-badge.installed{color:#3DDC97}
+.release-rows{list-style:none;margin:0;padding:0}.release-row{display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid #1B2547;font-size:13px;line-height:1.5;color:#C9D1EE}.release-row:last-child{border:0}.release-row>span:last-child{min-width:0;overflow-wrap:anywhere}.release-tag{flex:none;width:78px;text-align:center;padding:2px 0;margin-top:1px;border-radius:6px;font-size:11px;background:#172040;color:#6FAAFF}.release-tag.new{color:#3DDC97;background:#0E3A2E}.release-tag.fix{color:#FFC24D;background:#241E18}
+.empty-release{font-size:13px;color:#98A3C7;margin:0;padding:16px 0}
+.previous-versions{margin-top:12px}.previous-versions summary{display:flex;align-items:center;justify-content:space-between;list-style:none;padding:11px 16px;border:1px solid #243052;border-radius:10px;margin:0;color:#C9D1EE;background:#10182D}.previous-versions summary::-webkit-details-marker{display:none}.previous-versions summary svg{width:18px;height:18px;transition:transform .15s}.previous-versions[open] summary svg{transform:rotate(180deg)}.previous-versions summary:hover{background:#172040}.previous-versions>.release-notes{margin-top:12px}
+.about-brand{display:flex;align-items:center;gap:16px;padding:0;border:0;flex-wrap:wrap}.about-logo{flex:none}.about-logo svg{width:60px;height:60px}.about-heading{flex:1;min-width:250px}.about-brand h1{font-size:30px!important;letter-spacing:.04em!important;margin:4px 0!important}.about-brand .subtext{margin:0 0 8px}.about-badges{display:flex;gap:6px}.about-links{display:flex;gap:10px;margin-left:auto}
+.about-intro{font-size:14px!important;color:#C9D1EE;line-height:1.6!important;margin:22px 0 14px}
+.about-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.about-features section{border:1px solid #243052;border-radius:12px;background:#10182D;padding:14px;margin:0;min-width:0}.feature-icon{width:32px;height:32px;border-radius:8px;background:#172040;color:#6FAAFF;display:grid;place-items:center;flex:none}.feature-icon svg{width:20px;height:20px}.about-features h2{font-size:14px!important;font-weight:500!important;margin:10px 0 6px!important}.about-features p{font-size:12px!important;color:#C9D1EE;margin:0;line-height:1.5}
+.about-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:24px 0;padding:12px 14px;border:1px solid #243052;border-radius:12px;background:#10182D;color:#C9D1EE}.about-note-copy{flex:1;min-width:280px}.about-note strong{font-size:13px;color:#EEF2FF;font-weight:500}.about-note p{font-size:12px!important;line-height:1.5;margin:5px 0 0}
+#about .developer-heading{font-size:11px!important;letter-spacing:.12em;color:#98A3C7;margin:0 0 8px}
+.developer-list{border:1px solid #243052;border-radius:12px;overflow:hidden;min-width:0;background:#10182D}.developer-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid #243052}.developer-row:last-child{border:0}.developer-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#172040;color:#6FAAFF;font-size:13px;font-weight:500;flex:none}.developer-profile{margin:0;display:flex;flex-direction:column;gap:3px}.developer-profile strong{font-size:14px;font-weight:500}.developer-roles{font-size:12px;color:#C9D1EE}
+#footer-status{display:flex;align-items:center;gap:8px;max-width:100%;min-width:0;color:#C9D1EE!important}#footer-status .dot{flex:none}#footer-status-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#appearance{max-width:1256px;margin:0 auto;overflow-y:auto;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(340px,400px);align-content:stretch}
+#appearance>div:last-child{width:auto!important;min-width:0}#appearance>div:first-child>div:last-child{min-height:120px}#live-panel{min-height:242px}.extra-page{grid-template-columns:repeat(auto-fit,minmax(340px,1fr));align-content:start}
+#general{padding-left:max(28px,calc((100% - 1200px)/2));padding-right:max(28px,calc((100% - 1200px)/2))}.mode-ranks{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+#report{padding-left:max(28px,calc((100% - 1200px)/2));padding-right:max(28px,calc((100% - 1200px)/2))}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,[role=button]:focus-visible{outline:2px solid #6FAAFF;outline-offset:3px}
+@media(max-width:1030px){#appearance{grid-template-columns:minmax(0,1fr) minmax(320px,370px)}.last-checked{font-size:11px}.release-actions .btn{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.previous-versions summary svg{transition:none}}
 </style></head>
 <body>
 <style>/* vietnamese */
@@ -308,19 +353,186 @@ RL Presence
 <button class="btn secondary" id="export-report">Tanılama raporu kaydet</button>
 </section></div>
 <div class="tab-content extra-page" hidden id="updates">
-<div class="release-heading"><div><div class="eyebrow">RL PRESENCE / SÜRÜM MERKEZİ</div><h1>Her zaman güncel.</h1><p class="subtext">Yeni özellikler ve düzeltmeler, doğrudan GitHub’dan.</p></div><span class="release-chip">Yüklü <strong class="version"></strong></span></div>
-<section class="update-card" aria-live="polite"><div class="update-symbol" aria-hidden="true">↻</div><div class="update-copy"><div class="eyebrow" id="update-status-label">OTOMATİK KONTROL</div><h2 id="update-title">Sürüm kontrolü hazırlanıyor</h2><p id="update-message">Her açılışta yeni sürüm kontrol edilir.</p><div class="download-track" id="update-progress-wrap" hidden><progress id="update-progress" max="100" value="0" aria-label="Güncelleme indirme ilerlemesi"></progress><span id="update-percent">0%</span></div></div></section>
-<div class="release-actions"><button class="btn primary-action" id="check-updates">Güncellemeleri kontrol et</button><button class="btn secondary-action" data-project="releases">GitHub sürümleri ↗</button><span class="hint" id="update-checked">Henüz kontrol edilmedi</span></div>
-<div class="update-steps"><span><b>01</b> Yeni sürüm bulunur</span><span><b>02</b> İndirilir ve doğrulanır</span><span><b>03</b> Uygulama yeniden açılır</span></div>
-<div class="release-list-heading"><h2>Yenilikler</h2><span class="hint">GitHub Release notları</span></div><div id="release-notes" class="release-notes"><p class="empty-release">Yayımlanmış sürümler kontrol sonrası burada görünür.</p></div>
-</div>
-<div class="tab-content extra-page" hidden id="about">
-<div class="about-brand"><div class="about-logo"><svg aria-hidden="true" height="40" viewbox="0 0 40 40" width="40"><rect fill="#172040" height="40" rx="11" width="40"></rect><circle cx="20" cy="20" fill="#3D8BFF" r="11"></circle><path d="M20 9a11 11 0 0 1 0 22z" fill="#FF8F2B"></path><circle cx="20" cy="20" fill="none" r="11" stroke="#EEF2FF" stroke-width="1.5"></circle><path d="M20 9v22" stroke="#EEF2FF" stroke-width="1.5"></path></svg></div><div><div class="eyebrow">OYUNUNU DISCORD’A TAŞI</div><h1>RL <span class="brand-blue">PRE</span><span class="brand-orange">SENCE</span></h1><p class="subtext">Rocket League için canlı Discord Rich Presence.</p><span class="release-chip">Sürüm <strong class="version"></strong> · Windows</span></div></div>
+<div class="page-inner">
+<div class="release-heading"><div><div class="eyebrow">RL PRESENCE / SÜRÜM MERKEZİ</div><h1>Her zaman güncel.</h1><p class="subtext">Yeni özellikler ve düzeltmeler, doğrudan GitHub’dan.</p></div></div>
+<section class="update-card" aria-live="polite">
+  <div class="update-top"><div class="update-symbol" aria-hidden="true"><!--
+tags: [check, done, success, confirmed, approved, tick, ok, verified, complete, correct, checkmark, circle]
+category: Shapes
+version: "1.0"
+unicode: "ea67"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+  <path d="M9 12l2 2l4 -4" />
+</svg>
+</div><div class="update-copy"><h2 id="update-title">Sürüm kontrolü hazırlanıyor</h2><p id="update-message">Her açılışta yeni sürüm kontrol edilir.</p></div><span class="release-chip"><span>Yüklü</span> <strong class="version"></strong></span></div>
+  <div class="update-progress-area" id="update-progress-wrap" hidden><div id="update-stage" class="update-stage"></div><div class="download-track"><progress id="update-progress" max="100" value="0" aria-label="Güncelleme indirme ilerlemesi"></progress><span id="update-percent">0%</span></div></div>
+  <div class="release-actions"><button class="btn primary-action" id="check-updates"><!--
+tags: [reload, sync, update, reset, arrows, loader, spinner, restart, refresh]
+category: Arrows
+version: "1.0"
+unicode: "eb13"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+  <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+</svg>
+<span>Güncellemeleri kontrol et</span></button><button class="btn secondary-action" data-project="releases">GitHub sürümleri ↗</button><span class="last-checked"><!--
+tags: [time, watch, hour, schedule, timer, clock-face, history, pending, wall-clock, minutes, clock]
+category: System
+version: "1.0"
+unicode: "ea70"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+  <path d="M12 7v5l3 3" />
+</svg>
+<span id="update-checked">Henüz kontrol edilmedi</span></span></div>
+</section>
+<div class="release-list-heading"><h2>Yenilikler</h2><button class="text-link" data-project="releases">GitHub Release notları ↗</button></div>
+<div id="release-notes" class="release-notes"><p class="empty-release">Yayımlanmış sürümler kontrol sonrası burada görünür.</p></div>
+<details id="previous-versions" class="previous-versions"><summary><span>Önceki sürümler</span><!--
+tags: [chevron, arrow, down, expand, dropdown, open, more, accordion, show, caret-down, arrow-down, direction, navigation, angle]
+category: Arrows
+version: "1.0"
+unicode: "ea5f"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 9l6 6l6 -6" />
+</svg>
+</summary><div id="previous-release-notes" class="release-notes"></div></details>
+</div></div>
+<div class="tab-content extra-page" hidden id="about"><div class="page-inner">
+<div class="about-brand"><div class="about-logo"><svg aria-hidden="true" height="40" viewbox="0 0 40 40" width="40"><rect fill="#172040" height="40" rx="11" width="40"></rect><circle cx="20" cy="20" fill="#3D8BFF" r="11"></circle><path d="M20 9a11 11 0 0 1 0 22z" fill="#FF8F2B"></path><circle cx="20" cy="20" fill="none" r="11" stroke="#EEF2FF" stroke-width="1.5"></circle><path d="M20 9v22" stroke="#EEF2FF" stroke-width="1.5"></path></svg></div><div class="about-heading"><div class="eyebrow">OYUNUNU DISCORD’A TAŞI</div><h1>RL <span class="brand-blue">PRE</span><span class="brand-orange">SENCE</span></h1><p class="subtext">Rocket League için canlı Discord Rich Presence.</p><div class="about-badges"><span class="release-chip"><span>Sürüm</span> <strong class="version"></strong></span><span class="release-chip">Windows</span></div></div><div class="about-links"><button class="btn secondary-action" data-project="stats">API belgesi ↗</button><button class="btn primary-action" data-project="project">GitHub ↗</button></div></div>
 <p class="about-intro">Harita, mod, skor ve oyuncu istatistiklerin oyundan alınır; Discord profilindeki etkinliğin oyunla birlikte değişir.</p>
-<div class="about-features"><section><div class="feature-icon">◎</div><h2>Resmî oyun verisi</h2><p>Rocket League Stats API ile salt okunur bağlantı. Maç, eğitim ve tekrar durumları otomatik algılanır.</p></section><section><div class="feature-icon orange">◷</div><h2>Senkron sayaç</h2><p>Maç saati zaman damgasıyla ilerler. Durum değişiklikleri Discord’un gönderim sınırında güncellenir.</p></section><section><div class="feature-icon">↻</div><h2>Kolay güncelleme</h2><p>Yeni GitHub sürümü açılışta kontrol edilir. Ayarların korunarak uygulama güncellenir.</p></section></div>
-<div class="about-note"><strong>Kontrol sende.</strong><span>Rank/küme ile API’nin bildirmediği menü, sıra ve mağaza durumlarını Genel sekmesinden seçebilirsin. Stats API ayarını değiştirdikten sonra oyunu yeniden başlat.</span></div>
-<div class="about-bottom"><div class="developer-list"><span class="eyebrow">GELİŞTİRİCİLER</span><div class="developer-profile"><strong>schwairex</strong><span class="developer-roles">Founder <span>·</span> App Developer</span></div><div class="developer-profile"><strong>Nyris</strong><span class="developer-roles">Co-Developer <span>·</span> QA</span></div></div><div class="about-links"><button class="btn secondary-action" data-project="stats">API belgesi ↗</button><button class="btn primary-action" data-project="project">GitHub ↗</button></div></div>
-</div>
+<div class="about-features"><section><div class="feature-icon"><!--
+tags: [connected, plugged-in, plugin, connection, integration, link, power, socket, cable, online, plug]
+category: Devices
+version: "1.53"
+unicode: "f00a"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M7 12l5 5l-1.5 1.5a3.536 3.536 0 1 1 -5 -5l1.5 -1.5" />
+  <path d="M17 12l-5 -5l1.5 -1.5a3.536 3.536 0 1 1 5 5l-1.5 1.5" />
+  <path d="M3 21l2.5 -2.5" />
+  <path d="M18.5 5.5l2.5 -2.5" />
+  <path d="M10 11l-2 2" />
+  <path d="M13 14l-2 2" />
+</svg>
+</div><h2>Resmî oyun verisi</h2><p>Rocket League Stats API ile salt okunur bağlantı. Maç, eğitim ve tekrar durumları otomatik algılanır.</p></section><section><div class="feature-icon"><!--
+tags: [time, watch, hour, schedule, timer, clock-face, history, pending, wall-clock, minutes, clock]
+category: System
+version: "1.0"
+unicode: "ea70"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+  <path d="M12 7v5l3 3" />
+</svg>
+</div><h2>Senkron sayaç</h2><p>Maç saati zaman damgasıyla ilerler. Durum değişiklikleri Discord’un gönderim sınırında güncellenir.</p></section><section><div class="feature-icon"><!--
+tags: [reload, sync, update, reset, arrows, loader, spinner, restart, refresh]
+category: Arrows
+version: "1.0"
+unicode: "eb13"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+  <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+</svg>
+</div><h2>Kolay güncelleme</h2><p>Yeni GitHub sürümü açılışta kontrol edilir. Ayarların korunarak uygulama güncellenir.</p></section></div>
+<div class="about-note"><div class="feature-icon"><!--
+tags: [settings, sliders, equalizer, controls, filter, options, tune, preferences, mixer, configure, adjustments, horizontal]
+category: System
+version: "1.11"
+unicode: "ec38"
+-->
+<svg aria-hidden="true"   xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+  <path d="M4 6l8 0" />
+  <path d="M16 6l4 0" />
+  <path d="M6 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+  <path d="M4 12l2 0" />
+  <path d="M10 12l10 0" />
+  <path d="M15 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+  <path d="M4 18l11 0" />
+  <path d="M19 18l1 0" />
+</svg>
+</div><div class="about-note-copy"><strong>Kontrol sende.</strong><p>Rank/küme ile API’nin bildirmediği menü, sıra ve mağaza durumlarını Genel sekmesinden seçebilirsin. Stats API ayarını değiştirdikten sonra oyunu yeniden başlat.</p></div><button class="btn secondary-action" id="go-general">Genel ayarlara git →</button></div>
+<h2 class="developer-heading">GELİŞTİRİCİLER</h2><div class="developer-list"><div class="developer-row"><div class="developer-avatar" aria-hidden="true">S</div><div class="developer-profile"><strong>schwairex</strong><span class="developer-roles">Founder · App Developer</span></div></div><div class="developer-row"><div class="developer-avatar" aria-hidden="true">N</div><div class="developer-profile"><strong>Nyris</strong><span class="developer-roles">Co-Developer · QA</span></div></div></div>
+</div></div>
 
 <div id="report" class="tab-content extra-page" hidden>
   <div class="release-heading"><div><div class="eyebrow">RL PRESENCE / <span>Sorun Bildir</span></div><h1>Birlikte daha iyi.</h1><p class="subtext">Karşılaştığın sorunu anlat; çözmemize yardımcı ol.</p></div><span class="release-chip"><span>Sürüm</span> <strong class="version"></strong></span></div>
@@ -337,7 +549,7 @@ RL Presence
 
 <div hidden="" id="toast" role="status"></div>
 <dialog id="diagnostics"><div class="dialog-header"><h2 class="sec"><i></i>Canlı veriler ve bağlantı</h2><button class="btn secondary" id="close-diagnostics">Kapat</button></div><p id="diagnostic-status"></p><div id="player-stats"></div><pre id="diagnostic-json"></pre></dialog><div style="height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-top:1px solid #1B2547;background:#080C19">
-<div id="footer-status" style="font-size:12px;color:#98A3C7">Stats API · 127.0.0.1:49123 · 30 paket/sn</div>
+<div id="footer-status" role="status" style="font-size:12px;color:#98A3C7"><span id="footer-dot" class="dot" style="background:#FFC24D"></span><span id="footer-status-text">Stats API bağlı değil</span></div>
 <div style="display:flex;gap:12px">
 <button class="btn" id="cancel" style="background:none;border:1px solid #2A3560;color:#C9D1EE">İptal</button>
 <button class="btn" id="save" style="background:#3D8BFF;border:0;color:#06122B">Kaydet</button>

@@ -30,7 +30,7 @@ def test_presence_includes_rank_division_and_local_player_stats():
                  time_remaining=222,clock_end=1222,local_team=0,
                  local_player_score=420,local_player_goals=2,local_player_saves=3)
     p=build_presence(s,cfg,1000)
-    assert 'Diamond II' in p['details'] and 'Div III' in p['details']
+    assert p['small_image'] == 'diamond_2' and p['small_text'] == 'Diamond II Div III'
     assert '420' in p['state'] and 'G:2' in p['state'] and 'S:3' in p['state']
     assert p['end']==1222 and p['large_image']=='dfh_stadium'
     p=build_presence(s,replace(cfg,show_time=False),1000)
@@ -106,7 +106,7 @@ async def test_hot_reload_identity_reduces_last_snapshot_and_transport_restarts(
     await app.apply_config({'player_name':'Çağrı','mode_ranks':{
         **app.config.mode_ranks,'doubles':{'tier':'Diamond II','division':2}}})
     assert app.state.local_team==0 and app.state.local_player_score==420
-    assert 'Diamond II' in app.current_payload()['details']
+    assert app.current_payload()['small_image'] == 'diamond_2'
     assert json.loads((tmp_path/'config.json').read_text(encoding='utf-8'))['player_name']=='Çağrı'
 
 

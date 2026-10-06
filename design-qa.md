@@ -1,32 +1,42 @@
-# Design QA — v0.2
+# v0.2.4 design verification
 
-Source: user-supplied `C:/Users/Berkay/Downloads/Rocket League RPC – Arayüz Tasarımı.html`, extracted into inert HTML without executing bundled scripts. `ui-source.png` captures the source with original fonts/SVGs.
+Final result: **pass** after two visual iterations.
 
-Implementation: `rocket_league_rpc/ui/index.html` + `app.js`, shared by browser verification and native WebView2. Evidence: `ui-implementation.png`, `ui-general.png`, `ui-small.png`, `ui-comparison.png`, `ui-detail-comparison.png`.
+Both supplied HTML references were opened locally and captured. Source and
+implementation captures were combined side by side for Updates and About.
+Existing DM Sans/Barlow Condensed fonts, navy/blue palette, logo, custom
+titlebar, header/navigation and 72px footer were preserved as requested.
 
-Viewport/state: 1120 × 760 CSS px, DPR 1; source and implementation images are both 1120 × 760 pixels. Simulated 2–1 match, 3:42, DFH Stadium/Ranked 2v2 and supplied sample player/log copy. Fixtures exist only in the temporary QA server; production never populates live values with samples. Native EXE client size independently verified as 1120 × 760. Minimum responsive viewport tested: 940 × 680.
+Initial findings and corrections:
+- Appearance's important grid display overrode hidden. A scoped rule now
+  guarantees exactly one visible page.
+- Turkish uppercase İ prevented Improvement headings from being categorized.
+  Normalization now produces Yeni / İyileştirme / Düzeltme rows correctly.
+- Semantic tag fills match the reference more closely using existing dark
+  green/brown colors; text remains accessible.
+- Live text is only mutated when changed, avoiding identical repeated announcements.
 
-**Comparison history and findings**
+Fidelity surfaces:
+- Typography: existing embedded offline fonts; notes 13px/19.5px, tags 78px,
+  feature titles 14px/500 and descriptions 12px.
+- Layout: internal card actions/divider/check time, version cards/badges/date,
+  collapsed history; horizontal hero/actions, equal feature cards, control CTA
+  and developer avatar rows. Taller content scrolls without overlap.
+- Color: only existing palette. Muted copy contrast 7.63:1, card copy 11.62,
+  blue tags 6.73 and primary-button dark text 5.61. Green/yellow tags also pass AA.
+- Assets: original logo; reference-style Tabler SVGs bundled with MIT license.
+- Copy: actual version/notes replace static v0.2.3 examples. Turkish/English
+  labels; original GitHub notes retain their language and render as safe text.
 
-- Initial captures had different effective viewport sizes; recaptured both at 1120 × 760, DPR 1 before comparing.
-- [P2, fixed] A global border-box rule and minimum card height changed the supplied badge/card proportions. Removed both rules and retained original content sizing. Post-fix full-view evidence: `ui-comparison.png`; focused evidence: `ui-detail-comparison.png`. Both comparisons were viewed with source left and implementation right.
-- [P2, fixed] WinForms initially reduced native client dimensions to 1104 × 721. Resized once after removing its frame. Actual EXE now reports 1120 × 760 in `release-smoke.json`.
-- No remaining actionable P0/P1/P2 visual findings. Stats API dot intentionally becomes green for live packets instead of the source's static yellow sample. Live preview, General settings and diagnostics are functional extensions.
+Functional evidence: 30 browser cases covering five tabs, both languages,
+900×640 / 1120×760 / 1600×1000 with no horizontal overflow. History retains its
+expanded state across refresh and defaults closed. All update phases/error,
+disabled actions, hidden current-state progress, inert script-like notes,
+About → General, connected/disconnected footer and 2px keyboard focus passed.
+Save/Cancel only appear on Appearance/General. No browser warnings/errors.
+Native window checks are in VERIFICATION.md / release-smoke.json.
 
-**Required fidelity surfaces**
-
-| Surface | Result |
-|---|---|
-| Fonts/typography | Original Barlow Condensed and DM Sans embedded offline; original weights, sizes, line heights, letter spacing and wrapping retained. Focused preview/card text inspected at 1:1 density. |
-| Spacing/layout | Original 40/72/72 title/header/footer, 28px gutters, 400px right column, row/toggle geometry, padding and radii retained at reference size. Responsive minimum retains Save/Cancel without horizontal overflow. |
-| Colors/tokens | Source background/border/text palette, blue #3D8BFF and orange #FF8F2B retained. Semantic connection colors change with telemetry. |
-| Assets | Supplied SVGs reused directly; original font data embedded. No generated approximations. Generic preview states reuse the source's header mark. Actual Discord arena artwork must be uploaded through the Developer Portal; source's field icon remains the illustrative map preview. |
-| Copy/content | Original Turkish UI labels retained. Runtime scores/logs/status and outgoing RPC text replace demo values. General explains manual fields. Preview samples never publish. |
-
-**Interactions and errors**
-
-Browser verified toggles, Save, Cancel, rank/division/manual shop selection, all four tabs, menu/replay preview, diagnostics open/close and minimum viewport. Console warning/error inspection returned no entries. Settings persistence, failure handling and hot reload are covered by Python tests. Actual native EXE bridge exercised without real Discord credentials.
-
-Remaining test gaps: uploaded Discord art/per-user ID, other Windows systems lacking WebView2/.NET, real overtime direction and other arena/playlist variations. These do not alter the visual comparison.
-
-final result: passed
+Expected differences: reference lacks the OS titlebar and uses exported font/
+color values and static notes. Existing app chrome/fonts/palette and real
+v0.2.4 data take precedence under the user's explicit constraints. Portal
+rank bitmap uploads are separate per the user's keys/list-only clarification.

@@ -1,3 +1,23 @@
+# v0.2.4 — RL Presence
+
+## Yeni
+- Oynanan ranked moda ait rank, küçük Discord ikonu ve rank/küme tooltip’iyle gösteriliyor.
+
+## İyileştirme
+- Rank metni details/state satırlarından çıkarıldı; harita büyük görseli ve tooltip’i korundu.
+- Bulundu → İndiriliyor → Doğrulanıyor → Yeniden başlat ilerlemesi artık kartın içinde gösteriliyor.
+- "Hakkında" ve "Güncellemeler" sayfalarının arayüzleri güncellendi. 
+- Bilgi sekmelerinde yalnızca canlı bağlantı durumu görünüyor. Kaydet/İptal ise ayar sekmesinde gösteriliyor.
+
+## Düzeltme
+- Çerçevesiz Windows penceresinde kenar/köşe boyutlandırması geri getirildi.
+- Minimum 900×640, başlangıç 1120×760; beş sekmede esnek/kaydırılabilir içerik.
+- Yeni metinlerin Türkçe/İngilizce desteği, okunabilir kontrast ve klavye focus durumu düzenlendi.
+
+English: rank artwork/tooltips replace inline text, reference-based Updates/About
+layouts, actual verification progress, native frameless sizing and responsive tabs.
+Rank artwork must be uploaded separately using ART_ASSETS.md / RANK_ASSET_KEYS.txt.
+
 # v0.2.3 — RL Presence
 
 - Sekiz ranked mod için ayrı manuel rank/küme terchileri eklendi.
@@ -27,16 +47,11 @@ and is corrected on kickoff. This platform limitation remains explicit.
 
 # v0.2.1 — RL Presence
 
-- Discord Application ID sabitlendi; arayüz salt okunur, eski config ID'si yok sayılır.
-- Sabit 15 saniyelik bekleme kaldırıldı. Discord sayacı oyun zamanına eşitlenir;
-  güncellemeler kayan 20 saniyede en fazla 5 gönderim sınırına uyar.
 - Eğitim açılışında mod verisi gelmeden yanlış 0–0 geri sayım kartı gönderilmez.
 - Eğitimde P/G/S kaldırıldı. Maç kartında yinelenen süre ve Goal replay metni kaldırıldı.
-- Mevcut mavi/turuncu logo EXE/pencere/görev çubuğu simgesine uygulandı.
-- Dağıtılan çalıştırılabilir dosyanın adı `rl-presence.exe` oldu.
-- Güncellemeler ve Hakkında sekmeleri mevcut tema içinde yenilendi.
-- Her açılışta GitHub Release kontrolü, bildirim, SHA-256 doğrulamalı indirme,
-  otomatik değiştirme/yeniden açma, sağlıklı açılış kontrolü ve geri alma eklendi.
+- Uygulama logosu güncellendi.
+- Uygulamadaki "Güncellemeler" ve "Hakkında" sekmeleri mevcut tema içinde yenilendi.
+- Her açılışta GitHub Release kontrolü, bildirim, SHA-256 doğrulamalı indirme, otomatik değiştirme/yeniden açma, sağlıklı açılış kontrolü ve geri alma eklendi.
 - Başarısız aynı sürümün yeniden başlatma döngüsüne girmesi önlendi.
 - Eski ayarlar korunur; özel config yolu yeniden açılışta mutlak yol olarak taşınır.
 
