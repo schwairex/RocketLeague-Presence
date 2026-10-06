@@ -51,34 +51,22 @@ def build_presence(state: MatchState, config: Config, now: float | None = None) 
     details = ' • '.join(filter(None, [lookup_mode(state.playlist_id) if config.show_mode else '', score if config.show_score else ''])) or 'Rocket League'
     if state.phase == Phase.TRAINING:
         details = 'Training'
-    clock = ''  # running time is rendered by Discord's anchored timestamp
-    label = 'Paused' if state.phase == Phase.PAUSED and not config.show_time else ''
-    if state.phase == Phase.OVERTIME:
-        clock = 'Overtime'
-    elif state.phase in (Phase.COUNTDOWN, Phase.GOAL_REPLAY, Phase.PAUSED):
-        if state.is_overtime:
-            stopped_at = state.clock_stopped_at if state.clock_stopped_at is not None else state.overtime_started_at
-            elapsed = max(0, int(stopped_at-state.overtime_started_at)) if stopped_at is not None and state.overtime_started_at is not None else 0
-            clock = f'Overtime ⏸ {elapsed//60}:{elapsed%60:02}'
-        elif state.time_remaining is not None:
-            remaining = max(0, state.time_remaining)
-            clock = f'⏸ {remaining//60}:{remaining%60:02}'
     if state.phase == Phase.ENDED:
         result = ''
         if state.winner_team in (0, 1):
             result = ('Win' if state.winner_team == state.local_team else 'Loss') if state.local_team in (0, 1) else ('Blue wins' if state.winner_team == 0 else 'Orange wins')
         details = 'Match finished' + (f': {score}' if config.show_score else '') + (f' ({result})' if result else '')
-        clock = ''
-    if not config.show_time or state.phase == Phase.TRAINING:
-        clock = ''
     stats = ''
     if config.show_player_stats and state.phase != Phase.TRAINING:
-        stats = ' '.join(f'{key}{value}' for key,value in (
-            ('⚽',state.local_player_goals), ('🧤',state.local_player_saves), ('⭐',state.local_player_score)) if value is not None)
-    status = ' • '.join(filter(None, [map_name if config.show_map else '', stats, label, clock])) or 'Playing Rocket League'
-    payload = {'name':'Rocket League', 'details':details, 'state':status,
+        # Missing identity/API fields are unknown, never guessed zero/opponent stats.
+        stats = '  '.join(f'{key}{value if value is not None else "—"}' for key,value in (
+            ('⚽',state.local_player_goals), ('🧤',state.local_player_saves), ('⭐',state.local_player_score)))
+    status = (map_name if config.show_map else '') if state.phase == Phase.TRAINING else stats
+    payload = {'name':'Rocket League', 'details':details,
                'large_image':asset if config.show_map else 'rl_logo',
                'large_text':map_name if config.show_map else 'Rocket League'}
+    if status:
+        payload['state'] = status
     rank = rank_label(config, state.playlist_id) if state.phase != Phase.TRAINING else ''
     if rank:
         key = RANK_KEY_BY_PLAYLIST[state.playlist_id]

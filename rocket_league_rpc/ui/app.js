@@ -84,7 +84,7 @@
     previewArt.style.background=isMap?'#0E3A2E':'#172040';
     previewArt.title=payload?.large_text||'Rocket League';
     text('preview-details',payload?.details||t('Rocket League kapalı'));
-    text('preview-status',payload?.state||t('Oyun açılınca presence etkinleşir.'));
+    text('preview-status',payload?.state||(payload?'':t('Oyun açılınca presence etkinleşir.')));
     let timer='';
     if(payload?.end)timer=t('{time} kaldı',{time:clock(Math.ceil(payload.end-Date.now()/1000)).padStart(5,'0')});
     else if(payload?.start)timer=t('{time} uzatma',{time:clock(Math.round(Date.now()/1000-payload.start))});
@@ -134,7 +134,7 @@
     $('footer-dot').style.background=s.stats.connected?'#3DDC97':s.stats.error?'#C53F51':'#FFC24D';
     text('footer-status-text',s.stats.connected?t('Stats API bağlı')+` · ${s.config.stats_host}:${port} · ${t('{rate} paket/sn',{rate:s.stats.packets_per_second})}`:t('Stats API bağlı değil'));
     renderInstallation(s.installation);
-    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.4');
+    for(const el of document.querySelectorAll('.version'))el.textContent='v'+(s.version||'0.2.6');
     renderUpdates(s.updates);
     if(!$('diagnostics').hidden&&$('diagnostics').open)renderDiagnostics();
     preview();

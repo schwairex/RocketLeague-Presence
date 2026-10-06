@@ -4,7 +4,7 @@
 
 Rocket League için Windows üzerinde Python 3.11+ ile çalışan Discord Rich Presence uygulaması. Veriler yalnızca [resmî yerel Stats API](https://www.rocketleague.com/developer/stats-api) üzerinden okunur. Oyun belleğine erişilmez; oyun komutu gönderilmez. [English guide](usage.md).
 
-## Dil seçimi ve Sorun Bildir (v0.2.5)
+## Dil seçimi ve Sorun Bildir (v0.2.6)
 
 **Genel → Arayüz dili** alanından Türkçe veya English seçin ve **Kaydet**’e basın.
 Seçim hemen önizlenir ve kaydedildikten sonra yeniden açılışta korunur. İptal,
@@ -29,7 +29,7 @@ ulaşmış olabilir; yinelenen rapor oluşturmamak için bilinçli olarak tekrar
 
 Discord etkinlik adı bütün durumlarda **Rocket League** gönderilir. Gol sonrası
 Kickoff countdown etiketi gösterilmez. Gol/kickoff/duraklatmada hareketli
-zaman damgası kaldırılır, son kalan oyun süresi sabit ⏸ 2:33 metniyle görünür.
+zaman damgası kaldırılır; beyaz/sabit süre metni gönderilmez.
 RoundStarted canlı geri sayımı yeniden başlatır. Discord’un yerel sayacında
 duraklatma alanı yoktur. Testler gerçek herkese açık rapor oluşturmadan mock sunucuyla yapıldı.
 
@@ -46,7 +46,7 @@ python -m venv .venv
 Hazır derleme varsa `rl-presence.exe` dosyasını çalıştırabilirsiniz. `config.json` ve `logs/`, kaynak kullanımında `run.py` yanında, exe kullanımında exe yanında bulunur. Alternatif ayar dosyası: `--config C:\klasor\config.json`. Arayüzde Kaydet ile ayarlar hemen uygulanır; JSON dosyasını dışarıdan düzenlediyseniz RPC’yi yeniden başlatın.
 
 
-## Yeni masaüstü arayüzü (v0.2.5)
+## Yeni masaüstü arayüzü (v0.2.6)
 
 Eski RPC’yi kapatıp yeni EXE’yi açın. Mevcut config.json dosyanızı yeni EXE’nin yanında tutarak oyuncu/harita/rank ayarlarınızı koruyabilirsiniz. Application ID bu sürümde sabittir; eski client_id yok sayılır ve kaldırılır. Windows 10/11, .NET Framework 4.8 ve Microsoft Edge WebView2 Runtime gerekir. Python, yazı tipleri ve verilen SVG görselleri EXE’ye dahildir; arayüz internet gerektirmez.
 
@@ -183,11 +183,11 @@ Application ID hazırdır. Bundan sonra oyun ve Discord herhangi bir sırada aç
 
 Geri sayım, normal oyun, gol tekrarı, duraklatma, uzatma, maç sonu ve geçmiş tekrar durumları ayrı işlenir. Yeni MatchGuid maç durumunu sıfırlar. Boş çevrimdışı MatchGuid ayrılana kadar tek maçtır. ReplayCreated sonrasında MatchDestroyed gelene kadar `Watching a replay` gösterilir; canlı skor/saat gönderilmez. Skor UpdateState'ten alınır; GoalScored'dan kendi kalesine gol gibi durumlarda tahmin edilmez.
 
-RoundStarted bitiş zamanını eşitler. Saat tahminden **2 saniyeden fazla** saparsa yeniden eşitlenir. Gol tekrarı, kickoff bekleyişi ve duraklatmada hareketli zaman damgası kaldırılır; son kalan oyun süresi sabit `⏸ M:SS` metniyle gösterilir. Oyun başlayana kadar bu değer ilerlemez. Discord’un yerel sayacında duraklatma alanı yoktur. Aktif oyunda yerel yeşil sayaç devam eder; yinelenen süre/kickoff/replay etiketi gösterilmez. Replay veya countdown sırasında duraklatma doğru evreye döner. Sonuç MatchDestroyed gelene veya 60 saniye dolana kadar tutulur. Bilinen yerel takım için Win/Loss, bilinmiyorsa Blue wins/Orange wins gösterilir.
+RoundStarted bitiş zamanını eşitler. Saat tahminden **2 saniyeden fazla** saparsa yeniden eşitlenir. Gol tekrarı, kickoff bekleyişi ve duraklatmada hareketli zaman damgası kaldırılır; beyaz/sabit kalan süre metni gönderilmez. Oyun saati içeride korunur, oyun başlayınca senkron sayaç devam eder. Discord’un yerel sayacında duraklatma alanı yoktur. Aktif oyunda yerel yeşil sayaç devam eder; yinelenen süre/kickoff/replay etiketi gösterilmez. Replay veya countdown sırasında duraklatma doğru evreye döner. Sonuç MatchDestroyed gelene veya 60 saniye dolana kadar tutulur. Bilinen yerel takım için Win/Loss, bilinmiyorsa Blue wins/Orange wins gösterilir.
 
-**Uzatmada TimeSeconds yönü doğrulanmamıştır.** Yerel geçen süre başlangıcı kullanılır. İlk gözlenen uzatma başlangıcı esas alınır; maçın ortasında yeniden bağlanılırsa ilk paket geçici başlangıç olur ve geçen süre eksik görünebilir. Uzatma durduğunda geçen süre sabit gösterilir; devam edince durulan saniyeler hesaba katılmaz. DEBUG günlükleri gerçek TimeSeconds örneklerini içerir. Politikayı değiştirmek için tek yer `state.overtime_clock_start()` fonksiyonudur.
+**Uzatmada TimeSeconds yönü doğrulanmamıştır.** Yerel geçen süre başlangıcı kullanılır. İlk gözlenen uzatma başlangıcı esas alınır; maçın ortasında yeniden bağlanılırsa ilk paket geçici başlangıç olur ve geçen süre eksik görünebilir. Uzatma durduğunda geçen süre damgası kaldırılır; devam edince durulan saniyeler hesaba katılmaz. DEBUG günlükleri gerçek TimeSeconds örneklerini içerir. Politikayı değiştirmek için tek yer `state.overtime_clock_start()` fonksiyonudur.
 
-Sabit 15 saniyelik bekleme yoktur. [Discord sınırı](https://docs.discord.com/developers/developer-tools/game-sdk) uyarınca kayan her 20 saniyede en fazla 5 aktivite yazılır. Başlangıç, skor, eğitim, tekrar ve bitiş geçişleri izin varsa hemen gönderilir. Normal istatistik değişiklikleri en az 4 saniye birleştirilir. Aynı içerik yeniden gönderilmez; son durum kazanır. Başarısız yazımlar/temizleme de bütçeyi tüketir, yeniden bağlanmak bütçeyi sıfırlamaz. Sayaç her saniye paket istemez: ilk eşitlenen bitiş zamanından Discord kendi geri sayar. Maç istatistikleri `⚽gol 🧤kurtarış ⭐puan` şeklindedir; eğitimde gösterilmez. Aktif oyunda yinelenen kalan süre ve gol tekrar etiketi yoktur. Gol/kickoff/duraklatmada hareketli damga kaldırılır, süre sabit metindir; kickoff ile geri sayım devam eder. Bütçe dolarsa kısa durumlar birleştirilebilir. Kapanışta uygunsa temizleme yazılır; aksi halde IPC kapanır.
+Sabit 15 saniyelik bekleme yoktur. [Discord sınırı](https://docs.discord.com/developers/developer-tools/game-sdk) uyarınca kayan her 20 saniyede en fazla 5 aktivite yazılır. Başlangıç, takım skoru, saat, eğitim, tekrar ve bitiş geçişleri ile yerel oyuncunun gol/kurtarış/puan değişiklikleri bütçe izin veriyorsa hemen gönderilir. Diğer normal değişiklikler en az 4 saniye birleştirilir. Aynı içerik yeniden gönderilmez; son durum kazanır. Başarısız yazımlar/temizleme de bütçeyi tüketir, yeniden bağlanmak bütçeyi sıfırlamaz. Sayaç her saniye paket istemez: ilk eşitlenen bitiş zamanından Discord kendi geri sayar. Ranked/casual state satırı yalnızca `⚽gol  🧤kurtarış  ⭐puan` şeklindedir; harita adı/beyaz saat metni yoktur. Harita görseli ve ad tooltip’i korunur. Eğitimde yalnızca Training/harita görünür. Oyuncu veya alan bulunamazsa — gösterilir; yanlış oyuncudan değer alınmaz. Görünüm’de oyun içi adı/platformu ayarlayın. Gol/kickoff/duraklatmada hareketli damga kaldırılır; kickoff ile geri sayım devam eder. Bütçe dolarsa kısa durumlar birleştirilebilir. Kapanışta uygunsa temizleme yazılır; aksi halde IPC kapanır.
 
 ## Hata ayıklama ve test
 
@@ -228,7 +228,7 @@ Kimlik ve uzatma davranışı gerçek paketlerle doğrulanmalıdır. ReplayCreat
 
 Sahte sunucuda `--encoded-data`, gerçek TCP’de gözlenen zarf biçimini canlandırır. Katlicia/LOLCustomRPC yalnızca arayüz/iş parçacığı ve Kaydet/İptal mimarisi için incelendi; League veri mantığı kullanılmadı.
 
-## GitHub güncellemeleri (v0.2.5)
+## GitHub güncellemeleri (v0.2.6)
 
 Her açılışta [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases) kontrol edilir. Yeni kararlı sürümde uygulama içi bildirim gelir; EXE indirilir, SHA-256 doğrulanır, gizli bir Windows yardımcısı uygulama kapandıktan sonra EXE’yi değiştirip yeniden açar. config.json ve günlükler korunur. Yeni pencere ve motor sağlıklı açıldığını onaylamazsa eski EXE geri yüklenir. Başarısız aynı sürüm tekrar otomatik denenmez; Güncellemeleri kontrol et ile elle denenebilir. Kaynak/Python kullanımında sürüm notları görünür fakat Python dosyası değiştirilmez.
 
@@ -237,7 +237,7 @@ Depo herkese açık ve Releases erişilebilir olmalıdır. Release’te `rl-pres
 Ranked Heatseeker PlaylistId 63 mapping reference: [author-maintained playlist enum](https://github.com/GrantJL/rl-lobby-ranks/blob/master/lobby-ranks/types.h). This is a lookup fact, not a runtime data source.
 
 
-## v0.2.5 arayüz ve rank ikonları
+## v0.2.6 arayüz ve rank ikonları
 
 Oynanan ranked modun manuel rankı artık küçük ikon (`diamond_1`, `champion_2` vb.)
 ve tooltip (`Diamond I Div IV`) olarak gönderilir; details/state satırlarından

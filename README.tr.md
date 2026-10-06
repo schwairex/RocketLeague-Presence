@@ -33,7 +33,7 @@ RL Presence, Rocket League'in **resmî yerel Stats API** verilerini okuyarak Dis
 | Maçın için | Günlük kullanım için |
 | --- | --- |
 | **Canlı maç bilgisi** — mod, harita, Mavi/Turuncu skor ve sonuç. | **Otomatik kurulum** — Steam ve Epic kurulumlarını bulur, Stats API'yi etkinleştirir. |
-| **Senkron sayaç** — oyunda geri sayar, gol arasında kalan süre sabit görünür. | **İki dil** — Genel bölümünden Türkçe veya İngilizce seçebilirsin. |
+| **Senkron sayaç** — oyunda geri sayar; oyun saati durunca hareketli sayaç kaldırılır. | **İki dil** — Genel bölümünden Türkçe veya İngilizce seçebilirsin. |
 | **Kendi istatistiklerin** — oyuncunu tanımladığında puan, gol ve kurtarış. | **Doğrulanan güncellemeler** — açılışta sürüm kontrolü, SHA-256 doğrulaması ve başarısız açılışta geri yükleme. |
 | **Rank ikonu** — her desteklenen ranked mod için ayrı manuel rank ve küme. | **Uygulama içinden sorun bildirimi** — günlükleri veya hesap kimliklerini eklemeyen, diline uygun bir form. |
 
@@ -67,16 +67,16 @@ Uygulama Steam kütüphanelerini ve Epic manifestlerini tarar, bulduğu kuruluml
 
 Görselleri sabit Discord uygulamasına geliştirici bir kez yükler. Son kullanıcıların görsel yüklemesi gerekmez. [Birebir harita ve rank anahtarları →](docs/art-assets.md)
 
-### v0.2.5 ile daha sade aktivite kartı
+### v0.2.6 ile istatistikler ön planda
 
 **Rocket League**
 
 ```text
 Ranked 2v2 • 🔵 5 - 2 🟠
-Mannfield (Night) • ⚽1 🧤2 ⭐593
+⚽1  🧤2  ⭐593
 ```
 
-⚽ gol · 🧤 kurtarış · ⭐ puan. Casual kartında gerçek mod adı ve yalnızca harita görseli kullanılır; eğitimde **Training** ve harita adı görünür, maç istatistiği gösterilmez. Oyun sırasında canlı sayaç korunur. Gol tekrarı, kickoff bekleyişi veya duraklatmada hareketli zaman damgası kaldırılır, kalan oyun süresi **⏸ 2:33** olarak sabit gösterilir. Kickoff ile geri sayım devam eder; uzatma da durduğu saniyeleri saymaz. Discord'un yerel sayacında duraklatma alanı bulunmadığından duran süre metinle gösterilir. [Sayaç ve gönderim sınırları →](docs/usage.tr.md#saat-maç-sonucu-ve-güncelleme-sınırı)
+⚽ gol · 🧤 kurtarış · ⭐ puan. Ranked ve casual kartlarında ikinci satır yalnızca kendi istatistiklerindir; harita adı büyük görselin tooltip’inde kalır. Casual gerçek mod adını kullanır, küçük ikon göstermez. Eğitimde **Training** ve harita adı bulunur; istatistik/küçük ikon yoktur. Canlı sayaç oyun sırasında korunur, oyun saati durunca kaldırılır ve kickoff ile devam eder; metne beyaz/sabit süre eklenmez. Kişisel istatistik değişiklikleri Discord’un gönderim bütçesi izin verdiğinde hemen iletilir. Değer **—** ise Görünüm’de oyun içi adını/platformunu doğru ayarla; eksik sayılar tahmin edilmez. [Sayaç ve gönderim sınırları →](docs/usage.tr.md#saat-maç-sonucu-ve-güncelleme-sınırı)
 
 ## Kullanımı kolay bir masaüstü arayüzü
 
@@ -160,7 +160,7 @@ RocketLeague-Presence/
 | Sürüm yayımlama ve otomatik güncelleme | [Release rehberi](docs/releasing.md) |
 | Logo ve README'yi GitHub'a yükleme | [Yükleme rehberi](docs/github-upload.tr.md) |
 | Discord harita ve rank görselleri | [Asset listesi](docs/art-assets.md) · [Rank anahtarları](docs/rank-asset-keys.txt) |
-| Değişiklikler ve doğrulama | [Değişiklikler](CHANGELOG.md) · [v0.2.5 doğrulaması](docs/qa/verification.md) |
+| Değişiklikler ve doğrulama | [Değişiklikler](CHANGELOG.md) · [v0.2.6 doğrulaması](docs/qa/verification.md) |
 
 ## RL Presence'ın arkasındaki ekip
 

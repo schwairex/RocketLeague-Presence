@@ -26,7 +26,7 @@ def test_ranked_requested_layout_and_rank_tooltip():
     payload = build_presence(match(), cfg, 1000)
     assert payload['name'] == 'Rocket League'
     assert payload['details'] == 'Ranked 2v2 • 🔵 5 - 2 🟠'
-    assert payload['state'] == 'Mannfield (Night) • ⚽1 🧤2 ⭐593'
+    assert payload['state'] == '⚽1  🧤2  ⭐593'
     assert payload['large_image'] == 'mannfield'
     assert payload['large_text'] == 'Mannfield (Night)'
     assert payload['small_image'] == 'diamond_1'
@@ -38,7 +38,7 @@ def test_ranked_requested_layout_and_rank_tooltip():
 def test_casual_only_map_artwork(playlist):
     payload = build_presence(match(playlist), Config(), 1000)
     assert payload['details'].startswith('Casual ')
-    assert payload['state'] == 'Mannfield (Night) • ⚽1 🧤2 ⭐593'
+    assert payload['state'] == '⚽1  🧤2  ⭐593'
     assert 'small_image' not in payload and 'small_text' not in payload
     assert payload['large_image'] == 'mannfield' and payload['end'] == 1153
 
@@ -59,7 +59,7 @@ def test_clock_stops_without_native_timestamp_and_static_value_never_ticks(name)
     later = build_presence(stopped, Config(), 1025)
     assert first == later
     assert 'end' not in first and 'start' not in first
-    assert first['state'] == 'Mannfield (Night) • ⚽1 🧤2 ⭐593 • ⏸ 2:33'
+    assert first['state'] == '⚽1  🧤2  ⭐593'
     assert 'Kickoff' not in first['state'] and 'Goal replay' not in first['state']
 
 
@@ -78,7 +78,7 @@ def test_goal_score_snapshot_replay_countdown_then_fresh_kickoff(skipped):
         state = event(state, 'GoalReplayEnd', 1010)
     state = event(state, 'CountdownBegin', 1011)
     frozen = build_presence(state, Config(), 1013)
-    assert frozen['state'].endswith('⏸ 2:33') and 'end' not in frozen
+    assert '⏸' not in frozen['state'] and 'end' not in frozen
     state = event(state, 'RoundStarted', 1014)
     resumed = build_presence(state, Config(), 1014)
     assert resumed['end'] == 1167
@@ -88,7 +88,7 @@ def test_goal_score_snapshot_replay_countdown_then_fresh_kickoff(skipped):
 def test_snapshot_replay_without_goal_event_stops_the_clock():
     state = event(match(), 'UpdateState', 1000, Game={'bReplay': True, 'TimeSeconds': 153})
     payload = build_presence(state, Config(), 1010)
-    assert 'end' not in payload and payload['state'].endswith('⏸ 2:33')
+    assert 'end' not in payload and '⏸' not in payload['state']
 
 
 @pytest.mark.parametrize('before', [Phase.COUNTDOWN, Phase.GOAL_REPLAY])
@@ -98,7 +98,7 @@ def test_unpause_does_not_run_a_stopped_countdown_or_replay(before):
     state = event(state, 'MatchUnpaused', 1010)
     assert state.phase == before
     assert 'end' not in build_presence(state, Config(), 1010)
-    assert build_presence(state, Config(), 1010)['state'].endswith('⏸ 2:33')
+    assert '⏸' not in build_presence(state, Config(), 1010)['state']
 
 
 def test_replay_end_while_paused_waits_for_unpause_then_kickoff():
@@ -119,7 +119,8 @@ def test_overtime_pause_resumes_without_counting_stopped_seconds():
     state = event(state, 'MatchPaused', 1017)
     frozen = build_presence(state, Config(), 1017)
     assert 'start' not in frozen and 'end' not in frozen
-    assert 'Overtime ⏸ 0:17' in frozen['state']
+    assert state.clock_stopped_at-state.overtime_started_at == 17
+    assert '⏸' not in frozen['state']
     assert build_presence(state, Config(), 1050) == frozen
     state = event(state, 'MatchUnpaused', 1050)
     resumed = build_presence(state, Config(), 1050)
@@ -133,7 +134,8 @@ def test_first_overtime_flag_during_pause_keeps_zero_clock_kickoff_anchor():
     state = event(state, 'MatchPaused', 1005)
     state = event(state, 'ClockUpdatedSeconds', 1006, TimeSeconds=1, bOvertime=True)
     frozen = build_presence(state, Config(), 1006)
-    assert 'Overtime ⏸ 0:01' in frozen['state']
+    assert state.clock_stopped_at-state.overtime_started_at == 1
+    assert '⏸' not in frozen['state']
     assert build_presence(state, Config(), 1020) == frozen
     state = event(state, 'MatchUnpaused', 1020)
     assert build_presence(state, Config(), 1020)['start'] == 1019
@@ -173,11 +175,11 @@ def test_unselected_or_hidden_rank_has_no_team_badge(cfg):
 def test_visibility_toggles_and_unknown_stats_are_preserved():
     state = replace(match(), local_player_goals=None, local_player_saves=None, local_player_score=None)
     payload = build_presence(state, Config(show_mode=False, show_score=False), 1000)
-    assert payload['details'] == 'Rocket League' and payload['state'] == 'Mannfield (Night)'
+    assert payload['details'] == 'Rocket League' and payload['state'] == '⚽—  🧤—  ⭐—'
     stopped = event(match(), 'GoalScored', 1000)
     hidden = build_presence(stopped, Config(show_time=False, show_player_stats=False, show_map=False), 1000)
-    assert '⏸' not in hidden['state'] and 'end' not in hidden and 'start' not in hidden
-    assert '⚽' not in hidden['state'] and 'Mannfield' not in str(hidden)
+    assert '⏸' not in hidden.get('state','') and 'end' not in hidden and 'start' not in hidden
+    assert '⚽' not in hidden.get('state','') and 'Mannfield' not in str(hidden)
 
 
 async def test_rpc_wire_replaces_rank_and_ticking_timestamp_with_no_small_assets():
@@ -198,5 +200,5 @@ async def test_rpc_wire_replaces_rank_and_ticking_timestamp_with_no_small_assets
     assert first['timestamps']['end'] == 1153
     assert not second.get('timestamps')
     assert 'small_image' not in second['assets'] and 'small_text' not in second['assets']
-    assert '⏸ 2:33' in second['state']
+    assert second['state'] == '⚽1  🧤2  ⭐593'
     assert all(struct.unpack('<II', frame[:8])[1] == len(frame[8:]) for frame in frames)

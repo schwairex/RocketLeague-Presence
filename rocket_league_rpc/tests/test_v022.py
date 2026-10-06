@@ -18,7 +18,7 @@ def test_goal_clock_freezes_through_replay_and_countdown_then_resyncs():
         state = reduce_event(state, {'Event':event,'Data':{}}, cfg, now)
         assert state.clock_end is None  # real game clock remains stopped
         payload = build_presence(state,cfg,now)
-        assert 'end' not in payload and '⏸ 2:33' in payload['state']
+        assert 'end' not in payload and '⏸' not in payload['state']
         assert 'Kickoff' not in payload['state'] and 'Goal replay' not in payload['state']
     state = reduce_event(state, {'Event':'UpdateState','Data':{'Game':{
         'TimeSeconds':153,'bReplay':False,'Teams':[{'TeamNum':0,'Score':2},{'TeamNum':1,'Score':1}]}}}, cfg,1009)
@@ -33,7 +33,7 @@ def test_replay_flag_without_goal_event_freezes_clock():
     state = MatchState(phase=Phase.PLAYING,arena='Park_P',playlist_id=2,clock_end=1153,time_remaining=153)
     state = reduce_event(state,{'Event':'UpdateState','Data':{'Game':{'bReplay':True}}},Config(),1000)
     assert 'end' not in build_presence(state,Config(),1000)
-    assert '⏸ 2:33' in build_presence(state,Config(),1000)['state']
+    assert '⏸' not in build_presence(state,Config(),1000)['state']
     paused = reduce_event(state,{'Event':'MatchPaused','Data':{}},Config(),1001)
     assert 'end' not in build_presence(paused,Config(),1001)
     assert 'end' not in build_presence(state,Config(show_time=False),1000)

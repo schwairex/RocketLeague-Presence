@@ -162,7 +162,9 @@ class Application:
         self.state = reduce_event(old, message, self.config, self.wall_clock())
         priority = (old.phase != self.state.phase or old.match_guid != self.state.match_guid
                     or old.playlist_id != self.state.playlist_id or old.clock_end != self.state.clock_end
-                    or (old.blue_score,old.orange_score) != (self.state.blue_score,self.state.orange_score))
+                    or (old.blue_score,old.orange_score) != (self.state.blue_score,self.state.orange_score)
+                    or (old.local_player_goals,old.local_player_saves,old.local_player_score) != (
+                        self.state.local_player_goals,self.state.local_player_saves,self.state.local_player_score))
         self.refresh(priority=priority)
         if (self.config.auto_learn_primary_id and self.config.player_name
             and not self.config.player_primary_id and self.state.local_primary_id

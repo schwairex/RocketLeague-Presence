@@ -37,9 +37,9 @@ async def test_fragmented_mock_match_through_real_tcp_reducer_and_publisher():
     updates=[op for op in discord.operations if op[0]=='update']
     assert all(b[1]-a[1]>=15 for a,b in zip(updates,updates[1:]))
     assert any('(Win)' in op[2]['details'] for op in updates)
-    assert any('Overtime' in op[2]['state'] and 'start' in op[2] for op in updates)
+    assert any('start' in op[2] for op in updates)
     assert all(op[2]['name']=='Rocket League' and 'Kickoff countdown' not in op[2]['state'] for op in updates)
-    assert goal_payloads and all('end' not in p and 'start' not in p and '⏸' in p['state'] for p in goal_payloads)
+    assert goal_payloads and all('end' not in p and 'start' not in p and '⏸' not in p['state'] for p in goal_payloads)
     assert app.state.phase==Phase.MENU
     await app.publisher.shutdown()
     assert discord.closed

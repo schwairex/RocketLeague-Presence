@@ -1,3 +1,21 @@
+# v0.2.6 — RL Presence
+
+## İyileştirme
+- Ranked/casual kartının ikinci satırı yalnızca `⚽gol  🧤kurtarış  ⭐puan`; harita adı büyük görsel tooltip’inde kalır.
+- Yerel gol/kurtarış/puan değişiklikleri ek 4 saniyelik bekleme olmadan, Discord bütçesi izin verdiğinde gönderilir.
+- Eğitimde Training/harita görünümü ve ranked moda özel rank ikonu/tooltip’i korunur.
+
+## Düzeltme
+- Gol/replay/kickoff/duraklatmadaki beyaz/sabit saat metni kaldırıldı; duran oyunda hareketli damga yoktur, kickoff ile canlı sayaç devam eder.
+- Eksik oyuncu eşleşmesi/API alanı — ile belirtilir; yanlış oyuncu veya tahminî sıfır kullanılmaz.
+- UTF-8 IPC, gerçek parçalı TCP stat akışı ve hızlı değişikliklerde kayan gönderim sınırı doğrulandı.
+- README tasarımı, kullanıcı logosu ve dosya düzeni korunarak açıklamalar/önizlemeler güncellendi.
+
+English: stats-only ranked/casual text, map tooltip retained, no white stopped
+clock, eligible immediate personal stat updates, and explicit unknown values.
+Casual uses its actual playlist name. Native active/OT timestamps and the
+rolling activity budget are retained; no new asset key or dependency.
+
 # v0.2.5 — RL Presence
 
 ## İyileştirme

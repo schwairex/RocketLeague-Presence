@@ -33,7 +33,7 @@ RL Presence is a Windows companion that reads Rocket League's **official local S
 | Made for your match | Made for everyday use |
 | --- | --- |
 | **Live match context** — mode, arena, Blue/Orange score and result. | **Automatic setup** — discovers Steam and Epic installations and enables the Stats API. |
-| **A synchronized clock** — live countdown during play, frozen time during goal breaks. | **Two languages** — switch between Türkçe and English in General. |
+| **A synchronized clock** — live countdown during play, hidden while the game clock is stopped. | **Two languages** — switch between Türkçe and English in General. |
 | **Your own stats** — points, goals and saves after identifying your player. | **Verified updates** — startup release checks, SHA-256 verification and recovery on failed startup. |
 | **Rank artwork** — a separate manual rank/division for each supported ranked mode. | **Built-in issue reports** — a localized form, without sending logs or account identifiers. |
 
@@ -67,16 +67,16 @@ Select independent ranks for **Ranked 1v1, 2v2, 3v3, Heatseeker, Rumble, Hoops, 
 
 The maintainer uploads artwork once to the fixed Discord application. End users do not upload images. [Exact map and rank asset keys →](docs/art-assets.md)
 
-### A cleaner activity card in v0.2.5
+### Stats in focus with v0.2.6
 
 **Rocket League**
 
 ```text
 Ranked 2v2 • 🔵 5 - 2 🟠
-Mannfield (Night) • ⚽1 🧤2 ⭐593
+⚽1  🧤2  ⭐593
 ```
 
-⚽ goals · 🧤 saves · ⭐ points. Casual uses its actual playlist name and map artwork only; training shows **Training** and the map, without match stats. The live timer stays visible during play. During a goal replay, kickoff wait or pause, ticking timestamps are removed and the last game time appears as **⏸ 2:33**. Kickoff restores the countdown; overtime pauses also exclude stopped seconds. Discord has no native timer-pause field, so stopped time uses static text. [Clock and update limits →](docs/usage.md#match-clocks-and-rate-limiting)
+⚽ goals · 🧤 saves · ⭐ points. Ranked and casual put only your stats on the second line; the map name stays in the large artwork tooltip. Casual uses its actual playlist name, without a small icon. Training shows **Training** and the map, without stats or small artwork. The native live timer stays during play, disappears while the game clock is stopped, and resumes at kickoff; no white/static time is added to the text. Personal stat changes publish as soon as Discord’s rolling budget permits. If a value is **—**, set your exact player name/platform in Appearance; unknown values are never guessed. [Clock and update limits →](docs/usage.md#match-clocks-and-rate-limiting)
 
 ## A desktop app that stays out of the way
 
@@ -160,14 +160,14 @@ Generated `dist/`, `build/`, `logs/`, `.venv/` and personal `config.json` are ig
 | Release publishing and automatic updates | [Release guide](docs/releasing.md) |
 | Uploading the README/logo to GitHub | [Türkçe yükleme rehberi](docs/github-upload.tr.md) |
 | Discord map and rank artwork | [Asset list](docs/art-assets.md) · [Rank keys](docs/rank-asset-keys.txt) |
-| Changes and validation | [Changelog](CHANGELOG.md) · [v0.2.5 verification](docs/qa/verification.md) |
+| Changes and validation | [Changelog](CHANGELOG.md) · [v0.2.6 verification](docs/qa/verification.md) |
 
 ## The people behind RL Presence
 
 | Developer | Role |
 | --- | --- |
-| **[Schwairex](https://github.com/schwairex)** | Founder · App Developer |
-| **[Nyris](https://github.com/tolgayorkurt)** | Co-Developer · QA |
+| **[schwairex](https://github.com/schwairex)** | Founder · App Developer |
+| **Nyris** | Co-Developer · QA |
 
 Rocket League data comes from the [official Stats API](https://www.rocketleague.com/developer/stats-api). Playlist/map lookups are best effort; the full guide documents clock and identity limitations. Third-party notices: [fonts](docs/licenses/fonts.txt) · [icons](docs/licenses/icons.txt).
 

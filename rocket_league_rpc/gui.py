@@ -297,6 +297,10 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
                             check = window.evaluate_js("JSON.stringify((()=>{const p=Array.from(document.querySelectorAll('.tab-content')).find(p=>!p.hidden);return {tab:p.id,frame:[innerWidth,innerHeight],width:[p.clientWidth,p.scrollWidth],save:!document.getElementById('save').hidden,visiblePages:Array.from(document.querySelectorAll('.tab-content')).filter(p=>getComputedStyle(p).display!=='none').length}})())")
                             resize_checks.append(json.loads(check))
                     window.maximize()
+                    # Native sizing is asynchronous; observe it after the UI thread applies it.
+                    deadline = time.monotonic()+2
+                    while bridge._resize_adapter and not adapter.user.IsZoomed(adapter.hwnd) and time.monotonic()<deadline:
+                        time.sleep(.02)
                     maximized = window.evaluate_js('JSON.stringify([innerWidth,innerHeight])')
                     maximized_checks = []
                     for tab in ('appearance','general','updates','about','report'):
@@ -304,7 +308,13 @@ def launch(config, config_path, log_dir, mock_game=False, raw_packets=False, upd
                         check = window.evaluate_js("JSON.stringify((()=>{const p=document.getElementById('"+tab+"');return {tab:p.id,width:[p.clientWidth,p.scrollWidth],save:!document.getElementById('save').hidden}})())")
                         maximized_checks.append(json.loads(check))
                     window.restore()
+                    deadline = time.monotonic()+2
+                    while bridge._resize_adapter and adapter.user.IsZoomed(adapter.hwnd) and time.monotonic()<deadline:
+                        time.sleep(.02)
                     window.resize(800,500)
+                    deadline = time.monotonic()+2
+                    while json.loads(window.evaluate_js('JSON.stringify([innerWidth,innerHeight])')) != [900,640] and time.monotonic()<deadline:
+                        time.sleep(.02)
                     minimum = window.evaluate_js('JSON.stringify([innerWidth,innerHeight])')
                     window.resize(1120,760)
                     window.evaluate_js("document.querySelector('[data-tab=report]').click();document.getElementById('report-title').value='Native release verification';document.getElementById('report-description').value='Isolated mocked report from the packaged desktop application.';document.getElementById('report-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));")

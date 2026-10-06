@@ -19,7 +19,7 @@ python -m venv .venv
 Or run the built `rl-presence.exe` in a writable folder. The default `config.json` and `logs/` live beside `run.py` for source runs, or beside the executable for packaged runs. `--config path\config.json` selects another config file; logs still live beside the launcher.
 
 
-## Desktop window (v0.2.5)
+## Desktop window (v0.2.6)
 
 Close the old RPC before launching this version. Keep your existing config.json beside the new EXE to preserve player/rank preferences. Application ID is now fixed; legacy client_id is ignored and removed. Windows 10/11, .NET Framework 4.8 and Microsoft Edge WebView2 Runtime are required. The EXE includes Python and the UI fonts/SVGs; the interface loads offline.
 
@@ -56,9 +56,8 @@ text. Redirects and automatic report retries are disabled. A timed-out request
 may already have reached the server; retry deliberately to avoid duplicates.
 
 Activity payloads use **Rocket League** for the Discord card/profile name.
-During goal replay/kickoff/pause, ticking timestamps are omitted and the last
-remaining game time is shown as static text (⏸ 2:33). RoundStarted restores a
-synchronized countdown. Discord's native timer supports start/end, with no
+During goal replay/kickoff/pause, ticking timestamps are omitted. No white/static
+remaining-time text is sent. RoundStarted restores a synchronized countdown. Discord's native timer supports start/end, with no
 pause field. No real public test report was submitted during verification.
 
 ## Discord application and images
@@ -174,11 +173,11 @@ Explicit ID/name detection takes priority and never falls through to a viewed op
 
 The reducer handles menu, countdown, active play, goal replay, pause, overtime, ended and history replay phases. It resets for a new online MatchGuid and treats an empty offline guid as one match until leave. `ReplayCreated` stays `Watching a replay` through live-shaped replay events and never shows a live score/timer. Scores are authoritative from UpdateState, not guessed from GoalScored (which may involve own goals).
 
-RoundStarted re-syncs the end timestamp; drift over two seconds triggers a clock correction. Goal replay, kickoff waits and pauses remove ticking timestamps and show the last authoritative remaining time as static `⏸ M:SS` text. It stays frozen until play resumes. Discord has no native timer-pause field. Running play uses the green timestamp without duplicate remaining-time text; kickoff/replay labels stay omitted. Pausing during a replay or countdown returns to that stopped phase, rather than prematurely starting the clock. Results last until leaving or 60 seconds.
+RoundStarted re-syncs the end timestamp; drift over two seconds triggers a clock correction. Goal replay, kickoff waits and pauses remove ticking timestamps. No static remaining-time text is sent; only player stats remain in the text line. The reducer retains the game clock internally for synchronized resume. Discord has no native timer-pause field. Running play uses the green timestamp without duplicate remaining-time text; kickoff/replay labels stay omitted. Pausing during a replay or countdown returns to that stopped phase, rather than prematurely starting the clock. Results last until leaving or 60 seconds.
 
-**Overtime direction is unverified.** The app uses an elapsed start anchor rather than deriving it from TimeSeconds. The first observed overtime kickoff establishes it; on a mid-overtime reconnect the first observed packet is a provisional anchor, so elapsed time can be incomplete. A stopped overtime clock shows a frozen elapsed value; resuming excludes the stopped duration. DEBUG logs include raw overtime TimeSeconds samples. `state.overtime_clock_start()` is the single policy function to change after real packets establish the direction.
+**Overtime direction is unverified.** The app uses an elapsed start anchor rather than deriving it from TimeSeconds. The first observed overtime kickoff establishes it; on a mid-overtime reconnect the first observed packet is a provisional anchor, so elapsed time can be incomplete. A stopped overtime clock removes its elapsed timestamp; resuming excludes the stopped duration. DEBUG logs include raw overtime TimeSeconds samples. `state.overtime_clock_start()` is the single policy function to change after real packets establish the direction.
 
-The fixed 15-second wait is removed. The publisher obeys [Discord’s limit](https://docs.discord.com/developers/developer-tools/game-sdk) of at most 5 activity writes in any rolling 20 seconds. Phase/score/clock changes publish immediately when budget permits; normal statistics coalesce for at least 4 seconds. Latest payload wins and unchanged payloads are skipped. Failed writes and clears consume budget; reconnecting does not reset it. An anchored end timestamp lets Discord count down every second without repeated packets, including when a packet is delayed. Player stats use `⚽goals 🧤saves ⭐points`; training omits them. Running match text omits duplicate remaining time and the goal-replay label. Goal replay, kickoff waits and pauses remove ticking timestamps and show static remaining time; kickoff restores the anchor. Rapid phases can still be coalesced when the Discord budget is exhausted. Exit clears if eligible; otherwise IPC closure removes the activity.
+The fixed 15-second wait is removed. The publisher obeys [Discord’s limit](https://docs.discord.com/developers/developer-tools/game-sdk) of at most 5 activity writes in any rolling 20 seconds. Phase/team-score/clock and local Goals/Saves/Score changes publish immediately when budget permits. Other normal changes coalesce for at least 4 seconds. Latest payload wins and unchanged payloads are skipped. Failed writes and clears consume budget; reconnecting does not reset it. An anchored end timestamp lets Discord count down every second without repeated packets, including when a packet is delayed. Ranked/casual state is exactly `⚽goals  🧤saves  ⭐points`, without map names or white/static clocks. Arena artwork and its map-name tooltip remain. Training uses only Training/map. Missing stat fields/identity show — rather than invented zero or opponent values. Set player name/platform in Appearance. Goal replay, kickoff waits and pauses remove ticking timestamps; kickoff restores the anchor. Rapid phases can still be coalesced when the Discord budget is exhausted. Exit clears if eligible; otherwise IPC closure removes the activity.
 
 
 ## Debugging and test match
@@ -228,7 +227,7 @@ The current [Its-Haze/league-rpc](https://github.com/Its-Haze/league-rpc) was re
 
 The mock also supports `--encoded-data` to replay the observed real TCP envelope. Katlicia/LOLCustomRPC was consulted only for GUI/worker-thread and save/cancel architecture; no League data logic is used.
 
-## GitHub updates (v0.2.5)
+## GitHub updates (v0.2.6)
 
 Each launch checks [RocketLeague-Presence Releases](https://github.com/schwairex/RocketLeague-Presence/releases). A newer stable release triggers an in-app notification, verified SHA-256 download and a hidden Windows helper that waits for exit, replaces the EXE and relaunches it. Config/logs remain intact. The new window/engine must acknowledge healthy startup or the helper restores the previous EXE. A failed release is blocked from automatic retries until a different version; the check button permits explicit retry. Source/Python runs display releases but never replace Python.
 
@@ -237,7 +236,7 @@ The repository and Releases must be publicly accessible. Publish `rl-presence.ex
 Ranked Heatseeker PlaylistId 63 mapping reference: [author-maintained playlist enum](https://github.com/GrantJL/rl-lobby-ranks/blob/master/lobby-ranks/types.h). This is a lookup fact, not a runtime data source.
 
 
-## v0.2.5 interface and rank artwork
+## v0.2.6 interface and rank artwork
 
 Selected ranked-mode rank is sent as a small icon (`diamond_1`, `champion_2`, etc.)
 and tooltip (`Diamond I Div IV`), never in details/state. Map artwork remains
