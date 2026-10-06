@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="352" viewBox="0 0 1280 352" role="img" aria-labelledby="title desc">
+<title id="title">RL Presence — Rocket League on Discord</title>
+<desc id="desc">The RL Presence logo with the slogan Your match. Your rank. Your Discord. Windows 10/11, Official Stats API, Turkish and English.</desc>
+<defs>
+ <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#080D20"/><stop offset="1" stop-color="#152140"/></linearGradient>
+ <linearGradient id="edge"><stop stop-color="#3D8BFF"/><stop offset="1" stop-color="#FF8F2B"/></linearGradient>
+</defs>
+<rect x="1" y="1" width="1278" height="350" rx="24" fill="url(#bg)" stroke="#263656"/>
+<path d="M1060 40l-132 132 132 132M1160 40l-132 132 132 132" fill="none" stroke="#3D8BFF" stroke-opacity=".09" stroke-width="36"/>
+<rect x="54" y="55" width="4" height="242" rx="2" fill="url(#edge)"/>
+<svg x="86" y="86" width="176" height="176" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#172040" />
+  <circle cx="20" cy="20" r="11" fill="#3D8BFF" />
+  <path d="M20 9a11 11 0 0 1 0 22z" fill="#FF8F2B" />
+  <circle cx="20" cy="20" r="11" fill="none" stroke="#EEF2FF" stroke-width="1.2" />
+  <path d="M20 9v22" stroke="#EEF2FF" stroke-width="1.2" />
+</svg>
+<g font-family="Segoe UI,Arial,sans-serif">
+ <text x="306" y="90" fill="#9EBAE3" font-size="15" font-weight="600" letter-spacing="3">ROCKET LEAGUE × DISCORD</text>
+ <text x="302" y="169" fill="#EEF2FF" font-size="64" font-weight="700" letter-spacing="1">RL PRESENCE</text>
+ <text x="306" y="212" fill="#C9D1EE" font-size="24">Your match. Your rank. Your Discord.</text>
+ <g font-size="13" font-weight="600">
+  <rect x="306" y="247" width="140" height="34" rx="8" fill="#172B4B" stroke="#294363"/>
+  <text x="376" y="269" text-anchor="middle" fill="#D6E8FF">Windows 10 / 11</text>
+  <rect x="458" y="247" width="158" height="34" rx="8" fill="#172B4B" stroke="#294363"/>
+  <text x="537" y="269" text-anchor="middle" fill="#D6E8FF">Official Stats API</text>
+  <rect x="628" y="247" width="156" height="34" rx="8" fill="#172B4B" stroke="#294363"/>
+  <text x="706" y="269" text-anchor="middle" fill="#D6E8FF">Türkçe / English</text>
+ </g>
+</g></svg>

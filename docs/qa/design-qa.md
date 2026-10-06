@@ -34,7 +34,7 @@ expanded state across refresh and defaults closed. All update phases/error,
 disabled actions, hidden current-state progress, inert script-like notes,
 About → General, connected/disconnected footer and 2px keyboard focus passed.
 Save/Cancel only appear on Appearance/General. No browser warnings/errors.
-Native window checks are in VERIFICATION.md / release-smoke.json.
+Native window checks are in verification.md / release-smoke.json.
 
 Expected differences: reference lacks the OS titlebar and uses exported font/
 color values and static notes. Existing app chrome/fonts/palette and real

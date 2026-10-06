@@ -1,5 +1,7 @@
 # GitHub sürümü yayımlama / Publishing releases
 
+[English overview](../README.md) · [Türkçe ana sayfa](../README.tr.md)
+
 Güncelleyici yalnızca `schwairex/RocketLeague-Presence` deposunun herkese açık,
 kararlı GitHub Releases kayıtlarını kullanır. Taslak/pre-release kayıtları atlanır.
 Sürüm etiketi `v0.2.3` gibi üç sayılı olmalıdır. Bir dal commit'i güncelleme sayılmaz.
@@ -40,4 +42,4 @@ the Python interpreter. Repository errors leave RPC running.
 v0.2.4: Publish notes with `## Yeni`, `## İyileştirme`, `## Düzeltme`
 (English: `## New`, `## Improvement`, `## Fix`) headings or `- Yeni: ...`
 prefixes for accurate row tags. Notes are safely rendered as text, not HTML.
-Upload the additional rank keys in ART_ASSETS.md before advertising rank artwork.
+Upload the additional rank keys in art-assets.md before advertising rank artwork.

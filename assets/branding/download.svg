@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="244" height="48" viewBox="0 0 244 48" role="img" aria-labelledby="title">
+<title id="title">Download for Windows</title>
+<rect x=".5" y=".5" width="243" height="47" rx="10" fill="#3D8BFF" stroke="#6FAAFF"/>
+<path d="M24 13v15m-5-5 5 5 5-5M16 31v4h16v-4" fill="none" stroke="#06122B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<g fill="#06122B" font-family="Segoe UI,Arial,sans-serif">
+<text x="46" y="22" font-size="14" font-weight="700">Download for Windows</text>
+<text x="46" y="36" font-size="10">RL Presence · v0.2.4</text>
+</g></svg>
